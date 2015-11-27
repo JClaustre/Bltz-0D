@@ -1,0 +1,202 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Author: Jonathan Claustre
+! Date  : 08/07/2015
+! Objctv: Penning and Associative processes in He
+! note  : data's and analytic formula in 
+!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
+!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+MODULE MOD_PENNASS
+  USE F90_KIND  
+  USE MOD_PARAM
+  IMPLICIT NONE
+
+CONTAINS
+
+  !***********************************************************************
+  SUBROUTINE Penn_Assoc (sys, meta, U, Fi, Diag)
+    !INTENT
+    TYPE(SysVar) , INTENT(IN) :: sys
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
+    TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: Diag
+    TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
+    !LOCAL
+    INTEGER :: i, j, k, l, ichi
+    REAL(DOUBLE) :: asso, Penn, beta, Dx
+    REAL(DOUBLE) :: Eij, chi, rchi, coef1, coef2
+    REAL(DOUBLE) :: ratx
+    !*********************************
+    beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(-1.86d0)
+    asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0
+    Dx = sys%Dx ; Diag(5)%Tx = 0.d0 ; Diag(6)%Tx = 0.d0
+
+    !**** Associative process
+    DO i = 5, 34
+       Eij = meta(i)%En - ion(2)%En ! associative threshold
+       IF (Eij > 0.d0) THEN
+          chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi + 0.5d0
+          asso = meta(0)%Ni*meta(i)%Ni * Sn(i)
+          DO k = 1, sys%nx
+             coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
+             coef2 = rchi / (sqrt(U(ichi+1))*Dx)
+             IF (k .NE. ichi  ) coef1 = 0.d0
+             IF (k .NE. ichi+1) coef2 = 0.d0
+             Fi(k) = Fi(k) + Clock%Dt * (asso * (coef1 + coef2))
+          END DO
+          !**** Particle balance (explicit --> meta)
+          meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
+          ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
+          !**** Diagnostic
+          Diag(6)%EnProd(i) = Diag(6)%EnProd(i) + Clock%Dt * asso * Eij
+          Diag(6)%DnLoss(i) = Diag(6)%DnProd(i) + Clock%Dt * asso
+          Diag(6)%DnProd(NumMeta+2) = Diag(6)%DnProd(NumMeta+2) + Clock%Dt * asso
+          Diag(6)%Tx = Diag(6)%Tx + asso
+
+          ratx = Sn(i)*meta(0)%Ni
+          IF (ratx .GT. MaxR) MaxR = ratx
+       END IF
+    END DO
+
+    !**** Penning process
+    DO i = 1, 3
+       DO j = 1, 3
+
+          DO l = 1, 2
+             IF (l .EQ. 1) Penn  =  0.3d0* meta(i)%Ni*meta(j)%Ni * beta
+             IF (l .EQ. 2) Penn  =  0.7d0* meta(i)%Ni*meta(j)%Ni * beta
+             Eij = meta(j)%En + meta(i)%En - ion(l)%En ! Penning threshold
+             chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi + 0.5d0
+             DO k = 1, sys%nx
+                coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
+                coef2 = rchi / (sqrt(U(ichi+1))*Dx)
+                IF (k .NE. ichi  ) coef1 = 0.d0
+                IF (k .NE. ichi+1) coef2 = 0.d0
+                Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
+             END DO
+             ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
+             !**** Diagnostic
+             diag(5)%EnProd(NumMeta+l) = diag(5)%EnProd(NumMeta+l) + Eij*Clock%Dt * Penn
+             diag(5)%DnProd(NumMeta+l) = diag(5)%DnProd(NumMeta+l) + Clock%Dt * Penn
+             diag(5)%Tx = diag(5)%Tx + Penn
+          END DO
+          !**** Update population
+          Penn = meta(i)%Ni*meta(j)%Ni * beta
+          meta(i)%Updens = meta(i)%Updens - Clock%Dt * Penn
+          meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
+          diag(5)%DnLoss(i) = diag(5)%DnLoss(i) + Clock%Dt * Penn
+          diag(5)%DnLoss(j) = diag(5)%DnLoss(j) + Clock%Dt * Penn
+       END DO
+    END DO
+  END SUBROUTINE Penn_Assoc
+  !***********************************************************************
+
+  SUBROUTINE Init_Asso(Sn, n)
+    !INTENT
+    INTEGER, INTENT(IN) :: n
+    REAL(DOUBLE), DIMENSION(:), INTENT(OUT) :: Sn
+    Sn = 0.d0
+
+    Select Case (n)
+    Case (0) ! Alves data's
+       !********************************************
+       ! Table 4. in Alves 92.
+       ! Associative ionization rate coef. (cm3 s-1)
+       !********************************************
+       Sn(8)  = 3.14d-11 * 1.d-6
+       Sn(9)  = 1.96d-10 * 1.d-6
+       Sn(10) = 1.31d-11 * 1.d-6
+       Sn(11) = 2.75d-10 * 1.d-6
+       Sn(12) = 2.48d-10 * 1.d-6
+       Sn(13) = 3.14d-10 * 1.d-6
+       Sn(14) = 3.40d-10 * 1.d-6
+       Sn(15) = 5.90d-10 * 1.d-6
+       Sn(16) = 3.30d-10 * 1.d-6
+       Sn(17) = 3.30d-10 * 1.d-6
+       Sn(18) = 1.70d-10 * 1.d-6
+       Sn(19) = 3.00d-10 * 1.d-6
+       Sn(20) = 2.70d-10 * 1.d-6
+       Sn(21) = 3.45d-10 * 1.d-6
+       Sn(22) = 3.70d-10 * 1.d-6
+       Sn(23) = 6.50d-10 * 1.d-6
+       Sn(24) = 7.30d-10 * 1.d-6
+       Sn(25) = 7.30d-10 * 1.d-6
+       Sn(26) = 1.90d-10 * 1.d-6
+       Sn(27) = 3.20d-10 * 1.d-6
+       Sn(28) = 2.90d-10 * 1.d-6
+       Sn(29) = 3.60d-10 * 1.d-6
+       Sn(30) = 3.90d-10 * 1.d-6
+       Sn(31) = 6.80d-10 * 1.d-6
+       Sn(32) = 8.20d-10 * 1.d-6
+       Sn(33) = 8.20d-10 * 1.d-6
+       Sn(34) = 2.00d-10 * 1.d-6
+       !************************************
+    Case (1) ! Santos data's
+       Sn(5)  = 2.90d-11 * 1.d-6
+       Sn(6)  = 2.90d-10 * 1.d-6
+       Sn(7)  = 3.40d-11 * 1.d-6
+       Sn(8)  = 3.60d-11 * 1.d-6
+       Sn(9)  = 2.30d-10 * 1.d-6
+       Sn(10) = 8.60d-12 * 1.d-6
+       Sn(11) = 3.80d-11 * 1.d-6
+       Sn(12) = 3.40d-11 * 1.d-6
+       Sn(13) = 7.80d-11 * 1.d-6
+       Sn(14) = 1.50d-10 * 1.d-6
+       Sn(15) = 2.50d-10 * 1.d-6
+       Sn(16) = 1.10d-10 * 1.d-6
+       Sn(17) = 2.00d-10 * 1.d-6
+       Sn(18) = 4.20d-11 * 1.d-6
+       Sn(19) = 3.00d-10 * 1.d-6
+       Sn(20) = 4.10d-11 * 1.d-6
+       Sn(21) = 8.60d-11 * 1.d-6
+       Sn(22) = 1.63d-10 * 1.d-6
+       Sn(23) = 2.75d-10 * 1.d-6
+       Sn(24) = 2.16d-10 * 1.d-6
+       Sn(25) = 3.92d-10 * 1.d-6
+       Sn(26) = 4.70d-11 * 1.d-6
+       Sn(27) = 4.40d-11 * 1.d-6
+       Sn(28) = 4.00d-11 * 1.d-6
+       Sn(29) = 8.90d-11 * 1.d-6
+       Sn(30) = 1.72d-10 * 1.d-6
+       Sn(31) = 2.88d-10 * 1.d-6
+       Sn(32) = 3.07d-10 * 1.d-6
+       Sn(33) = 5.58d-10 * 1.d-6
+       Sn(34) = 4.90d-11 * 1.d-6 
+    Case (2)
+       Sn(5)  = 1.00d-13 * 1.d-6
+       Sn(6)  = 8.00d-10 * 1.d-6
+       Sn(7)  = 2.50d-11 * 1.d-6
+       Sn(8)  = 1.00d-13 * 1.d-6
+       Sn(9)  = 1.00d-13 * 1.d-6
+       Sn(10) = 1.00d-11 * 1.d-6
+       Sn(11) = 2.00d-10 * 1.d-6
+       Sn(12) = 1.50d-09 * 1.d-6
+       Sn(13) = 1.00d-13 * 1.d-6
+       Sn(14) = 1.00d-13 * 1.d-6
+       Sn(15) = 1.00d-13 * 1.d-6
+       Sn(16) = 5.00d-12 * 1.d-6
+       Sn(17) = 2.00d-11 * 1.d-6
+       Sn(18) = 1.00d-10 * 1.d-6
+       Sn(19) = 3.00d-10 * 1.d-6
+       Sn(20) = 4.10d-11 * 1.d-6
+       Sn(21) = 8.60d-11 * 1.d-6
+       Sn(22) = 1.63d-10 * 1.d-6
+       Sn(23) = 2.75d-10 * 1.d-6
+       Sn(24) = 2.16d-10 * 1.d-6
+       Sn(25) = 3.92d-10 * 1.d-6
+       Sn(26) = 4.70d-11 * 1.d-6
+       Sn(27) = 4.40d-11 * 1.d-6
+       Sn(28) = 4.00d-11 * 1.d-6
+       Sn(29) = 8.90d-11 * 1.d-6
+       Sn(30) = 1.72d-10 * 1.d-6
+       Sn(31) = 2.88d-10 * 1.d-6
+       Sn(32) = 3.07d-10 * 1.d-6
+       Sn(33) = 5.58d-10 * 1.d-6
+       Sn(34) = 4.90d-11 * 1.d-6 
+    Case Default
+       write(*,"(A)") "Choose Alves (0), Santos (1) or Belmonte (2) data's!"
+    END Select
+
+  END SUBROUTINE Init_Asso
+
+END MODULE MOD_PENNASS

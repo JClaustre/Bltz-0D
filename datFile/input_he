@@ -1,0 +1,16 @@
+500		  Number of grid points 
+0          	  Restart simulation ( 0  - no restart | 1 - restart )
+1.40000E+02	  E (V/cm)	Electric field
+3.00000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
+2.45000E+09   	  f (Hz)	Heating Frequency
+7.60000E+02	  prs (Torr)	Pressure
+2000.000000	  Tp (K)	Temperature
+2.10000E+00	  Tpe (eV)	Electronic Temperature
+1.00000E-01	  Ra (cm)	Cylinder Radius
+2.30000E+00	  L  (cm)       Tube Length
+2.34000E+12	  ne (cm-3)	Initial electron density
+8.30000E+01   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
+360.0000000   	  Simulation Time (mic-sec)  
+1.00000E-12	  Dt ( Time-Step (sec) )
+1.00000E+02	  Emax (Energy grid max (eV) ) 
+1.0000		  save data's every XXX micro-sec
