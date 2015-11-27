@@ -142,22 +142,21 @@ CONTAINS
     !write(*,"(A,4ES15.6)") "Elec Field (V/m) & Input Power (Watt/m-3)", sys%E, Sys%Powr
     !***************************************************
 
-    !******PARAMETRES COLLISIONS ELASTIQUES*************
+    !****** PARAMETRES COLLISIONS ELASTIQUES*************
     alpha0 = gama**2
-    !*****************CALCUL DES QUANTITES INITIALES**************************
-    part= 0.d0 ; F(nx) = 0.d0
+    !***************** CALCUL DES QUANTITES INITIALES**************************
+    part= 0.d0
     do i=1, nx
        part = part + F(i)*dsqrt(U(i))*Dx    ! nombre de particules initiale
        En1  = En1  + F(i)*U(i)**(1.5d0)*Dx    
     end do
-    !****NORMALISATION DE LA FONCTION DE DISTRIBUTION ***********************
+    !**** NORMALISATION DE LA FONCTION DE DISTRIBUTION ***********************
     do i=1,nx
        F(i) = F(i) / part
        f0(i)= F(i)
     end do
 
-    f0(nx) = 0.d0
-    !!****************SYSTEME TRIDIAGONALE A RESOUDRE CAS GENEGRAL***************
+    !**** SYSTEME TRIDIAGONALE A RESOUDRE CAS GENEGRAL***************
     do i=1,nx
        XX = (U(i)-0.5d0*Dx)                               
        YY = (U(i)+0.5d0*Dx)
@@ -187,7 +186,7 @@ CONTAINS
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
     !**** Diagnostic 
-    diag(10)%EnProd(1) = diag(10)%EnProd(1) + (En2 - En1)
+    diag(10)%EnProd(1) = diag(10)%EnProd(1) + abs(En2 - En1)
     !***************
 
     DEALLOCATE ( AC1,BC1,CC1,SECMAX )

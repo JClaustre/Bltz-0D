@@ -17,7 +17,8 @@ MODULE MOD_EVOL
   USE MOD_READ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 0
+  INTEGER :: XcDx = 1
+  INTEGER :: IonX = 0
 
 CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -39,7 +40,7 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt = 7.d-10 ! Maximum Time-Step allowed
+    MaxDt = 1.d-10 ! Maximum Time-Step allowed
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -69,7 +70,11 @@ CONTAINS
        CASE DEFAULT ; CALL Exc_Equil (sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz He+
-       CALL Ioniz_100    (sys, meta, U, F, diag)
+       SELECT CASE (IonX)
+       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
+       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
+       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
+       END SELECT
        !**** Ioniz dimer 
        IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F, diag)
        !**** Disso Recombination
@@ -230,6 +235,8 @@ CONTAINS
     DO i = 5, 34 ! else Sn(i) = 0.d0                                                    !
        Coef = Coef - Diag(6)%EnProd(i)                                                  !
     END DO                                                                              !
+    !**** (7)  **** Energy loss due to Ionic conversion                                 !
+    !Coef = Coef + diag(7)%EnLoss(NumMeta+1)                                             !
     !**** (8)  **** Energy loss due to recombination processes                          !
     Coef = Coef + diag(8)%EnLoss(NumMeta+2)                                             !
     !**** (9)  **** Energy loss due to diffusion process                                !

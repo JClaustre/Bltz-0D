@@ -71,23 +71,23 @@ CONTAINS
     !LOCAL
     INTEGER :: i
     REAL(DOUBLE) :: coef, recmb, part, En1, En2, rcmb_ex
-    En1  = 0.d0 ; En2 = 0.d0
-    part = 0.d0 ; recmb = 5.0d-09 * 1.d-6 * (meta(0)%Tp / (elec%Tp))
+    En1  = 0.d0 ; En2 = 0.d0 ; part = 0.d0
+    recmb = 5.0d-09 * 1.d-6 * (meta(0)%Tp / (elec%Tp)) ! m3 s-1
     coef = recmb * Clock%Dt * elec%Ni * ion(2)%Ni
 
     do i = 1, sys%nx
        En1 = Fi(i) * U(i)**1.5d0 * sys%Dx
        part = part + Fi(i) * sqrt(U(i)) * sys%Dx
     end do
-    Fi(:) = Fi(:) / part
 
     elec%Ni = part - coef
-    ion(2)%UpDens  = ion(2)%UpDens - coef
+    ion(2)%UpDens  = ion(2)%UpDens  - coef
     meta(1)%UpDens = meta(1)%UpDens + coef
     do i = 1, sys%nx
-       Fi(i) = Fi(i) * elec%Ni
+       Fi(i) = Fi(i) * elec%Ni / part
        En2 = Fi(i) * U(i)**1.5d0 * sys%Dx
     END do
+
     !**** Diagnostic
     diag(8)%EnLoss(1) = diag(8)%EnLoss(1) + abs(En1 - En2)
     diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni

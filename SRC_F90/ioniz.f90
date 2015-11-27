@@ -25,48 +25,69 @@ CONTAINS
     !LOCAL
     INTEGER :: i, k, kp, ichi
     REAL(DOUBLE) :: prod, loss, coef, coef1
-    REAL(DOUBLE) :: Eij, chi, rchi, Dx, ionz
+    REAL(DOUBLE) :: Eij, chi, rchi, Dx, ionz, ratx
+    !SubCYCLING VARIABLES
+    REAL(DOUBLE) :: SubDt
+    INTEGER :: SubCycl, l
+    diag(2)%Tx = 0.d0
     Dx = sys%Dx ; prod=0.d0 ; loss = 0.d0
 
     DO i = 0, NumMeta
-       ionz=0.d0
+       !**** SubCycling for the direct ionization 
+       IF (i .NE. 0) THEN
+          SubCycl = 1
+          SubDt = Clock%Dt
+       ELSE
+          SubDt = 1.0d-11
+          IF (Clock%Dt .GT. SubDt) SubCycl = ceiling(Clock%Dt / SubDt)
+          IF (Clock%Dt .LE. SubDt) SubCycl = 1
+          IF (Clock%Dt .LE. SubDt) SubDt = Clock%Dt
+       END IF
+       !*******************************************
        coef1 = gama * meta(i)%Ni
        Eij = ion(1)%En - meta(i)%En ! ionization threshold
        chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi
        IF (rchi .LT. 0.d0 .OR. Eij .LT. 0.d0) then
           print*, 'probleme rchi<0 in [Ioniz]' ; STOP
        END IF
+          
+       DO l = 1, SubCycl
+          ionz=0.d0
 
-       DO k = 1, sys%nx
-          prod=0.d0 ; loss = 0.d0
-          kp = 2*k + ichi
-          loss = meta(i)%SecIon(1,k) * Fi(k) * U(k)
+          DO k = 1, sys%nx
+             prod=0.d0 ; loss = 0.d0
+             kp = 2*k + ichi
+             loss = meta(i)%SecIon(1,k) * Fi(k) * U(k)
 
-          IF ((kp-2 .GT. 0) .and. (kp-2 .LE. sys%nx) ) &
-               prod = prod + (1.d0-rchi)*0.5d0 * meta(i)%SecIon(1,kp-2) * Fi(kp-2) * U(kp-2)
-          IF (kp-1 .GT. 0 .and. kp-1 .LE. sys%nx) &
-               prod = prod + (1.5d0-rchi) * meta(i)%SecIon(1,kp-1) * Fi(kp-1) * U(kp-1)
-          IF (kp .LE. sys%nx) &
-               prod = prod + 1.5d0 * meta(i)%SecIon(1,kp) * Fi(kp) * U(kp)
-          IF (kp+1 .LE. sys%nx) &
-               prod = prod + (0.5d0+rchi) * meta(i)%SecIon(1,kp+1) * Fi(kp+1) * U(kp+1)
-          IF (kp+2 .LE. sys%nx) &
-               prod = prod + rchi*0.5d0 * meta(i)%SecIon(1,kp+2) * Fi(kp+2) * U(kp+2)
+             IF ((kp-2 .GT. 0) .and. (kp-2 .LE. sys%nx) ) &
+                  prod = prod + (1.d0-rchi)*0.5d0 * meta(i)%SecIon(1,kp-2) * Fi(kp-2) * U(kp-2)
+             IF (kp-1 .GT. 0 .and. kp-1 .LE. sys%nx) &
+                  prod = prod + (1.5d0-rchi) * meta(i)%SecIon(1,kp-1) * Fi(kp-1) * U(kp-1)
+             IF (kp .LE. sys%nx) &
+                  prod = prod + 1.5d0 * meta(i)%SecIon(1,kp) * Fi(kp) * U(kp)
+             IF (kp+1 .LE. sys%nx) &
+                  prod = prod + (0.5d0+rchi) * meta(i)%SecIon(1,kp+1) * Fi(kp+1) * U(kp+1)
+             IF (kp+2 .LE. sys%nx) &
+                  prod = prod + rchi*0.5d0 * meta(i)%SecIon(1,kp+2) * Fi(kp+2) * U(kp+2)
 
-          !**** Excited states balance
-          IF (k .GE. ichi+1) then
-             coef = 1.d0
-             if (k == ichi+1) coef = (1.0d0-rchi)
-             ionz = ionz + coef * Fi(k) * U(k) * meta(i)%SecIon(1,k)
-          END IF
-          !**** UpDate EEDF
-          Fi(k) = Fi(k) + Clock%Dt * (prod-loss) * coef1 / sqrt(U(k))
+             !**** Excited states balance
+             IF (k .GE. ichi+1) then
+                coef = 1.d0
+                if (k == ichi+1) coef = (1.0d0-rchi)
+                ionz = ionz + coef * Fi(k) * U(k) * meta(i)%SecIon(1,k)
+             END IF
+             !**** UpDate EEDF
+             Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / sqrt(U(k))
+          END DO
+          ratx = ionz * Dx * gama
+          if (ratx .GT. maxR) maxR = ratx
+          diag(2)%Tx = diag(2)%Tx + ratx * meta(i)%Ni
+          diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + SubDt * ionz * coef1 * Dx*Eij
+          diag(2)%DnProd(NumMeta+1) = diag(2)%DnProd(NumMeta+1) + SubDt * ionz * coef1 * Dx
+          IF(i.GT.0) diag(2)%DnLoss(i) = diag(2)%DnLoss(i) + SubDt * ionz * coef1 * Dx
+          meta(i)%UpDens = meta(i)%UpDens - SubDt * ionz * coef1 * Dx
+          ion(1)%Updens  = ion(1)%Updens  + SubDt * ionz * coef1 * Dx
        END DO
-       diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + Clock%Dt * ionz * coef1 * Dx*Eij
-       diag(2)%DnProd(NumMeta+1) = diag(2)%DnProd(NumMeta+1) + Clock%Dt * ionz * coef1 * Dx
-       IF(i.GT.0) diag(2)%DnLoss(i) = diag(2)%DnLoss(i) + Clock%Dt * ionz * coef1 * Dx
-       meta(i)%UpDens = meta(i)%UpDens - Clock%Dt * ionz * coef1 * Dx
-       ion(1)%Updens  = ion(1)%Updens  + Clock%Dt * ionz * coef1 * Dx
     END DO
 
   END SUBROUTINE Ioniz_50
@@ -91,7 +112,7 @@ CONTAINS
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; diag(2)%Tx = 0.d0
 
-    case = 0 ! if 0 then "Francois case" | else "J-P case"
+    case = 0 ! if 0 then "Vidal case" | else "Matte case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     DO i = 0, NumMeta
