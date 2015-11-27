@@ -25,7 +25,6 @@ CONTAINS
     ! LOCAL ******************************************************************!
     INTEGER :: i, j, k, l, m                                                  !
     INTEGER :: t1, t2, clock_rate                                             !
-    INTEGER :: cycL, switch=1, iter=0                                         !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
     CHARACTER(LEN=250)::fileName                                              !
     count1 = 0.d0 ; count2 = 0.d0                                             !
@@ -59,25 +58,8 @@ CONTAINS
        END IF
        !*************************************
 
-       IF (l .LE. 5000) cycL = cycL + int(10.d-06 / Clock%Dt)
-       IF (l .EQ. 5001) cycL = cycL / 5000
-
        !**** Heat + Elas + Fk-Pl
-       IF (Clock%SumDt .GE. 20d-6 .and. modulo(l,cycL) == 0 ) switch = 0
-       IF (switch == 0) THEN
-          IF ((iter * Clock%Dt) .LE. 5d-09) THEN
-             switch = 0 ; iter = iter + 1
-             Clock%Dt = 1.d-11
-             sys%Powr = 8.3d09
-             CALL Heating      (sys,meta, U, F)
-          ELSE 
-             iter = 0
-             switch = 1
-             sys%Powr = 8.3d07
-          END IF
-       END IF
-       IF (Clock%SumDt .LT. 20d-6) CALL Heating (sys,meta, U, F)
-
+       CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Excit + De-excit
