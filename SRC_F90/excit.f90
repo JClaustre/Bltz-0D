@@ -94,8 +94,6 @@ CONTAINS
              ELSE
                 diag(1)%EnProd(i) = diag(1)%EnProd(i) + Clock%Dt * Sd*meta(j)%Ni * E_ij
                 diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + Clock%Dt * Sx*meta(i)%Ni * E_ij
-                diag(1)%DnProd(j) = diag(1)%DnProd(j) + Clock%Dt * Sx*meta(i)%Ni
-                diag(1)%DnLoss(j) = diag(1)%DnLoss(j) + Clock%Dt * Sd*meta(j)%Ni
              END IF
              !*****************
              !**** UpDate Density
@@ -179,8 +177,6 @@ CONTAINS
                 meta(j)%UpDens = meta(j)%UpDens + SubDt * (Sx*meta(i)%Ni-Sd*meta(j)%Ni)
                 meta(i)%UpDens = meta(i)%UpDens + SubDt * (Sd*meta(j)%Ni-Sx*meta(i)%Ni)
                 !*****************
-                IF(i.GT.0) diag(1)%DnProd(i) = diag(1)%DnProd(i) + SubDt * Sd*meta(j)%Ni
-                IF(i.GT.0) diag(1)%DnLoss(i) = diag(1)%DnLoss(i) + SubDt * Sx*meta(i)%Ni
              END IF
 
              DO k = 1, sys%nx
@@ -214,8 +210,6 @@ CONTAINS
              ELSE
                 diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*meta(j)%Ni * E_ij * Rmd
                 diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*meta(i)%Ni * E_ij * Rmx
-                diag(1)%DnProd(j) = diag(1)%DnProd(j) + SubDt * Sx*meta(i)%Ni
-                diag(1)%DnLoss(j) = diag(1)%DnLoss(j) + SubDt * Sd*meta(j)%Ni
              END IF
              !*****************
           END IF
@@ -317,8 +311,6 @@ CONTAINS
              ELSE
                 diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*meta(j)%Ni * E_ij * Rmd
                 diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*meta(i)%Ni * E_ij * Rmx
-                diag(1)%DnProd(j) = diag(1)%DnProd(j) + SubDt * Sx*meta(i)%Ni
-                diag(1)%DnLoss(j) = diag(1)%DnLoss(j) + SubDt * Sd*meta(j)%Ni
              END IF
              !*****************
           END IF

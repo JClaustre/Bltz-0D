@@ -318,10 +318,11 @@ CONTAINS
        meta(0)%Ni = meta(0)%Prs / (qe * meta(0)%Tp * 7.5006d-3)
        write(*,"(2A,ES10.2)") tabul, "Gas density is redefined (cm-3) : ", meta(0)%Ni*1d-6
     END IF
-    IF (NumIon == 3) THEN
-       ion(3)%Name = " HE2-EXCIM" ; ion(3)%En = 17.8d0
-       write(*,"(4A,F6.2)") tabul, "Init Excimer : ",ion(3)%Name, " | Enrgy (eV) = ", ion(3)%En
-    END IF
+    SELECT CASE (NumIon)                                                    !
+    CASE (3)                                                                !
+       ion(NumIon)%Name = " HE2-EXCIM" ; ion(NumIon)%En = 17.8d0
+       write(*,"(4A,F6.2)") tabul, "Init Excimer : ",ion(NumIon)%Name, " | Enrgy (eV) = ", ion(NumIon)%En
+    END SELECT
 
     !**** Cross-Sec Elastic Momentum transfer
     OPEN(UNIT=51,FILE='./datFile/momentum.cs',ACTION="READ",STATUS="OLD")
@@ -481,14 +482,18 @@ CONTAINS
     IF (Clock%Rstart == 0) THEN                                             !
        ion(2)%Ni = elec%Ni * 0.9d0                                          !
        ion(1)%Ni = elec%Ni * 0.1d0                                          !
-       IF (NumIon == 3) ion(3)%Ni = 0.d0                                    !
+       SELECT CASE (NumIon)                                                 !
+       CASE (3) ; ion(NumIon)%Ni = 0.d0                                     !
+       END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
           meta(i)%Ni = 1.0d+11                                              !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE='./datFile/Rstart/Density.dat',STATUS='OLD')      !
        READ(90,*) (meta(i)%Ni, i=1,NumMeta)                                 !
-       IF (NumIon == 3) READ(90,*) ion(3)%Ni                                !
+       SELECT CASE (NumIon)                                                 !
+       CASE (3) ; READ(90,*) ion(NumIon)%Ni                                 !
+       END SELECT                                                           !
        CLOSE (90)                                                           !
     END IF                                                                  !
     !***********************************************************************!
@@ -516,7 +521,9 @@ CONTAINS
     !**** Save excited states density
     OPEN(UNIT=990,File="./datFile/Rstart/Density.dat",ACTION="WRITE",STATUS="UNKNOWN")
     write(990,"(42ES15.6)") (meta(i)%Ni, i=1,NumMeta)
-    IF (NumIon == 3) write(990,"(ES15.6)") ion(3)%Ni
+    SELECT CASE (NumIon) 
+    CASE (3) ; write(990,"(ES15.6)") ion(NumIon)%Ni
+    END SELECT
     CLOSE(990)
     !**** Save Parameters
     OPEN(UNIT=990,File="./datFile/Rstart/Rs_input_he",ACTION="WRITE",STATUS="UNKNOWN")

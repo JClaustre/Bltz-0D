@@ -128,14 +128,15 @@ CONTAINS
 
        !**** WRITE IN FILES (Function of TIME) (density in cm^-3) ****************!
        IF (modulo(l,100)==0) Then                                                 !
-          IF (NumIon == 3) THEN                                                   !
+          SELECT CASE (NumIon)                                                    !
+          CASE (3)                                                                !
              write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, elec%Ni*1d-06,&   !
-                  ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, ion(3)%Ni*1d-06, &            !
+                  ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, ion(NumIon)%Ni*1d-06, &       !
                   (meta(i)%Ni*1d-06,i=1,NumMeta)                                  !
-          ELSE                                                                    !
+          CASE DEFAULT                                                            !
              write(99,"(47ES15.4)") (Clock%SumDt*1e6), elec%Tp, elec%Ni*1d-06,&   !
                   ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)!
-          END IF                                                                  !
+          END SELECT                                                              !
           !****                                                                   !
           !**** WRITE IN FILES (density in cm^-3) ****                            !
           OPEN(UNIT=98,File="./datFile/density.dat",ACTION="WRITE",STATUS="UNKNOWN")
@@ -189,7 +190,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(2) , INTENT(INOUT) :: consv
     !LOCAL
     INTEGER      :: i
-    REAL(DOUBLE) :: Coef
+    REAL(DOUBLE) :: Coef, Eloss=0.d0, Eprod=0.d0
     ! **** Particle Conservation : Σ f(i).U(i)^½.ΔU ************************************!
     Coef = 0.d0                                                                         !
     DO i = 1, sys%nx                                                                    !
@@ -219,24 +220,20 @@ CONTAINS
     !**** (1)  **** Add energy due to excit/de-excit processes                          !
     DO i = 1, NumMeta                                                                   !
        Coef = Coef + (diag(1)%EnLoss(i)-diag(1)%EnProd(i))                              !
-       diag(1)%ELoss = diag(1)%ELoss + (diag(1)%EnLoss(i)-diag(1)%EnProd(i))            !
     END DO                                                                              !
     Coef = Coef + (diag(1)%EnLoss(NumMeta+NumIon+1)-diag(1)%EnProd(NumMeta+NumIon+1))   !
-    diag(1)%ELoss = diag(1)%ELoss + (diag(1)%EnLoss(NumMeta+NumIon+1)-diag(1)%EnProd(NumMeta+NumIon+1))
     !**** (2)  **** Energy Loss due to ionization processes                             !
     Coef = Coef + diag(2)%EnProd(NumMeta+1)                                             !
-    diag(2)%ELoss = diag(2)%EnProd(NumMeta+1)                                           !
     !**** (5)  **** Energy gain due to Penning processes                                !
     DO i = 1, 2                                                                         !
        Coef = Coef - Diag(5)%EnProd(NumMeta+i)                                          !
-       diag(5)%Eprod = diag(5)%Eprod + Diag(5)%EnProd(NumMeta+i)                        !
     END DO                                                                              !
     !**** (6)  **** Energy gain due to Associative processes                            !
     DO i = 5, 34 ! else Sn(i) = 0.d0                                                    !
        Coef = Coef - Diag(6)%EnProd(i)                                                  !
     END DO                                                                              !
     !**** (7)  **** Energy loss due to Ionic conversion                                 !
-    !Coef = Coef + diag(7)%EnLoss(NumMeta+1)                                             !
+    !Coef = Coef + diag(7)%EnLoss(NumMeta+1)                                            !
     !**** (8)  **** Energy loss due to recombination processes                          !
     Coef = Coef + diag(8)%EnLoss(NumMeta+2)                                             !
     !**** (9)  **** Energy loss due to diffusion process                                !

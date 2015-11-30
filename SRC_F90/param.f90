@@ -36,9 +36,9 @@ MODULE MOD_PARAM
   END type Species
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
-     REAL(DOUBLE)      :: Tx, Eloss, Eprod
+     REAL(DOUBLE)      :: Tx
      CHARACTER(len=10) :: Name
-     REAL(DOUBLE), DIMENSION(:), POINTER :: EnProd, EnLoss, DnProd, DnLoss
+     REAL(DOUBLE), DIMENSION(:), POINTER :: EnProd, EnLoss
   END type Diagnos
    !-----------------------------------------------------------
 
@@ -99,18 +99,19 @@ CONTAINS
        ALLOCATE ( Meta(i)%SecExc(0:NumMeta,nx) ) ; Meta(i)%SecExc(:,:) = 0.d0
        ALLOCATE ( Meta(i)%Aij(0:NumMeta) ) ; Meta(i)%Aij(:) = 0.d0
     END DO
-    IF (NumIon == 3) THEN
-       ALLOCATE ( ion(3)%SecIon(1 ,nx) ) ; ion(3)%SecIon(:,:) = 0.d0
-    END IF
 
+    SELECT CASE (NumIon)
+    CASE (3)
+       ALLOCATE ( ion(NumIon)%SecIon(1 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
+    END SELECT
+    
     ALLOCATE ( Meta(0)%SecTot(nx) ) ; Meta(0)%SecTot(:) = 0.d0
     ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0
     ALLOCATE ( Meta(0)%SecRec(nx) ) ; Meta(0)%SecRec(:) = 0.d0
     ALLOCATE ( Meta(0)%Nuel(nx)  ) ; Meta(0)%Nuel(:)   = 0.d0
     DO i = 1, 13
-       ALLOCATE ( diag(i)%DnProd(NumMeta+NumIon+1), Diag(i)%DnLoss(NumMeta+NumIon+1) )
        ALLOCATE ( diag(i)%EnProd(NumMeta+NumIon+1), Diag(i)%EnLoss(NumMeta+NumIon+1) )
-       diag(i)%EnProd = 0.d0 ; diag(i)%EnLoss = 0.d0 ; diag(i)%DnLoss = 0.d0 ; diag(i)%DnProd = 0.d0 
+       diag(i)%EnProd = 0.d0 ; diag(i)%EnLoss = 0.d0 
     END DO
 
     ALLOCATE ( F(nx) ) ; F(:) = 0.d0
@@ -124,11 +125,13 @@ CONTAINS
     DO i = 0, NumMeta
        DEALLOCATE ( Meta(i)%SecIon, Meta(i)%SecExc, Meta(i)%Aij )
     END DO
-    IF (NumIon == 3) DEALLOCATE ( ion(3)%SecIon )
+    SELECT CASE (NumIon)
+    CASE (3) 
+       DEALLOCATE ( ion(NumIon)%SecIon )
+    END SELECT
 
     DO i = 1, 13
        DEALLOCATE( diag(i)%EnProd, Diag(i)%EnLoss )
-       DEALLOCATE( diag(i)%DnProd, Diag(i)%DnLoss )
     END DO
     DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(0)%SecRec )
     DEALLOCATE ( F, U, Meta(0)%Nuel )

@@ -43,7 +43,7 @@ Install it
 2. unzip the file
 
 ### On Linux
-* to unzip with the terminal mode :
+* To unzip with the terminal mode :
 
 		unzip file.zip -d destination_folder
 		
@@ -86,6 +86,8 @@ parameters. If you don't have it, create it by using the example below
 	1.0000            save data's every XXX micro-sec
 
 ----------------------------------------
+### On Windows
+* Sorry, i really don't know! :X
 
 Run it
 -------

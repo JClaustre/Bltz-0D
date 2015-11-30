@@ -46,19 +46,18 @@ CONTAINS
     ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * recmb * Dx
     !**** Ref. Branching ratio in Santos et al (j.phys D:47 (2014)) 
     Do i = 1, 4
-       diag(8)%DnProd(i) = diag(8)%DnProd(i) + Clock%Dt * recmb * tx(i) * Dx
        meta(i)%Updens = meta(i)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
     END Do
     !**** Diagnostic
     diag(8)%EnLoss(NumMeta+2) = diag(8)%EnLoss(NumMeta+2) + (energI-energF)
-    diag(8)%DnLoss(NumMeta+2) = diag(8)%DnLoss(NumMeta+2) + Clock%Dt * recmb * Dx
     diag(8)%Tx =  recmb * Dx
     !****************
     !**** He2* : Excimer recombination He2* + e- --> 2He + e-
-    IF (NumIon == 3) Then
-       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(3)%Ni
-       ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
-    END IF
+    SELECT CASE (NumIon)
+    CASE (3) 
+       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(NumIon)%Ni
+       ion(NumIon)%UpDens = ion(NumIon)%UpDens - Clock%Dt * rcmb_ex 
+    END SELECT
   END SUBROUTINE Recomb
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Recomb_Norm (sys, meta, U, Fi, diag)
@@ -92,10 +91,12 @@ CONTAINS
     diag(8)%EnLoss(1) = diag(8)%EnLoss(1) + abs(En1 - En2)
     diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
     !**** He2* : Excimer SuperElastic He2* + e- --> 2He + e-
-    IF (NumIon == 3) Then
-       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(3)%Ni
-       ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
-    END IF
+    SELECT CASE (NumIon)
+    CASE (3) 
+       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(NumIon)%Ni
+       ion(NumIon)%UpDens = ion(NumIon)%UpDens - Clock%Dt * rcmb_ex 
+    END SELECT
+
   END SUBROUTINE Recomb_Norm
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Conv_3Body (meta, ion)
@@ -115,8 +116,6 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens - Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens + Clock%Dt * Src
        !**** Diagnostic
-       diag(7)%DnLoss(NumMeta+1) = diag(7)%DnLoss(NumMeta+1) + Clock%Dt * Src
-       diag(7)%DnProd(NumMeta+2) = diag(7)%DnProd(NumMeta+2) + Clock%Dt * Src
        diag(7)%EnLoss(NumMeta+1) = diag(7)%EnLoss(NumMeta+1) + Clock%Dt * Src &
             * abs(ion(1)%En-ion(2)%En)
        !***************
@@ -130,8 +129,6 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
        !**** Diagnostic
-       diag(7)%DnLoss(NumMeta+1) = diag(7)%DnLoss(NumMeta+1) + Clock%Dt * Src
-       diag(7)%DnProd(NumMeta+2) = diag(7)%DnProd(NumMeta+2) + Clock%Dt * Src
        diag(7)%EnLoss(NumMeta+1) = diag(7)%EnLoss(NumMeta+1) + Clock%Dt * Src &
             * abs(ion(1)%En-ion(2)%En)
        !***************
@@ -139,19 +136,20 @@ CONTAINS
     !*************************************
     !**** 3body collisions (Excimer creation) : He2*
     !**** He(2P3) + 2He --> He2* + He
-    IF (NumIon == 3) THEN
+    SELECT CASE (NumIon)
+    CASE (3) 
        excim = 1.6d-32 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
-       ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
+       ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
        !**** He(2P3) + 2He <-- He2* + He
-       excim = 3.6d-14 *1d-06 * ion(3)%Ni * meta(0)%Ni
+       excim = 3.6d-14 *1d-06 * ion(NumIon)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
-       ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
+       ion(NumIon)%UpDens  = ion(NumIon)%UpDens  - Clock%Dt * excim
        !**** He(2S3) + 2He --> He2* + He
        excim = 1.5d-34 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
-       ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
-    END IF
+       ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
+    END SELECT
   END SUBROUTINE Conv_3Body
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init_Recomb (sys, meta)

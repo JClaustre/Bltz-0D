@@ -49,8 +49,6 @@ CONTAINS
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
           !**** Diagnostic
           Diag(6)%EnProd(i) = Diag(6)%EnProd(i) + Clock%Dt * asso * Eij
-          Diag(6)%DnLoss(i) = Diag(6)%DnProd(i) + Clock%Dt * asso
-          Diag(6)%DnProd(NumMeta+2) = Diag(6)%DnProd(NumMeta+2) + Clock%Dt * asso
           Diag(6)%Tx = Diag(6)%Tx + asso
 
           ratx = Sn(i)*meta(0)%Ni
@@ -77,15 +75,12 @@ CONTAINS
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** Diagnostic
              diag(5)%EnProd(NumMeta+l) = diag(5)%EnProd(NumMeta+l) + Eij*Clock%Dt * Penn
-             diag(5)%DnProd(NumMeta+l) = diag(5)%DnProd(NumMeta+l) + Clock%Dt * Penn
              diag(5)%Tx = diag(5)%Tx + Penn
           END DO
           !**** Update population
           Penn = meta(i)%Ni*meta(j)%Ni * beta
           meta(i)%Updens = meta(i)%Updens - Clock%Dt * Penn
           meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
-          diag(5)%DnLoss(i) = diag(5)%DnLoss(i) + Clock%Dt * Penn
-          diag(5)%DnLoss(j) = diag(5)%DnLoss(j) + Clock%Dt * Penn
        END DO
     END DO
   END SUBROUTINE Penn_Assoc

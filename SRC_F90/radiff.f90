@@ -52,8 +52,6 @@ CONTAINS
                    meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
                    meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                    !**** Diagnostic
-                   diag(3)%DnLoss(i) = diag(3)%DnLoss(i) + Clock%Dt* emitF * meta(i)%Ni
-                   IF(j>0) diag(3)%DnProd(j) = diag(3)%DnProd(j) + Clock%Dt* meta(i)%Ni * emitF
                    diag(3)%EnLoss(i) = diag(3)%EnLoss(i) + Clock%Dt* emitF * meta(i)%Ni * Eij
                    !****************
                 END IF
@@ -137,11 +135,6 @@ CONTAINS
        ion(3)%Updens  = ion(3)%Updens  - Clock%Dt * Smeta3
     END IF
     !**** Diagnostic
-    diag(9)%DnLoss(1) = diag(9)%DnLoss(1) + Clock%Dt * Smeta1
-    diag(9)%DnLoss(2) = diag(9)%DnLoss(2) + Clock%Dt * Smeta2
-    diag(9)%DnLoss(NumMeta+1) = diag(9)%DnLoss(NumMeta+1) + Clock%Dt * Sa
-    diag(9)%DnLoss(NumMeta+2) = diag(9)%DnLoss(NumMeta+2) + Clock%Dt * Sm
-    diag(9)%DnLoss(3) = diag(9)%DnLoss(3) + Clock%Dt * Se
     diag(9)%Tx = Se
     DO i = 1, sys%Nx
        !**** Renormalization with modified 
@@ -208,11 +201,6 @@ CONTAINS
     !**** Diagnostic
     ion(1)%mobl = mua ; ion(2)%mobl = mum
     ion(1)%Dfree = Da ; ion(2)%Dfree = Dm
-    diag(9)%DnLoss(1) = diag(9)%DnLoss(1) + Clock%Dt * Smeta1
-    diag(9)%DnLoss(2) = diag(9)%DnLoss(2) + Clock%Dt * Smeta2
-    diag(9)%DnLoss(NumMeta+1) = diag(9)%DnLoss(NumMeta+1) + Clock%Dt * Sa
-    diag(9)%DnLoss(NumMeta+2) = diag(9)%DnLoss(NumMeta+2) + Clock%Dt * Sm
-    diag(9)%DnLoss(3) = diag(9)%DnLoss(3) + Clock%Dt * Se
     diag(9)%Tx = Se
 
     DO i = 1, sys%Nx

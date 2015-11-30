@@ -86,8 +86,6 @@ CONTAINS
           if (ratx .GT. maxR) maxR = ratx
           diag(2)%Tx = diag(2)%Tx + ratx * meta(i)%Ni
           diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + SubDt * ionz * coef1 * Dx*Eij
-          diag(2)%DnProd(NumMeta+1) = diag(2)%DnProd(NumMeta+1) + SubDt * ionz * coef1 * Dx
-          IF(i.GT.0) diag(2)%DnLoss(i) = diag(2)%DnLoss(i) + SubDt * ionz * coef1 * Dx
           meta(i)%UpDens = meta(i)%UpDens - SubDt * ionz * coef1 * Dx
           ion(1)%Updens  = ion(1)%Updens  + SubDt * ionz * coef1 * Dx
        END DO
@@ -164,9 +162,7 @@ CONTAINS
              Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
           END IF
           !**** Diagnostic
-          diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + SubDt * Src * coef1* Dx*(Eij -Dx*0.5d0) 
-          diag(2)%DnProd(NumMeta+1) = diag(2)%DnProd(NumMeta+1) + SubDt * Src * coef1* Dx
-          IF(i.GT.0) diag(2)%DnLoss(i) = diag(2)%DnLoss(i) + SubDt * Src * coef1* Dx
+          diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + SubDt * Src * coef1* Dx*(Eij -Dx*0.5d0)
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
           ion(1)%Ni  = ion(1)%Ni  + SubDt * Src * coef1 * Dx
 
@@ -329,18 +325,22 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: i, k, kp, ichi, case
+    INTEGER :: i, k, kp, ichi, case, Nion
     REAL(DOUBLE) :: prod, loss
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src, moy
     Dx = sys%Dx ; prod=0.d0 ; loss = 0.d0 ; moy = 0.d0
+    SELECT CASE (NumIon)
+    CASE (3) 
+       Nion = 3
+    END SELECT
 
     case = 0 ! if 0 then "Francois case" | else "J-P case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     Src = 0.d0
-    coef1 = gama * ion(3)%Ni
-    Eij = ion(2)%En - ion(3)%En ! ionization threshold
+    coef1 = gama * ion(Nion)%Ni
+    Eij = ion(2)%En - ion(Nion)%En ! ionization threshold
     IF (case == 0) Eij = Eij + Dx*0.5d0
     chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi
     IF (rchi .LT. 0.d0 .OR. Eij .LT. 0.d0) then
@@ -352,14 +352,14 @@ CONTAINS
        kp = k + ichi
 
        IF (k == ichi+1) Coef = (1.d0-rchi)
-       loss = Coef * U(k) * ion(3)%SecIon(1,k) * Fi(k)
-       IF (kp   .LE. sys%nx) prod = U(kp) * ion(3)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
-       IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * ion(3)%SecIon(1,kp+1) * Fi(kp+1)
+       loss = Coef * U(k) * ion(Nion)%SecIon(1,k) * Fi(k)
+       IF (kp   .LE. sys%nx) prod = U(kp) * ion(Nion)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
+       IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * ion(Nion)%SecIon(1,kp+1) * Fi(kp+1)
        !**** Excited states balance
        IF (k .GE. ichi+1) Then
           coef = 1.d0
           if (k == ichi+1) coef = (1.d0-rchi) * (1.d0- (rchi/chi) )
-          Src = Src + ( coef * U(k) * ion(3)%SecIon(1,k) * Fi(k) )
+          Src = Src + ( coef * U(k) * ion(Nion)%SecIon(1,k) * Fi(k) )
        END IF
        !**** UpDate Distribution Function
        Fi(k) = Fi(k) + Clock%Dt * (prod-loss) * coef1 / dsqrt(U(k))
@@ -371,7 +371,7 @@ CONTAINS
        Fi(1) = Fi(1) + Clock%Dt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
        Fi(2) = Fi(2) - Clock%Dt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
     END IF
-    ion(3)%Updens = ion(3)%Updens - Clock%Dt * Src * coef1 * Dx
+    ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Src * coef1 * Dx
     ion(1)%Updens  = ion(1)%Updens  + Clock%Dt * Src * coef1 * Dx
   END SUBROUTINE Ioniz_Excimer100
   !***********************************************************************
@@ -439,17 +439,18 @@ CONTAINS
 9905 END DO
     !**** Ionization from Excimer He2*
     !**** He2* + e- --> He2+ + 2e-
-    IF (NumIon == 3) THEN
-       Eij=ion(2)%En-ion(3)%En
+    SELECT CASE (NumIon)
+    CASE (3) 
+       Eij=ion(2)%En-ion(NumIon)%En
        IF (Eij .GT. 0.d0) THEN
           DO k = 1, sys%nx
              U=IdU(k,Dx)/Eij
-             IF(U.GT.1.d0) ion(3)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
-               ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
-          ion(3)%SecIon(1,k) = ion(3)%SecIon(1,k) * 1d-20
+             IF(U.GT.1.d0) ion(NumIon)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
+                  ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
+             ion(NumIon)%SecIon(1,k) = ion(NumIon)%SecIon(1,k) * 1d-20
           END DO
        END IF
-    END IF
+    END SELECT
   END SUBROUTINE Init_ioniz
   !***********************************************************************
 
