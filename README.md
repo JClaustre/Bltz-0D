@@ -1,10 +1,10 @@
-TIME DEPENDENT BOLTZMANN 0D
+0D Time Dependent Boltzmann Solver
 ===============
 *Author: J. Claustre*
 
 *Date  : 12/2015*
 
-DESCRIPTION
+Description
 -----------
 
 This code solve the 0D Boltzmann equation, depending on time for the
@@ -24,23 +24,32 @@ We invite you to look at these papers where most of the rates and
 cross-sections used in the code come from (our source of inspiration!
 :D ):
 
-* L Alves et al (doi:10.1088/0022-3727/25/12/007)
-  [link](http://m.iopscience.iop.org/article/10.1088/0022-3727/25/12/007/meta;jsessionid=AE4353A7414EB307AA0214AD6A4BA223.c3.iopscience.cld.iop.org)
-* M Santos et al
-  (doi:10.1088/0022-3727/47/26/265201)[link](http://iopscience.iop.org/article/10.1088/0022-3727/47/26/265201#)
-* G Hagelaar et al (doi:10.1088/0963-0252/14/4/011)
-  [link](http://m.iopscience.iop.org/article/10.1088/0963-0252/14/4/011/meta)
-* T Belmonte et al
-  (doi:10.1088/0022-3727/40/23/015)[link](http://iopscience.iop.org/article/10.1088/0022-3727/40/23/015/meta)
+* L Alves *et al* (doi:10.1088/0022-3727/25/12/007)
+  [(link article)](http://m.iopscience.iop.org/article/10.1088/0022-3727/25/12/007/meta;jsessionid=AE4353A7414EB307AA0214AD6A4BA223.c3.iopscience.cld.iop.org)
+* M Santos *et al* (doi:10.1088/0022-3727/47/26/265201)
+  [(link article)](http://iopscience.iop.org/article/10.1088/0022-3727/47/26/265201#)
+* G Hagelaar *et al* (doi:10.1088/0963-0252/14/4/011)
+  [(link article)](http://m.iopscience.iop.org/article/10.1088/0963-0252/14/4/011/meta)
+* T Belmonte *et al* (doi:10.1088/0022-3727/40/23/015)
+  [(link article)](http://iopscience.iop.org/article/10.1088/0022-3727/40/23/015/meta)
 
 ----------------------------------------------------------------
 
-INSTALL
+Install it
 -------
 
+1. Download the zip file on your machine. (button on the right of the
+   web page)
+2. unzip the file
+
 ### On Linux
-* A makefile is included. Modifie it with your own compiler (gcc by
-        default) and compile it by using the terminal consol :
+* to unzip with the terminal mode :
+
+		unzip file.zip -d destination_folder
+		
+* In the folder, a makefile is included. Modifie it with your own
+        compiler (gcc by default) and compile it by using the terminal
+        consol :
 
 		make makedirectories
 		make
@@ -52,7 +61,6 @@ named "Rstart", else create it!
 "input_he". This file is needed to define (and read) the simulation
 parameters. If you don't have it, create it by using the example below
 :
-
 
 ----------------------------------------
 
@@ -79,12 +87,8 @@ parameters. If you don't have it, create it by using the example below
 
 ----------------------------------------
 
-*END EXAMPLE*
-
-----------------------------------------
-
-RUN THE CODE
-------------
+Run it
+-------
 
 After the code compiled perfectly, you should have an executale
 *run_BOD*. In a Linux terminal, wrote the command
@@ -100,7 +104,7 @@ Want to Contribute ?
 4. Push to the branch (`git push origin my-own-new-feature`)
 5. Create new Pull Request
 
-ROUTINE DESCRIPTIONS
+Routine descriptions
 ---------------
 
 * Evolution.f90
