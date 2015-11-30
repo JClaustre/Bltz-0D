@@ -53,9 +53,12 @@ named "Rstart", else create it!
 parameters. If you don't have it, create it by using the example below
 :
 
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+----------------------------------------
+
 *EXAMPLE OF INPUT FILE : (name_of_file =* input_he*)*
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+----------------------------------------
 
 	500               Number of grid points 
 	0                 Restart simulation ( 0  - no restart | 1 - restart )
@@ -74,9 +77,11 @@ parameters. If you don't have it, create it by using the example below
 	1.00000E+02       Emax (Energy grid max (eV) ) (Maximum allowed = 1000 eV)
 	1.0000            save data's every XXX micro-sec
 
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+----------------------------------------
+
 *END EXAMPLE*
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+----------------------------------------
 
 RUN THE CODE
 ------------
@@ -86,6 +91,14 @@ After the code compiled perfectly, you should have an executale
 
 	./run_BOD
 
+Want to Contribute ?
+--------------------
+
+1. Fork it
+2. Create your own feature branch (`git checkout -b my-own-new-feature`)
+3. Commit your changes (`git commit -am "Add some changes"`)
+4. Push to the branch (`git push origin my-own-new-feature`)
+5. Create new Pull Request
 
 ROUTINE DESCRIPTIONS
 ---------------
@@ -159,33 +172,3 @@ ROUTINE DESCRIPTIONS
 	* the SOURCE! :)
 
 ------------------------------------------------------------------------------------------------------------
-
-
-#### /!\ Inside of the folder "datFile", make sure you have a folder named "Rstart", else create it!
-
-####/!\ In the same folder ("datFile"), you should have a file called
-####    "input_he".  This file is needed to define (and read) the
-####    simulation parameters. If you don't have it, create it by using
-####    the example below :
-
-	**** EXAMPLE OF INPUT FILE : (name_of_file = input_he)
-
-	500               Number of grid points 
-	0                 Restart simulation ( 0  - no restart | 1 - restart )
-	2.13000E+01       E (V/cm)      Electric field
-	3.00000E+18   0   Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
-	2.45000E+09       f (Hz)        Heating Frequency
-	7.60000E+02       prs (Torr)    Pressure (760 Torr = Atmospheric pressure)
-	2000.000000       Tp (K)        Temperature
-	2.10000E+00       Tpe (eV)      Initial electron temperature
-	1.00000E-01       Ra (cm)       Cylinder Radius
-	2.30000E+00       L  (cm)       Tube Length
-	2.34000E+12       ne (cm-3)     Initial electron density
-	8.30000E+01   0   P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-	3.000000000       Simulation Time (micro-secnd)  
-	1.00000E-12       Dt ( Time-Step (secnd) )
-	1.00000E+02       Emax (Energy grid max (eV) ) (Maximum allowed = 1000 eV)
-	1.0000            save data's every XXX micro-sec
-
-	**** END EXAMPLE
-
