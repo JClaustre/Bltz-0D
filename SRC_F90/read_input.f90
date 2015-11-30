@@ -380,13 +380,6 @@ CONTAINS
           END IF
        END DO
     END DO
-    !**************************************
-!    DO i = 0, NumMeta
-!       print*, i, meta(i)%Name, meta(i)%En, meta(i)%Ns, Meta(i)%Nl, Meta(i)%Deg
-!    END DO
-!    DO i = 1, NumIon
-!       print*, i, ion(i)%Name, ion(i)%En, ion(i)%Ns, ion(i)%Nl, ion(i)%Deg
-!    END DO
 
     !**************************************
     !**** Associative process
