@@ -2,9 +2,8 @@
 ! Author: Jonathan Claustre
 ! Date  : 14/07/2015
 ! Objctv: Radiative and ambipolar diffusion processes in He
-! note  : data's and analytic formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
-!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+! note  : Norm : Calculate ambipolar diffusion using fixed 
+!                mobility
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_RADIFF
   USE F90_KIND  
@@ -13,7 +12,7 @@ MODULE MOD_RADIFF
 
 CONTAINS
 
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Radiat (sys, meta, Fosc, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -63,7 +62,7 @@ CONTAINS
        END DO
     END DO
   END SUBROUTINE Radiat
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Diffuz(sys,meta,ion,elec,F,U,diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN)    :: sys
@@ -153,8 +152,8 @@ CONTAINS
     !**** Diagnostic
     diag(9)%EnLoss(2) = diag(9)%EnLoss(2) + (En-En2)
   END SUBROUTINE Diffuz
-  !***********************************************************************
-  SUBROUTINE Alves_Diffuz (sys,meta,ion,elec,F,U,diag)
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  SUBROUTINE Diffuz_Norm (sys,meta,ion,elec,F,U,diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN)    :: sys
     TYPE(Species), INTENT(INOUT) :: elec
@@ -224,6 +223,6 @@ CONTAINS
     END DO
     !**** Diagnostic
     diag(9)%EnLoss(2) = diag(9)%EnLoss(2) + (En-En2)
-  END SUBROUTINE Alves_Diffuz
-  !***********************************************************************
+  END SUBROUTINE Diffuz_Norm
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_RADIFF

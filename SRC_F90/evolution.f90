@@ -1,7 +1,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Author: Jonathan Claustre
 ! Date  : 15/05/2015
-! Objctv: Loop routine to performe eedf in time
+! Objctv: Main Loop to performe eedf in time
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_EVOL
 
@@ -17,8 +17,8 @@ MODULE MOD_EVOL
   USE MOD_READ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 1
-  INTEGER :: IonX = 0
+  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
+  INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

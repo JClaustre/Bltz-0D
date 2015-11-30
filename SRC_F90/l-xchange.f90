@@ -2,9 +2,8 @@
 ! Author: Jonathan Claustre
 ! Date  : 08/07/2015
 ! Objctv: l-exchange and s-exchange processes in He
-! note  : data's and analytic formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
-!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+! note  : Calculation of an equilibrium solution due to their 
+!         high collision frequency
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_XCHANGE
   USE F90_KIND  
@@ -13,9 +12,10 @@ MODULE MOD_XCHANGE
 
 CONTAINS
   !***********************************************************************
-  !**** Solution Independante du temps **********************************
-  !**** On pose : dni/dt = -Kij*Ni*Nhe + Kji*Nii*Nhe
-  !**** avec dni/dt = 0 et N = Ni + Nii
+  !**** No time dependent solution ***************************************
+  !**** We use : dni/dt = -Kij * Ni*Nhe + Kji * Nii*Nhe
+  !**** with dni/dt = 0 and N = Ni + Nii
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE l_change (meta, Kij)
     !INTENT
     TYPE(Species), DIMENSION(0:) , INTENT(INOUT) :: meta
@@ -53,9 +53,7 @@ CONTAINS
        END if
     END DO
   END SUBROUTINE l_change
-  !***********************************************************************
-
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** rate (cm-3 s-1) too high!
   SUBROUTINE l_change_old (meta, Kij)
     !INTENT
@@ -75,8 +73,6 @@ CONTAINS
              IF (Eij .GT. 0.d0) THEN
                 Coef1 = Kij(i,j) * meta(0)%Ni * meta(i)%Ni
                 Coef2 = Kij(j,i) * meta(0)%Ni * meta(j)%Ni
-                !write(*,"(2A,2ES15.6,F15.4)") meta(i)%Name, meta(j)%Name, &
-                !Kij(i,j), Kij(j,i), Eij
                 meta(i)%Ni = meta(i)%Ni + Clock%Dt * (Coef2 - Coef1)
                 meta(j)%Ni = meta(j)%Ni + Clock%Dt * (Coef1 - Coef2)
              END IF
@@ -97,9 +93,7 @@ CONTAINS
     END DO
 
   END SUBROUTINE l_change_old
-  !***********************************************************************
-
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init_lchange (meta, Kij)
     !INTENT
     TYPE(Species), DIMENSION(0:) , INTENT(INOUT) :: meta
@@ -219,6 +213,6 @@ CONTAINS
     END DO
 
   END SUBROUTINE Init_lchange
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
 END MODULE MOD_XCHANGE

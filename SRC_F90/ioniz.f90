@@ -1,10 +1,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Author: Jonathan Claustre
 ! Date  : 08/07/2015
-! Objctv: Ionization processes in He
-! note  : data's and analytic formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
-!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+! Objctv: Ionization (direct & undirect) processes in Helium
+! note  : 50 : Divide the residual energy between the scattered 
+!              in & out electron (50/50)
+!         100: The scattered-in electron keep all the residual
+!              energy from the collision.
+!         Subcycles are used (only for the ground state atom) 
+!         in order to keep a greater time-step
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_IONIZ
   USE F90_KIND  

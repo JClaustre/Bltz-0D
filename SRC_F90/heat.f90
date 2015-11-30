@@ -3,8 +3,7 @@
 ! Date  : 14/07/2015
 ! Objctv: Elastic collisions, Fokker-Planck and Heating 
 !         processes in Helium
-! note  : data's and analytic formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
+! note  : Fk-Planck equation --> see paper Vidal & Boukandou 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_CHAUF
   USE F90_KIND
@@ -14,6 +13,7 @@ MODULE MOD_CHAUF
 CONTAINS
 
   !*********** SUBROUTINE FOKKER-PLANCK ***************!
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   subroutine FP (sys,elec, f1, U)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -30,7 +30,6 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(:) , ALLOCATABLE :: utt, usq, A, B, C, D
 
     !**** Log Coulomb (cf. NRL formulary) (Ne--> cm-3 !)
-
     LnC = 23.d0 - log((elec%Ni*1d-6)**0.5d0 / elec%Tp**1.5d0)
 
     nx = sys%nx
@@ -111,7 +110,7 @@ CONTAINS
     DEALLOCATE (II, JJ, f1_new)
     DEALLOCATE (utt, usq, A, B, C, D)
   END subroutine FP
-  !************** FIN SUBROUTINE FOKKER-PLANCK ****************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Heating (sys,meta, U,F)
     !INTENT
     TYPE(SysVar), INTENT(INOUT)  :: sys
@@ -139,7 +138,6 @@ CONTAINS
        power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
     END do
     sys%E = dsqrt ( sys%Powr / (power * qe) )
-    !write(*,"(A,4ES15.6)") "Elec Field (V/m) & Input Power (Watt/m-3)", sys%E, Sys%Powr
     !***************************************************
 
     !****** PARAMETRES COLLISIONS ELASTIQUES*************
@@ -192,8 +190,7 @@ CONTAINS
     DEALLOCATE ( AC1,BC1,CC1,SECMAX )
     DEALLOCATE ( f0,nuc )
   END SUBROUTINE Heating
-  !******************** Fin subroutine chauffage ***************
-
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !*********** SUBROUTINE Collisions Elastiques ***************!
   SUBROUTINE Elastic (sys,meta,U,F)
     !INTENT
@@ -259,9 +256,9 @@ CONTAINS
     diag(10)%EnLoss(2) = diag(10)%EnLoss(2) + abs(En - En2)
     if (int(Clock%SumDt/Clock%Dt) .EQ. Clock%NumIter-2)THEN 
        diag(10)%Tx = (En - En2)
-       !write(*,"(A,ES15.6)") "Powr Elastic: ", diag(10)%Tx * qe / clock%Dt
     END if
     !***************
     DEALLOCATE ( AEN,BEN,CEN,f0)
   END SUBROUTINE Elastic
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_CHAUF

@@ -1,3 +1,10 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Author: Jonathan Claustre
+! Date  : 08/07/2015
+! Objctv: Read input parameters, cross-sections and initialize
+!         EEDF, densities, etc.
+! note  : 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_READ
 
   USE F90_KIND
@@ -10,13 +17,11 @@ MODULE MOD_READ
   IMPLICIT NONE
 
 CONTAINS
-  !SUBROUTINE Read_input (sys, ion, elec, Meta)
-  !SUBROUTINE Init (sys, clock, ion, elec, meta)
-
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !***********************************************************************
   !                    SUBROUTINE READ_INPUT
   !***********************************************************************
-  !**** Read the input file from Alves's code and init cross sections
+  !**** Read the input file and init cross-sections
   SUBROUTINE Read_input (sys, ion, elec, Meta)
     IMPLICIT NONE
     !INTENT
@@ -26,43 +31,33 @@ CONTAINS
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL 
     REAL(DOUBLE)       :: MassRatio  ! e-/He Gas Mass Ratio
-    CHARACTER(len=2)   :: Name   ! Gas Name
+    CHARACTER(len=2)   :: Name       ! Gas Name
     INTEGER, PARAMETER :: Npmax=1001 ! # of points max in file
     INTEGER :: i, j, k, l, idex
     INTEGER :: Npts, Npts0, expand, nul
     INTEGER :: NumA, NumQ, readA, readQ
-    REAL(DOUBLE) :: EmaxF, Alpha, Eij
-    REAL(DOUBLE) :: DU0, U0
-
+    REAL(DOUBLE) :: EmaxF, Alpha, Eij, DU0, U0
     INTEGER     , DIMENSION(3) :: WhichQ, WhichA 
     INTEGER     , DIMENSION(43) :: Npts2 
     REAL(DOUBLE), DIMENSION(43) :: EmaxF2
-    REAL(DOUBLE), DIMENSION(Npmax) :: SecRead, EnRead, SecML! Momentum
-    ! c-s read
-    ! in file
+    REAL(DOUBLE), DIMENSION(Npmax) :: SecRead, EnRead, SecML  ! Momentum c-s read
+                                                              ! in file
     REAL(DOUBLE), DIMENSION(sys%nx+1)    :: SecMom
     REAL(DOUBLE), DIMENSION(Lv,Npmax) :: Sec !EXCIT/IONIZ C-S READ IN
     !FILE
     INTEGER :: LVG, LIG, NVG, LVVG !  ACTUAL # OF VIBRATIONAL STATES
-    !  CONSIDERED IN BOLTZMANN
+                                   !  CONSIDERED IN BOLTZMANN
     INTEGER, DIMENSION(0:Lv) :: NVYES ! FOR EACH OF THE EXCITED STATES,
-    ! NVYES IS 1 IF THIS STATE WILL BE
-    ! CONSIDERED IN MCR
+                                      ! NVYES IS 1 IF THIS STATE WILL BE
+                                      ! CONSIDERED IN MCR
     REAL(DOUBLE), DIMENSION(0:2,0:Lv) :: Q, A  !Coeff
-    INTEGER :: IY2,IMOD,MOD_F,MOD
-    REAL(DOUBLE) :: PR, BS0, QS0
-    INTEGER :: N1, N2, N3
-    REAL(DOUBLE) :: N4
+    INTEGER :: DEL01,XETHETA, IY2,IMOD,MOD_F,MOD, N1,N2,N3
+    REAL(DOUBLE) :: PR,BS0,QS0, N4
     CHARACTER(len=10) :: A0
-    !GAS
-    REAL(DOUBLE) :: DEL01,XETHETA !DEL01 AND XETHETA ARE COEFFICIENTS
-    !FOR CALCULATING TREANOR DISTRIBUTION
-    !OF VIBRATIONAL LEVELS
     SecMom=0.d0
 
     !**********************************************************************
     !                     READ DISCHARGE CONDITIONS 
-    !**********************************************************************
     !**********************************************************************
     Write(*,"(2A)") tabul, "Starting Initialization "
     IF (Clock%Rstart == 0) THEN
@@ -418,7 +413,7 @@ CONTAINS
     write(*,"(2A)") tabul, "*************************************************"
 
   END SUBROUTINE Read_input
-  ! **********************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init (sys, clock, ion, elec, meta)
     !INTENT
     TYPE(SysVar) , INTENT(INOUT) :: sys
@@ -467,18 +462,20 @@ CONTAINS
     elec%Ni = consv(1)
     write(*,"(2A, F6.2,A)"  ) tabul, "Tpe init : ", 0.66667d0*consv(2)/consv(1), " (eV)"
     write(*,"(2A, ES19.10,A)") tabul, "Ne init  : ", consv(1)*1d-6, " (cm-3) "
-
-    IF (sys%P0 .EQ. 1) THEN ! Fix the power here function of Elec field
-       DO i = 1, sys%nx - 1
-          Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 + sys%Freq**2)
-          Df = (F(i+1)-F(i))
-          power = power - Uc * U(i)**(1.5d0) * Df * meta(0)%Nuel(i)*0.6667d0
-       END DO
-       power = power * qe
-       sys%Powr = power
+    
+    !**** Fix the power here function of Elec field ************************!
+    IF (sys%P0 .EQ. 1) THEN                                                 !
+       DO i = 1, sys%nx - 1                                                 !
+          Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 + sys%Freq**2)         !
+          Df = (F(i+1)-F(i))                                                !
+          power = power - Uc * U(i)**(1.5d0) * Df * meta(0)%Nuel(i)*0.6667d0!
+       END DO                                                               !
+       power = power * qe                                                   !
+       sys%Powr = power                                                     !
        write (*,"(2A,ES15.4,AES15.6)") tabul, "Power [W/cm3 | W] fixed to : ", &
-            sys%Powr*1d-6, " |", sys%Powr*sys%volume
-    END IF
+            sys%Powr*1d-6, " |", sys%Powr*sys%volume                        !
+    END IF                                                                  !
+    !***********************************************************************!
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !

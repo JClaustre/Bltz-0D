@@ -2,9 +2,12 @@
 ! Author: Jonathan Claustre
 ! Date  : 08/07/2015
 ! Objctv: Excitation & SuperElastic processes in He
-! note  : data's and empiric formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
-!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+! note  : Begin : original implementation
+!         Equil : With some equilibrium solutions (depends of 
+!                 the collisional rate between both excited 
+!                 state).
+!         Impli : semi-implicit calculation of excited state 
+!                 densities 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_EXCIT
   USE F90_KIND  
@@ -127,7 +130,7 @@ CONTAINS
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
     !********************
     SubDt = Clock%Dt
-    SubRt = 2.d-10
+    SubRt = 2.d-10 ! give a maximum value of collision rate
     n = sys%Dx
     !********************
 

@@ -2,9 +2,9 @@
 ! Author: Jonathan Claustre
 ! Date  : 08/07/2015
 ! Objctv: Penning and Associative processes in He
-! note  : data's and analytic formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
-!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+! note  : Several associative rates are available 
+!         (see below "init_asso" routine) and can be changed in
+!         the "read_init.f90" file.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_PENNASS
   USE F90_KIND  

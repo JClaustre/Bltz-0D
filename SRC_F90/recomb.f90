@@ -2,9 +2,9 @@
 ! Author: Jonathan Claustre
 ! Date  : 08/07/2015
 ! Objctv: Dissociative Recombination processes in He
-! note  : data's and analytic formula in 
-!         Luis Alves et al (doi:10.1088/0022-3727/25/12/007)
-!         M Santos et al (doi:10.1088/0022-3727/47/26/265201)
+! note  : Norm : use the rates defined in "Alves et al", and 
+!                renormalized the EEDF
+!         Recomb: use the cross-section given in "Santos et al"
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_RECOMB
   USE F90_KIND  
@@ -13,7 +13,7 @@ MODULE MOD_RECOMB
 
 CONTAINS
 
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Recomb (sys, meta, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -60,8 +60,8 @@ CONTAINS
        ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
     END IF
   END SUBROUTINE Recomb
-  !***********************************************************************
-  SUBROUTINE Recomb_Alves (sys, meta, U, Fi, diag)
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  SUBROUTINE Recomb_Norm (sys, meta, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
@@ -96,8 +96,8 @@ CONTAINS
        rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(3)%Ni
        ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
     END IF
-  END SUBROUTINE Recomb_Alves
-  !***********************************************************************
+  END SUBROUTINE Recomb_Norm
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Conv_3Body (meta, ion)
     !INTENT
     TYPE(Species), DIMENSION(0:), INTENT(InOut)    :: meta
@@ -153,9 +153,7 @@ CONTAINS
        ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
     END IF
   END SUBROUTINE Conv_3Body
-  !***********************************************************************
-
-  !***********************************************************************
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init_Recomb (sys, meta)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -200,6 +198,5 @@ CONTAINS
     meta(0)%SecRec(sys%nx) = 0.d0
 
   END SUBROUTINE Init_Recomb
-  !***********************************************************************
-
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_RECOMB
