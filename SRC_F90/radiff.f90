@@ -129,11 +129,12 @@ CONTAINS
     ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
     meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
     meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
-    IF (NumIon == 3) THEN
-       ion(3)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
-       Smeta3 = ion(3)%Damb  * ion(3)%Ni  / Coef2
-       ion(3)%Updens  = ion(3)%Updens  - Clock%Dt * Smeta3
-    END IF
+    SELECT CASE (NumIon) 
+    CASE (3)   
+       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
+       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef2
+       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
+    END SELECT
     !**** Diagnostic
     diag(9)%Tx = Se
     DO i = 1, sys%Nx
@@ -193,11 +194,12 @@ CONTAINS
     ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
     meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
     meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
-    IF (NumIon == 3) THEN
-       ion(3)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
-       Smeta3 = ion(3)%Damb  * ion(3)%Ni  / Coef
-       ion(3)%Updens  = ion(3)%Updens  - Clock%Dt * Smeta3
-    END IF
+    SELECT CASE (NumIon) 
+    CASE (3)   
+       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
+       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef
+       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
+    END SELECT
     !**** Diagnostic
     ion(1)%mobl = mua ; ion(2)%mobl = mum
     ion(1)%Dfree = Da ; ion(2)%Dfree = Dm

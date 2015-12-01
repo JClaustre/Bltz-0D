@@ -135,13 +135,13 @@ CONTAINS
     END IF
     !*************************************
     !**** 3body collisions (Excimer creation) : He2*
-    !**** He(2P3) + 2He --> He2* + He
     SELECT CASE (NumIon)
-    CASE (3) 
+    CASE (3)
+       !**** He(2P3) + 2He --> He2* + He
        excim = 1.6d-32 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
-       !**** He(2P3) + 2He <-- He2* + He
+       !**** He2* + He --> He(2P3) + He
        excim = 3.6d-14 *1d-06 * ion(NumIon)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  - Clock%Dt * excim
