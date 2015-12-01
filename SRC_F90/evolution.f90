@@ -259,7 +259,7 @@ CONTAINS
 
   END SUBROUTINE Consv_Test
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE OutPut (sys, meta, ion, elec, diag, consv)
+  SUBROUTINE OutPutMD (sys, meta, ion, elec, diag, consv)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Diagnos), DIMENSION(:) , INTENT(IN) :: diag
@@ -271,90 +271,94 @@ CONTAINS
     REAL(DOUBLE) :: ne, Dt
     ne = elec%Ni ; Dt = Clock%Dt
 
-    OPEN(UNIT=99,File="./datFile/Output.dat",ACTION="WRITE",STATUS="UNKNOWN")
-    write(99,"(A)")"        .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
-    write(99,"(A)")"       .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
-    write(99,"(A)")"                  _         "
-    write(99,"(A)")"                 [ ] Hope you enjoyed, "
-    write(99,"(A)")"                (* *) /  look forward to seeing you again!     "
-    write(99,"(A)")"                 |>|                  -JC-                     "
-    write(99,"(A)")"              __/===\__     "
-    write(99,"(A)")"             //| o=o |\\    "
-    write(99,"(A)")"           <]  | o=o |  [>  "
-    write(99,"(A)")"               \=====/      "
-    write(99,"(A)")"              / / | \ \     "
-    write(99,"(A)")"             <_________>    "
-    write(99,"(A)")"        .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
-    write(99,"(A)")"       .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
+    OPEN(UNIT=99,File="./datFile/Output.md",ACTION="WRITE",STATUS="UNKNOWN")
+    write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
+    write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
+    write(99,"(A)")"               _         "
+    write(99,"(A)")"              [ ] Hope you enjoyed, "
+    write(99,"(A)")"             (* *) /  look forward to seeing you again!     "
+    write(99,"(A)")"              |>|                  -JC-                     "
+    write(99,"(A)")"           __/===\__     "
+    write(99,"(A)")"          //| o=o |\\    "
+    write(99,"(A)")"        <]  | o=o |  [>  "
+    write(99,"(A)")"            \=====/      "
+    write(99,"(A)")"           / / | \ \     "
+    write(99,"(A)")"          <_________>    "
+    write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
+    write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
     write(99,"(A)")""
 
     write(99,"(A)") ""
-    write(99,"(2A)") tabul, "SYSTEM PARAMETERS"
-    write(99,"(A)") ""
-    write(99,"(2A,I6)") tabul, "Number of grid Cells : ", sys%Nx
-    write(99,"(2A,F8.2)") tabul, "Energy Max (ev)      : ", sys%Emx
-    write(99,"(2A,ES10.2)") tabul, "Energy step (Δu)    : ", sys%Dx
-    write(99,"(2A,F8.2)") tabul, "Cylinder radius (cm) : ", sys%Ra*1d2
-    write(99,"(2A,F8.2)") tabul, "E Field (V/cm) : ", sys%E*1d-2
-    write(99,"(2A,ES11.3)") tabul, "heating frequency (Hz) : ", sys%Freq / (2*pi)
-    write(99,"(2A,2ES11.3)") tabul, "Power (W/cm3) | (W): ", sys%Powr*1d-6, sys%Powr * sys%volume
+    write(99,"(A)") "SYSTEM PARAMETERS"
+    write(99,"(A)") "--------------------"
+    write(99,"(A,I6)")      "* Number of grid Cells : ", sys%Nx
+    write(99,"(A,F8.2)")    "* Energy Max (ev)      : ", sys%Emx
+    write(99,"(A,ES10.2)")  "* Energy step (Δu)    : ", sys%Dx
+    write(99,"(A,F8.2)")    "* Cylinder radius (cm) : ", sys%Ra*1d2
+    write(99,"(A,F8.2)")    "* E Field (V/cm) : ", sys%E*1d-2
+    write(99,"(A,ES11.3)")  "* heating frequency (Hz) : ", sys%Freq / (2*pi)
+    write(99,"(A,2ES11.3)") "* Power (W/cm3) | (W): ", sys%Powr*1d-6, sys%Powr * sys%volume
 
     write(99,"(A)") ""
-    write(99,"(2A)") tabul, "TIME PARAMETERS"
-    write(99,"(A)") ""
-    write(99,"(2A,ES11.2)") tabul, "Time step (Δt) : ", Clock%Dt
-    write(99,"(2A,I10)") tabul, "Number of iterations : ", Clock%NumIter
-    write(99,"(2A,F6.2)") tabul, "Time Simulation (μs): ", Clock%SimuTime*1.d6
-    write(99,"(2A,3(I3,A))") tabul, "Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
+    write(99,"(A)") "TIME PARAMETERS"
+    write(99,"(A)") "-----------------"
+    write(99,"(A,ES11.2)")  "* Time step (Δt) : ", Clock%Dt
+    write(99,"(A,I10)")     "* Number of iterations : ", Clock%NumIter
+    write(99,"(A,F6.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
+    write(99,"(A,3(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
          int(Clock%Minutes), " Min ", int(Clock%Seconds), " sec" 
     write(99,"(A)") ""
-    write(99,"(2A)") tabul, "NEUTRAL GAS PARAMETERS"
+    write(99,"(A)") "NEUTRAL GAS PARAMETERS"
+    write(99,"(A)") "--------------------"
+    write(99,"(A,ES11.3)")  "* Gas density (cm-3): ", meta(0)%Ni*1d-6
+    write(99,"(A,F8.2)")    "* Gas Pressure (Torr): ", meta(0)%Prs
+    write(99,"(2(A,F7.2))") "* Gas Temperature (°K | eV): ", meta(0)%Tp*qok, " | ", meta(0)%Tp
     write(99,"(A)") ""
-    write(99,"(2A,ES11.3)") tabul, "Gas density (cm-3): ", meta(0)%Ni*1d-6
-    write(99,"(2A,F8.2)") tabul, "Gas Pressure (Torr): ", meta(0)%Prs
-    write(99,"(A,2(A,F7.2))") tabul, "Gas Temperature (°K | eV): ", meta(0)%Tp*qok, " | ", meta(0)%Tp
-    write(99,"(A)") ""
-    write(99,"(2A)") tabul, "ELEC | IONS PARAMETERS"
-    write(99,"(A)") ""
-    write(99,"(2A,ES15.6)") tabul, "Electron   Density (cm-3) : ", elec%Ni*1d-6
-    write(99,"(2A,ES15.6)") tabul, "Ion [He+]  Density (cm-3) : ", ion(1)%Ni*1d-6
-    write(99,"(2A,ES15.6)") tabul, "Ion [He2+] Density (cm-3) : ", ion(2)%Ni*1d-6
-    write(99,"(2A,ES15.6)") tabul, "Error partcl : ", ABS(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni))
-    write(99,"(2A,ES15.6)") tabul, "Error energy : ", ABS(1.d0-elec%En/consv(2))
-    write(99,"(A,2(A,F8.2))") tabul, "Electron Tp° (eV) : init ", consv(2)*0.66667d0/consv(1),&
+    write(99,"(A)") "ELEC | IONS PARAMETERS"
+    write(99,"(A)") "--------------------"
+    write(99,"(A,ES15.6)") "* Electron   Density (cm-3) : ", elec%Ni*1d-6
+    write(99,"(A,ES15.6)") "* Ion [He+]  Density (cm-3) : ", ion(1)%Ni*1d-6
+    write(99,"(A,ES15.6)") "* Ion [He2+] Density (cm-3) : ", ion(2)%Ni*1d-6
+    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A,ES15.6)") "* Error partcl : ", ABS(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni))
+    write(99,"(A,ES15.6)") "* Error energy : ", ABS(1.d0-elec%En/consv(2))
+    write(99,"(2(A,F8.2))") "* Electron Tp° (eV) : init ", consv(2)*0.66667d0/consv(1),&
          " | Final ", elec%Tp
-    write(99,"(2A,ES11.3)") tabul, "Electron  mobility (cm2.V-¹.s-¹) : ", elec%mobl
-    write(99,"(2A,ES11.3)") tabul, "ion[He+]  mobility (cm2.V-¹.s-¹) : ", ion(1)%mobl
-    write(99,"(2A,ES11.3)") tabul, "ion[He2+] mobility (cm2.V-¹.s-¹) : ", ion(2)%mobl
-    write(99,"(2A,ES11.3)") tabul, "Electron  Free Diff (cm².s-¹) : ", elec%Dfree
-    write(99,"(2A,ES11.3)") tabul, "ion[He+]  Free Diff (cm².s-¹) : ", ion(1)%Dfree
-    write(99,"(2A,ES11.3)") tabul, "ion[He2+] Free Diff (cm².s-¹) : ", ion(2)%Dfree
+    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A,ES11.3)") "* Electron  mobility (cm2.V-¹.s-¹) : ", elec%mobl
+    write(99,"(A,ES11.3)") "* ion[He+]  mobility (cm2.V-¹.s-¹) : ", ion(1)%mobl
+    write(99,"(A,ES11.3)") "* ion[He2+] mobility (cm2.V-¹.s-¹) : ", ion(2)%mobl
+    write(99,"(A,ES11.3)") "* Electron  Free Diff (cm².s-¹) : ", elec%Dfree
+    write(99,"(A,ES11.3)") "* ion[He+]  Free Diff (cm².s-¹) : ", ion(1)%Dfree
+    write(99,"(A,ES11.3)") "* ion[He2+] Free Diff (cm².s-¹) : ", ion(2)%Dfree
     write(99,"(A)") ""
-    write(99,"(2A)") tabul, "ELECTRON | IONS BALANCE"
-    write(99,"(A)") ""
-    write(99,"(2A)") tabul, "Power balance :"
-    write(99,"(2A,ES15.6)") tabul, "Gain Heat :  ", Diag(10)%EnProd(1) * qe/(ne*Dt*clock%NumIter)
-    write(99,"(2A,ES15.6)") tabul, "Gain Penn :  ", Diag(5)%EnProd(4)  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(2A,ES15.6)") tabul, "Gain Asso :  ", Diag(6)%EnProd(4)  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(2A,ES15.6)") tabul, "Loss Elas :  ", Diag(10)%EnLoss(2) * qe/(ne*Dt*clock%NumIter)
-    write(99,"(2A,ES15.6)") tabul, "Loss Recb :  ", Diag(8)%EnLoss(1)  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(2A,ES15.6)") tabul, "Loss Ionz :  ", Diag(2)%EnLoss(1)  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(2A)") tabul, "Particle balance :"
-    write(99,"(2A,ES15.6)") tabul, "Gain ioniz : ", Diag(2)%Tx/ne
-    write(99,"(2A,ES15.6)") tabul, "Gain Assoc : ", Diag(6)%Tx/ne
-    write(99,"(2A,2ES15.6)")tabul, "Gain Penng : ", Diag(5)%Tx/(2.d0*ne)
-    write(99,"(2A,ES15.6)") tabul, "Loss recmb : ", Diag(8)%Tx/ne
-    write(99,"(2A,2ES15.6)")tabul, "Loss diffz : ", Diag(9)%Tx/ne
-    write(99,"(2A,2ES15.6)")tabul, "Gain elec total (Pwr | Prtcl) : ", &
+    write(99,"(A)") "ELECTRON | IONS BALANCE"
+    write(99,"(A)") "--------------------"
+    write(99,"(A)") "### Power balance :"
+    write(99,"(A,ES15.6)") "* Gain Heat :  ", Diag(10)%EnProd(1) * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Gain Penn :  ", Diag(5)%EnProd(4)  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Gain Asso :  ", Diag(6)%EnProd(4)  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A,ES15.6)") "* Loss Elas :  ", Diag(10)%EnLoss(2) * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Loss Recb :  ", Diag(8)%EnLoss(1)  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6,/)") "* Loss Ionz :  ", Diag(2)%EnLoss(1)  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A)") "### Particle balance :"
+    write(99,"(A,ES15.6)") "* Gain ioniz : ", Diag(2)%Tx/ne
+    write(99,"(A,ES15.6)") "* Gain Assoc : ", Diag(6)%Tx/ne
+    write(99,"(A,ES15.6)") "* Gain Penng : ", Diag(5)%Tx/(2.d0*ne)
+    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A,ES15.6)") "* Loss recmb : ", Diag(8)%Tx/ne
+    write(99,"(A,ES15.6)") "* Loss diffz : ", Diag(9)%Tx/ne
+    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", &
          (Diag(10)%EnProd(1)+Diag(5)%EnProd(4)+Diag(6)%EnProd(4))* qe/(ne*Dt*clock%NumIter), &
          (Diag(2)%Tx+Diag(6)%Tx+Diag(5)%Tx/(2.d0))/ne
-    write(99,"(2A,3ES15.6)")tabul, "Loss elec total (Pwr | Prtcl) : ", &
+    write(99,"(A,2ES15.4)") "* Loss elec total (Pwr | Prtcl) : ", &
          (Diag(10)%EnLoss(2)+Diag(8)%EnLoss(1)+Diag(2)%EnLoss(1))* qe/(ne*Dt*clock%NumIter), &
          (Diag(8)%Tx+Diag(9)%Tx) / ne
-    write(99,"(A)")"        .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
-    write(99,"(A)")"       .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
-    write(99,"(A)")""
+    write(99,"(A)") " "
+    write(99,"(A)")"![Zozor](http://uploads.siteduzero.com/files/420001_421000/420263.png)"
     Close(99)
-  END SUBROUTINE OutPut
+  END SUBROUTINE OutPutMD
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_EVOL

@@ -22,7 +22,7 @@ PROGRAM MAIN
   CALL Evolution ()
   CALL SYSTEM_CLOCK (t2, clock_rate)
   CALL PrinTime (t1,t2,clock_rate)
-  CALL OutPut (sys, meta, ion, elec, diag, consv)
+  CALL OutPutMD (sys, meta, ion, elec, diag, consv)
 
   CALL DelocArray()
   write(*,"(2A)") tabul, "***** Goodbye ! *****"
@@ -33,20 +33,20 @@ CONTAINS
   SUBROUTINE welcome()
     
 
-    write(*,"(A)")"        .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
-    write(*,"(A)")"       .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
-    write(*,"(A)")"                  _         "
-    write(*,"(A)")"                 [ ] Welcome into my program, "
-    write(*,"(A)")"                (* *) /   and have fun in Plasma-Land!         "
-    write(*,"(A)")"                 |>|                  -JC-                     "
-    write(*,"(A)")"              __/===\__     "
-    write(*,"(A)")"             //| o=o |\\    "
-    write(*,"(A)")"           <]  | o=o |  [>  "
-    write(*,"(A)")"               \=====/      "
-    write(*,"(A)")"              / / | \ \     "
-    write(*,"(A)")"             <_________>    "
-    write(*,"(A)")"        .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
-    write(*,"(A)")"       .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
+    write(*,"(A)")"      .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
+    write(*,"(A)")"     .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
+    write(*,"(A)")"                _         "
+    write(*,"(A)")"               [ ] Welcome into my program, "
+    write(*,"(A)")"              (* *) /   and have fun in Plasma-Land!         "
+    write(*,"(A)")"               |>|                  -JC-                     "
+    write(*,"(A)")"            __/===\__     "
+    write(*,"(A)")"           //| o=o |\\    "
+    write(*,"(A)")"         <]  | o=o |  [>  "
+    write(*,"(A)")"             \=====/      "
+    write(*,"(A)")"            / / | \ \     "
+    write(*,"(A)")"           <_________>    "
+    write(*,"(A)")"      .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
+    write(*,"(A)")"     .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
     write(*,"(A)")""
     
   END SUBROUTINE welcome
