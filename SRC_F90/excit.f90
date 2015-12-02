@@ -126,18 +126,20 @@ CONTAINS
     REAL(DOUBLE) :: SubDt, SubRt
     !Equili VaRIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
+    REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
     SubRt = 2.d-10 ! give a maximum value of collision rate
     n = sys%Dx
     !********************
+    Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
 
     !********************************************************
     DO i = 0, NumMeta-1
-       coef1 = meta(i)%Ni * gama
+       coef1 = Ndens(i) * gama
        !********************************************************
        DO j = i+1, NumMeta
-          coef2 = meta(j)%Ni * gama
+          coef2 = Ndens(j) * gama
           !********************************************************
           Sx = 0.d0 ; Sd = 0.d0
           E_ij = meta(j)%En - meta(i)%En
@@ -204,12 +206,12 @@ CONTAINS
              END DO
              IF (i == 0) THEN
                 diag(1)%EnProd(NumMeta+Numion+1) = diag(1)%EnProd(NumMeta+Numion+1) + &
-                     SubDt * Sd*meta(j)%Ni* E_ij * Rmd
+                     SubDt * Sd*Ndens(j)* E_ij * Rmd
                 diag(1)%EnLoss(NumMeta+Numion+1) = diag(1)%EnLoss(NumMeta+Numion+1) + &
-                     SubDt * Sx*meta(i)%Ni* E_ij * Rmx
+                     SubDt * Sx*Ndens(i)* E_ij * Rmx
              ELSE
-                diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*meta(j)%Ni * E_ij * Rmd
-                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*meta(i)%Ni * E_ij * Rmx
+                diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*Ndens(j) * E_ij * Rmd
+                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*Ndens(i) * E_ij * Rmx
              END IF
              !*****************
           END IF
@@ -233,6 +235,7 @@ CONTAINS
     REAL(DOUBLE) :: chi, rchi, E_ij
     REAL(DOUBLE) :: Sx, Sd, steady
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
+    REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
     REAL(DOUBLE) :: SubDt
     !Implicit Density VARIABLES
@@ -241,13 +244,14 @@ CONTAINS
     SubDt = Clock%Dt
     n = sys%Dx
     !********************
+    Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
 
     !********************************************************
     DO i = 0, NumMeta-1
-       coef1 = meta(i)%Ni * gama
+       coef1 = Ndens(i) * gama
        !********************************************************
        DO j = i+1, NumMeta
-          coef2 = meta(j)%Ni * gama
+          coef2 = Ndens(j) * gama
           !********************************************************
           Sx = 0.d0 ; Sd = 0.d0
           E_ij = meta(j)%En - meta(i)%En
@@ -305,12 +309,12 @@ CONTAINS
              !**** Diagnostic
              IF (i == 0) THEN
                 diag(1)%EnProd(NumMeta+Numion+1) = diag(1)%EnProd(NumMeta+Numion+1) + &
-                     SubDt * Sd*meta(j)%Ni* E_ij * Rmd
+                     SubDt * Sd*Ndens(j)* E_ij * Rmd
                 diag(1)%EnLoss(NumMeta+Numion+1) = diag(1)%EnLoss(NumMeta+Numion+1) + &
-                     SubDt * Sx*meta(i)%Ni* E_ij * Rmx
+                     SubDt * Sx*Ndens(i)* E_ij * Rmx
              ELSE
-                diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*meta(j)%Ni * E_ij * Rmd
-                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*meta(i)%Ni * E_ij * Rmx
+                diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*Ndens(j) * E_ij * Rmd
+                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*Ndens(i) * E_ij * Rmx
              END IF
              !*****************
           END IF

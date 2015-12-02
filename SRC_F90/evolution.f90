@@ -40,7 +40,7 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt = 1.d-10 ! Maximum Time-Step allowed
+    MaxDt = 2.d-10 ! Maximum Time-Step allowed
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
