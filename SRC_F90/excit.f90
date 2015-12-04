@@ -25,14 +25,14 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: i, j, k, kp, km, ichi
+    INTEGER :: i, j, k, kp, km, ichi, nx
     REAL(DOUBLE) :: n, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
     REAL(DOUBLE) :: Sx, Sd, steady, En1, En2, Pn1, Pn2
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
-    n = sys%Dx
+    n = sys%Dx ; nx = sys%nx
     !********************
 
     !********************************************************
@@ -46,39 +46,68 @@ CONTAINS
           E_ij = meta(j)%En - meta(i)%En
 
           IF (E_ij .NE. 0.d0 .AND. meta(i)%SecExc(j,1) .NE. 111.d0) THEN
-             chi = E_ij/sys%Dx ; ichi = int(chi) ; rchi = chi - ichi
+             chi = E_ij/n ; ichi = int(chi) ; rchi = chi - ichi
              IF (rchi .LT. 0.d0 .OR. E_ij .LT. 0.d0) then
                 print*, 'probleme rchi<0 in [Inelastic]' ; STOP
              END IF
 
-             DO k = 1, sys%nx
+             DO k = 1, nx
                 kp = k + ichi
                 km = k - ichi
                 Fo(k) = Fi(k)
                 !**** Excitation
                 prod= 0.d0 ; loss= 0.d0 ; Coef = 1.d0
-                IF (k == ichi+1) Coef = (1.d0-rchi)
-                loss = Coef * U(k) * meta(i)%SecExc(j,k) * Fi(k)
-                IF (kp   .LE. sys%nx) prod = U(kp) * meta(i)%SecExc(j,kp)*Fi(kp) * (1.d0-rchi)
-                IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * meta(i)%SecExc(j,kp+1) * Fi(kp+1)
-                C_Exc = coef1 * (prod - loss) / sqrt(U(k))
+                IF (E_ij .LE. n) THEN ! Low threshold
+                   IF (k .GT. 1 ) loss = Fo(k-1) * U(k-1) * meta(i)%SecExc(j,k-1)
+                   IF (k .LT. nx) prod = Fi(k+1) * U(k+1) * meta(i)%SecExc(j,k+1)
+                   C_Exc = coef1 * E_ij * (prod - loss) / (2.d0 * n * sqrt(U(k)))
+                   IF (k == 1) THEN
+                      loss = Fi(k) * U(k) * meta(i)%SecExc(j,k)
+                      prod = Fi(k+1) * U(k+1) * meta(i)%SecExc(j,k+1)
+                      C_Exc = coef1 * E_ij * (prod + loss) / (2.d0 * n * sqrt(U(k)))
+                   END IF
+                ELSE
+                   IF (k == ichi+1) Coef = (1.d0-rchi)
+                   loss = Coef * U(k) * meta(i)%SecExc(j,k) * Fi(k)
+                   IF (kp   .LE. sys%nx) prod = U(kp) * meta(i)%SecExc(j,kp)*Fi(kp) * (1.d0-rchi)
+                   IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * meta(i)%SecExc(j,kp+1) * Fi(kp+1)
+                   C_Exc = coef1 * (prod - loss) / sqrt(U(k))
+                END IF
                 !**************************** 
 
                 prod= 0.d0 ; loss= 0.d0 ; coef = 1.d0
                 !**** De-Excitation
-                loss = U(k) * meta(j)%SecExc(i,k) * Fi(k)
-                IF (km   .GT. 0) prod = U(km) * meta(j)%SecExc(i,km)* (1.d0-rchi) * Fo(km)
-                IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * meta(j)%SecExc(i,km-1) * Fo(km-1)
-                C_Dxc = coef2 * (prod - loss) / sqrt(U(k))
+                IF (E_ij .LT. n) THEN ! Low threshold
+                   IF (k .GT. 1 ) loss = Fo(k-1) * U(k-1) * meta(j)%SecExc(i,k-1)
+                   IF (k .LT. nx) prod = Fi(k+1) * U(k+1) * meta(j)%SecExc(i,k+1)
+                   C_Dxc = - coef2 * E_ij * (prod - loss) / (2.d0 * n * sqrt(U(k)))
+                   IF (k == 1) THEN
+                      loss = Fi(k) * U(k) * meta(j)%SecExc(i,k)
+                      prod = Fi(k+1) * U(k+1) * meta(j)%SecExc(i,k+1)
+                      C_Dxc = - coef2 * E_ij * (prod + loss) / (2.d0 * n * sqrt(U(k)))
+                   END IF
+                ELSE
+                   loss = U(k) * meta(j)%SecExc(i,k) * Fi(k)
+                   IF (km   .GT. 0) prod = U(km) * meta(j)%SecExc(i,km)* (1.d0-rchi) * Fo(km)
+                   IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * meta(j)%SecExc(i,km-1) * Fo(km-1)
+                   C_Dxc = coef2 * (prod - loss) / sqrt(U(k))
+                END IF
                 !**************************** 
 
                 !**** Excited states balance
-                IF (k .GE. ichi+1) Then
-                   coef = 1.d0
-                   if (k == ichi+1) coef = (1.d0-rchi) * (1.d0- (rchi/chi) )
-                   Sx = Sx + ( coef * U(k) * meta(i)%SecExc(j,k) * Fi(k)* gama* n )
+                IF (E_ij .LE. n) THEN ! Low threshold
+                   if (k == 1) Sx = Sx + gama*n * U(k)*meta(i)%SecExc(j,k)*Fi(k) * 0.5d0
+                   Sx = Sx + gama*n * U(k)*meta(i)%SecExc(j,k)*Fi(k)
+                   if (k == 1) Sd = Sd + gama*n * U(k)*meta(j)%SecExc(i,k)*Fi(k) * 0.5d0
+                   Sd = Sd + gama*n * U(k)*meta(j)%SecExc(i,k)*Fi(k)
+                ELSE
+                   IF (k .GE. ichi+1) Then
+                      coef = 1.d0
+                      if (k == ichi+1) coef = (1.d0-rchi) * (1.d0- (rchi/chi) )
+                      Sx = Sx + ( coef * U(k) * meta(i)%SecExc(j,k) * Fi(k)* gama* n )
+                   END IF
+                   IF (k .LE. (nx-ichi-1) ) Sd = Sd + ( U(k) * meta(j)%SecExc(i,k) * Fi(k)* gama*n)
                 END IF
-                IF (k .LE. (sys%nx-ichi-1) ) Sd = Sd + ( U(k) * meta(j)%SecExc(i,k) * Fi(k)* gama*n)
                 !**************************** 
 
                 !**** UpDate EEDF
