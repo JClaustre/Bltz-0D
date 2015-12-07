@@ -39,8 +39,7 @@ CONTAINS
           IF (ichi == 0) ichi = 1
           rchi = ( Eij - U(ichi) ) / Dx
           asso = meta(0)%Ni*meta(i)%Ni * Sn(i)
-          !write(*,"(A,3ES15.6,I4)") "", Eij, chi, rchi, ichi
-
+          
           DO k = 1, sys%nx
              coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
              coef2 = rchi / (sqrt(U(ichi+1))*Dx)
