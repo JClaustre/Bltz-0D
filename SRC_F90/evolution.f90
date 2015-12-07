@@ -17,7 +17,7 @@ MODULE MOD_EVOL
   USE MOD_READ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 3 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -60,35 +60,35 @@ CONTAINS
        !*************************************
 
        !**** Heat + Elas + Fk-Pl
-!       CALL Heating (sys,meta, U, F)
-!       CALL Elastic      (sys,meta, U, F)
-!       CALL FP           (sys, elec, F, U)
+       CALL Heating (sys,meta, U, F)
+       CALL Elastic      (sys,meta, U, F)
+       CALL FP           (sys, elec, F, U)
        !**** Excit + De-excit
        SELECT CASE (XcDx)
        CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Begin (sys, meta, U, F, diag)
        END SELECT
-!       !**** Ioniz He+
-!       SELECT CASE (IonX)
-!       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
-!       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
-!       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
-!       END SELECT
-!       !**** Ioniz dimer 
-!       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F, diag)
-!       !**** Disso Recombination
-!       CALL Recomb       (sys, meta, U, F, Diag)
-!       !**** 3 Body ionic conversion
-!       CALL Conv_3Body   (meta, ion)
-!       !**** Penning + Associative ioniz
-!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-!       !**** Radiative transfert
-!       CALL Radiat       (sys, meta, Fosc, Diag)
-!       !**** Diffusion
-!       CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
-!       !**** L-Exchange
-!       CALL l_change     (meta, K_ij)
+       !**** Ioniz He+
+       SELECT CASE (IonX)
+       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
+       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
+       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
+       END SELECT
+       !**** Ioniz dimer 
+       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F, diag)
+       !**** Disso Recombination
+       CALL Recomb       (sys, meta, U, F, Diag)
+       !**** 3 Body ionic conversion
+       CALL Conv_3Body   (meta, ion)
+       !**** Penning + Associative ioniz
+       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+       !**** Radiative transfert
+       CALL Radiat       (sys, meta, Fosc, Diag)
+       !**** Diffusion
+       CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
+       !**** L-Exchange
+       CALL l_change     (meta, K_ij)
        !*************************************
 
        !**** Update densities (Ion + Excited)

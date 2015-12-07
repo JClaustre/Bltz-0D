@@ -479,7 +479,7 @@ CONTAINS
        CASE (3) ; ion(NumIon)%Ni = 0.d0                                     !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          meta(i)%Ni = 1.0d+11                                              !
+          meta(i)%Ni = 1.0d+10                                              !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE='./datFile/Rstart/Density.dat',STATUS='OLD')      !

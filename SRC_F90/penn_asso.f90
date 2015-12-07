@@ -35,8 +35,12 @@ CONTAINS
     DO i = 5, 34
        Eij = meta(i)%En - ion(2)%En ! associative threshold
        IF (Eij > 0.d0) THEN
-          chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi + 0.5d0
+          chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
+          IF (ichi == 0) ichi = 1
+          rchi = ( Eij - U(ichi) ) / Dx
           asso = meta(0)%Ni*meta(i)%Ni * Sn(i)
+          !write(*,"(A,3ES15.6,I4)") "", Eij, chi, rchi, ichi
+
           DO k = 1, sys%nx
              coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
              coef2 = rchi / (sqrt(U(ichi+1))*Dx)
@@ -59,12 +63,15 @@ CONTAINS
     !**** Penning process
     DO i = 1, 3
        DO j = 1, 3
-
+          
           DO l = 1, 2
              IF (l .EQ. 1) Penn  =  0.3d0* meta(i)%Ni*meta(j)%Ni * beta
              IF (l .EQ. 2) Penn  =  0.7d0* meta(i)%Ni*meta(j)%Ni * beta
              Eij = meta(j)%En + meta(i)%En - ion(l)%En ! Penning threshold
-             chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi + 0.5d0
+             chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
+             IF (ichi == 0) ichi = 1
+             rchi = ( Eij - U(ichi) ) / Dx
+
              DO k = 1, sys%nx
                 coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
                 coef2 = rchi / (sqrt(U(ichi+1))*Dx)
