@@ -1,4 +1,4 @@
-0D Time Dependent B++++++++ Solver
+0D Time Dependent Bltz Solver
 ===============
 *Author: J. Claustre*
 
@@ -7,7 +7,7 @@
 Description
 -----------
 
-This code solve the 0D B++++++++ equation, depending on time for the
+This code solve the 0D Bltz equation, depending on time for the
 Helium gas.  It includes *electron-electron* collisions,
 *electron-neutral* collision, *heating* by electric field.
 
