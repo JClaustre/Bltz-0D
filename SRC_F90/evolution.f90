@@ -27,12 +27,13 @@ CONTAINS
     INTEGER :: i, j, k, l, m                                                  !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
+    REAL(DOUBLE) :: Pwinit, GenPwr                                            !
     CHARACTER(LEN=250)::fileName                                              !
     count1 = 0.d0 ; count2 = 0.d0                                             !
     !*****************************                                            !
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
-    l = 0                                                                     !
+    l = 0 ; k = 0                                                             !
     IF (Clock%Rstart == 0) THEN                                               !
        OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
     ELSE IF (Clock%Rstart == 1) THEN                                          !
@@ -41,6 +42,8 @@ CONTAINS
     END IF                                                                    !
     !*************************************************************************!
     MaxDt = 2.d-10 ! Maximum Time-Step allowed
+    Pwinit = sys%Powr ! Keep Power init in memory
+    GenPwr = 0.5d-6 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -59,6 +62,9 @@ CONTAINS
        END IF
        !*************************************
 
+       !**** Increase Power exponantially function of time
+       sys%Powr = Pwinit * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
+       k = k+1
        !**** Heat + Elas + Fk-Pl
        CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
