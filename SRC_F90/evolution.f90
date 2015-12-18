@@ -43,7 +43,7 @@ CONTAINS
     !*************************************************************************!
     MaxDt = 2.d-10 ! Maximum Time-Step allowed
     Pwinit = sys%Powr ! Keep Power init in memory
-    GenPwr = 0.5d-6 ! Time constant to start the generator.
+    GenPwr = 0.25d-6 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
