@@ -41,7 +41,7 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt = 2.d-10 ! Maximum Time-Step allowed
+    MaxDt  = 4.d-10 ! Maximum Time-Step allowed
     Pwinit = sys%Powr ! Keep Power init in memory
     GenPwr = 0.25d-6 ! Time constant to start the generator.
 
@@ -126,9 +126,9 @@ CONTAINS
             Clock%Dt, "] \r"                                                      !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,4ES13.4,A,ES12.4)"), tabul, "Time : ", &            !
+          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
                (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06,&     !
-               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E-Field (V/cm)", sys%E*1d-02 !
+               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N (Td)", (sys%E/meta(0)%Ni)/1d-21
        END IF                                                                     !
        !**************************************************************************!
 
@@ -301,6 +301,7 @@ CONTAINS
     write(99,"(A,F8.2)")    "* Energy Max (ev)      : ", sys%Emx
     write(99,"(A,ES10.2)")  "* Energy step (Δu)    : ", sys%Dx
     write(99,"(A,F8.2)")    "* Cylinder radius (cm) : ", sys%Ra*1d2
+    write(99,"(A,F8.2)")    "* E/N (Td) : ", (sys%E/meta(0)%Ni) * 1d21
     write(99,"(A,F8.2)")    "* E Field (V/cm) : ", sys%E*1d-2
     write(99,"(A,ES11.3)")  "* heating frequency (Hz) : ", sys%Freq / (2*pi)
     write(99,"(A,2ES11.3)") "* Power (W/cm3) | (W): ", sys%Powr*1d-6, sys%Powr * sys%volume
