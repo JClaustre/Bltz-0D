@@ -224,39 +224,32 @@ CONTAINS
                                                                                         !
                                                                                         !
     !**** (1)  **** Add energy due to excit/de-excit processes                          !
-    DO i = 1, NumMeta                                                                   !
-       Coef = Coef + (diag(1)%EnLoss(i)-diag(1)%EnProd(i))                              !
-    END DO                                                                              !
-    Coef = Coef + (diag(1)%EnLoss(NumMeta+NumIon+1)-diag(1)%EnProd(NumMeta+NumIon+1))   !
+    Coef = Coef + (Diag(1)%EnLoss-Diag(1)%EnProd)                                       !
     !**** (2)  **** Energy Loss due to ionization processes                             !
-    Coef = Coef + diag(2)%EnProd(NumMeta+1)                                             !
+    Coef = Coef + Diag(2)%EnLoss                                                        !
     !**** (5)  **** Energy gain due to Penning processes                                !
-    DO i = 1, 2                                                                         !
-       Coef = Coef - Diag(5)%EnProd(NumMeta+i)                                          !
-    END DO                                                                              !
+    Coef = Coef - Diag(5)%EnProd                                                        !
     !**** (6)  **** Energy gain due to Associative processes                            !
-    DO i = 5, 34 ! else Sn(i) = 0.d0                                                    !
-       Coef = Coef - Diag(6)%EnProd(i)                                                  !
-    END DO                                                                              !
+    Coef = Coef - Diag(6)%EnProd                                                        !
     !**** (7)  **** Energy loss due to Ionic conversion                                 !
     !Coef = Coef + diag(7)%EnLoss(NumMeta+1)                                            !
     !**** (8)  **** Energy loss due to recombination processes                          !
-    Coef = Coef + diag(8)%EnLoss(NumMeta+2)                                             !
+    Coef = Coef + diag(8)%EnLoss                                                        !
     !**** (9)  **** Energy loss due to diffusion process                                !
-    Coef = Coef + Diag(9)%EnLoss(2)                                                     !
+    Coef = Coef + Diag(9)%EnLoss                                                        !
     !**** (10-1) **** Energy gain due to heating process                                !
-    Coef = Coef - Diag(10)%EnProd(1)                                                    !
+    Coef = Coef - Diag(10)%EnProd                                                       !
     !**** (10-2) **** Energy loss due to Elastic collisions                             !
-    Coef = Coef + Diag(10)%EnLoss(2)                                                    !
+    Coef = Coef + Diag(11)%EnLoss                                                       !
     !**** (3)=radiative trans | (4)=l-xchnge reaction                                   !
     !**** (7)=3 body convert  |                                                         !
     !***********************************************************************************!
 
     elec%En = Coef
-    write(*,"(2A,2ES15.4)"), tabul, "Gain Power in Heat : ", Diag(10)%EnProd(1) * qe/(clock%Dt*clock%NumIter),&
-         Diag(10)%EnProd(1) * qe * sys%volume/(clock%Dt*clock%NumIter)
-    write(*,"(2A,2ES15.4)"), tabul, "Loss Power in Elast: ", Diag(10)%EnLoss(2) * qe/(clock%Dt*clock%NumIter),&
-         Diag(10)%EnLoss(2) * qe * sys%volume/(clock%Dt*clock%NumIter)
+    write(*,"(2A,2ES15.4)"), tabul, "Gain Power in Heat : ", Diag(10)%EnProd * qe/(clock%Dt*clock%NumIter),&
+         Diag(10)%EnProd * qe * sys%volume/(clock%Dt*clock%NumIter)
+    write(*,"(2A,2ES15.4)"), tabul, "Loss Power in Elast: ", Diag(11)%EnLoss * qe/(clock%Dt*clock%NumIter),&
+         Diag(11)%EnLoss * qe * sys%volume/(clock%Dt*clock%NumIter)
 
     Coef = ABS(1.0d0 - elec%En/consv(2))
     write(*,"(2A,ES15.4)") tabul, "Energy Error : ", Coef
@@ -338,17 +331,23 @@ CONTAINS
     write(99,"(A,ES11.3)") "* Electron  Free Diff (cm².s-¹) : ", elec%Dfree
     write(99,"(A,ES11.3)") "* ion[He+]  Free Diff (cm².s-¹) : ", ion(1)%Dfree
     write(99,"(A,ES11.3)") "* ion[He2+] Free Diff (cm².s-¹) : ", ion(2)%Dfree
+    write(99,"(A,ES10.2)") "* Ionization degree (Ne/Ng) : ", elec%Ni/meta(0)%Ni
     write(99,"(A)") ""
     write(99,"(A)") "ELECTRON | IONS BALANCE"
     write(99,"(A)") "--------------------"
     write(99,"(A)") "### Power balance :"
-    write(99,"(A,ES15.6)") "* Gain Heat :  ", Diag(10)%EnProd(1) * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Gain Penn :  ", Diag(5)%EnProd(4)  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Gain Asso :  ", Diag(6)%EnProd(4)  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Gain Heat :  ", Diag(10)%EnProd * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Gain Penn :  ", Diag(5)%EnProd  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Gain Asso :  ", Diag(6)%EnProd  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Gain Exct :  ", Diag(1)%EnProd  * qe/(ne*Dt*clock%NumIter)
+
     write(99,"(/,A)") "-------------------------------------------------------"
-    write(99,"(A,ES15.6)") "* Loss Elas :  ", Diag(10)%EnLoss(2) * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Loss Recb :  ", Diag(8)%EnLoss(1)  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6,/)") "* Loss Ionz :  ", Diag(2)%EnLoss(1)  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Loss Recb :  ", Diag(8)%EnLoss  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Loss Ionz :  ", Diag(2)%EnLoss  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6)") "* Loss Exct :  ", Diag(1)%EnLoss  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6,/)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*clock%NumIter)
+
     write(99,"(A)") "### Particle balance :"
     write(99,"(A,ES15.6)") "* Gain ioniz : ", Diag(2)%Tx/ne
     write(99,"(A,ES15.6)") "* Gain Assoc : ", Diag(6)%Tx/ne
@@ -357,11 +356,11 @@ CONTAINS
     write(99,"(A,ES15.6)") "* Loss recmb : ", Diag(8)%Tx/ne
     write(99,"(A,ES15.6)") "* Loss diffz : ", Diag(9)%Tx/ne
     write(99,"(/,A)") "-------------------------------------------------------"
-    write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", &
-         (Diag(10)%EnProd(1)+Diag(5)%EnProd(4)+Diag(6)%EnProd(4))* qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
+         (Diag(10)%EnProd+Diag(5)%EnProd+Diag(6)%EnProd+Diag(1)%EnProd), &
          (Diag(2)%Tx+Diag(6)%Tx+Diag(5)%Tx/(2.d0))/ne
-    write(99,"(A,2ES15.4)") "* Loss elec total (Pwr | Prtcl) : ", &
-         (Diag(10)%EnLoss(2)+Diag(8)%EnLoss(1)+Diag(2)%EnLoss(1))* qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
+         (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%Tx+Diag(9)%Tx) / ne
     write(99,"(A)") " "
     write(99,"(A)")"![Zozor](http://uploads.siteduzero.com/files/420001_421000/420263.png)"

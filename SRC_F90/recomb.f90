@@ -49,7 +49,7 @@ CONTAINS
        meta(i)%Updens = meta(i)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
     END Do
     !**** Diagnostic
-    diag(8)%EnLoss(NumMeta+2) = diag(8)%EnLoss(NumMeta+2) + (energI-energF)
+    diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
     diag(8)%Tx =  recmb * Dx
     !****************
     !**** He2* : Excimer recombination He2* + e- --> 2He + e-
@@ -88,7 +88,7 @@ CONTAINS
     END do
 
     !**** Diagnostic
-    diag(8)%EnLoss(1) = diag(8)%EnLoss(1) + abs(En1 - En2)
+    diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
     diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
     !**** He2* : Excimer SuperElastic He2* + e- --> 2He + e-
     SELECT CASE (NumIon)
@@ -116,8 +116,7 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens - Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens + Clock%Dt * Src
        !**** Diagnostic
-       diag(7)%EnLoss(NumMeta+1) = diag(7)%EnLoss(NumMeta+1) + Clock%Dt * Src &
-            * abs(ion(1)%En-ion(2)%En)
+       diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************
     END IF
     !*************************************
@@ -129,8 +128,7 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
        !**** Diagnostic
-       diag(7)%EnLoss(NumMeta+1) = diag(7)%EnLoss(NumMeta+1) + Clock%Dt * Src &
-            * abs(ion(1)%En-ion(2)%En)
+       diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************
     END IF
     !*************************************

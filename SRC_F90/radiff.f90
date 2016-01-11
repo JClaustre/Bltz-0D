@@ -52,7 +52,7 @@ CONTAINS
                    meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
                    meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                    !**** Diagnostic
-                   diag(3)%EnLoss(i) = diag(3)%EnLoss(i) + Clock%Dt* emitF * meta(i)%Ni * Eij
+                   diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
                    !****************
                 END IF
              END IF
@@ -144,7 +144,7 @@ CONTAINS
        En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
     !**** Diagnostic
-    diag(9)%EnLoss(2) = diag(9)%EnLoss(2) + (En-En2)
+    diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
   END SUBROUTINE Diffuz
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Diffuz_Norm (sys,meta,ion,elec,F,U,diag)
@@ -212,7 +212,7 @@ CONTAINS
        En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
     !**** Diagnostic
-    diag(9)%EnLoss(2) = diag(9)%EnLoss(2) + (En-En2)
+    diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
   END SUBROUTINE Diffuz_Norm
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_RADIFF

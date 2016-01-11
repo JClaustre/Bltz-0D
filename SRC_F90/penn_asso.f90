@@ -51,7 +51,7 @@ CONTAINS
           meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
           !**** Diagnostic
-          Diag(6)%EnProd(i) = Diag(6)%EnProd(i) + Clock%Dt * asso * Eij
+          Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
           Diag(6)%Tx = Diag(6)%Tx + asso
 
           ratx = Sn(i)*meta(0)%Ni
@@ -80,7 +80,7 @@ CONTAINS
              END DO
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** Diagnostic
-             diag(5)%EnProd(NumMeta+l) = diag(5)%EnProd(NumMeta+l) + Eij*Clock%Dt * Penn
+             diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
              diag(5)%Tx = diag(5)%Tx + Penn
           END DO
           !**** Update population

@@ -85,7 +85,7 @@ CONTAINS
           ratx = ionz * Dx * gama
           if (ratx .GT. maxR) maxR = ratx
           diag(2)%Tx = diag(2)%Tx + ratx * meta(i)%Ni
-          diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + SubDt * ionz * coef1 * Dx*Eij
+          diag(2)%EnLoss = diag(2)%EnLoss + SubDt * ionz * coef1 * Dx*Eij
           meta(i)%UpDens = meta(i)%UpDens - SubDt * ionz * coef1 * Dx
           ion(1)%Updens  = ion(1)%Updens  + SubDt * ionz * coef1 * Dx
        END DO
@@ -113,7 +113,7 @@ CONTAINS
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; diag(2)%Tx = 0.d0
 
-    case = 0 ! if 0 then "Vidal case" | else "Matte case"
+    case = 1 ! if 0 then "Vidal case" | else "Matte case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     DO i = 0, NumMeta
@@ -162,7 +162,11 @@ CONTAINS
              Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
           END IF
           !**** Diagnostic
-          diag(2)%EnProd(NumMeta+1) = diag(2)%EnProd(NumMeta+1) + SubDt * Src * coef1* Dx*(Eij -Dx*0.5d0)
+          IF ( case == 0 ) THEN
+             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
+          ELSE
+             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij)
+          END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
           ion(1)%Ni  = ion(1)%Ni  + SubDt * Src * coef1 * Dx
 

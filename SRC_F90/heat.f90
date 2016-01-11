@@ -184,7 +184,7 @@ CONTAINS
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
     !**** Diagnostic 
-    diag(10)%EnProd(1) = diag(10)%EnProd(1) + abs(En2 - En1)
+    diag(10)%EnProd = diag(10)%EnProd + abs(En2 - En1)
     !***************
 
     DEALLOCATE ( AC1,BC1,CC1,SECMAX )
@@ -253,9 +253,9 @@ CONTAINS
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
     !**** Diagnostic 
-    diag(10)%EnLoss(2) = diag(10)%EnLoss(2) + abs(En - En2)
+    diag(11)%EnLoss = diag(11)%EnLoss + abs(En - En2)
     if (int(Clock%SumDt/Clock%Dt) .EQ. Clock%NumIter-2)THEN 
-       diag(10)%Tx = (En - En2)
+       diag(11)%Tx = (En - En2)
     END if
     !***************
     DEALLOCATE ( AEN,BEN,CEN,f0)

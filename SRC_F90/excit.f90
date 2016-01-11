@@ -120,15 +120,8 @@ CONTAINS
                 !**************************** 
              END DO
              !**** Diagnostic
-             IF (i == 0) THEN
-                diag(1)%EnProd(NumMeta+Numion+1) = diag(1)%EnProd(NumMeta+Numion+1) + &
-                     Clock%Dt * Sd*meta(j)%Ni* E_ij
-                diag(1)%EnLoss(NumMeta+Numion+1) = diag(1)%EnLoss(NumMeta+Numion+1) + &
-                     Clock%Dt * Sx*meta(i)%Ni* E_ij
-             ELSE
-                diag(1)%EnProd(i) = diag(1)%EnProd(i) + Clock%Dt * Sd*meta(j)%Ni * E_ij
-                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + Clock%Dt * Sx*meta(i)%Ni * E_ij
-             END IF
+             diag(1)%EnProd = diag(1)%EnProd + Clock%Dt * Sd*meta(j)%Ni* E_ij
+             diag(1)%EnLoss = diag(1)%EnLoss + Clock%Dt * Sx*meta(i)%Ni* E_ij
              !*****************
              !**** UpDate Density
              meta(i)%UpDens = meta(i)%UpDens + Clock%Dt*(Sd*meta(j)%Ni - Sx*meta(i)%Ni)
@@ -272,15 +265,8 @@ CONTAINS
                 Fi(k) = Fi(k) + SubDt * ( C_Exc * Rmx + C_Dxc * Rmd )
                 !**************************** 
              END DO
-             IF (i == 0) THEN
-                diag(1)%EnProd(NumMeta+Numion+1) = diag(1)%EnProd(NumMeta+Numion+1) + &
-                     SubDt * Sd*Ndens(j)* E_ij * Rmd
-                diag(1)%EnLoss(NumMeta+Numion+1) = diag(1)%EnLoss(NumMeta+Numion+1) + &
-                     SubDt * Sx*Ndens(i)* E_ij * Rmx
-             ELSE
-                diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*Ndens(j) * E_ij * Rmd
-                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*Ndens(i) * E_ij * Rmx
-             END IF
+             diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
+             diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
              !*****************
           END IF
        END DO
@@ -409,15 +395,8 @@ CONTAINS
                 !**************************** 
              END DO
              !**** Diagnostic
-             IF (i == 0) THEN
-                diag(1)%EnProd(NumMeta+Numion+1) = diag(1)%EnProd(NumMeta+Numion+1) + &
-                     SubDt * Sd*Ndens(j)* E_ij * Rmd
-                diag(1)%EnLoss(NumMeta+Numion+1) = diag(1)%EnLoss(NumMeta+Numion+1) + &
-                     SubDt * Sx*Ndens(i)* E_ij * Rmx
-             ELSE
-                diag(1)%EnProd(i) = diag(1)%EnProd(i) + SubDt * Sd*Ndens(j) * E_ij * Rmd
-                diag(1)%EnLoss(i) = diag(1)%EnLoss(i) + SubDt * Sx*Ndens(i) * E_ij * Rmx
-             END IF
+             diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
+             diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
              !*****************
           END IF
        END DO

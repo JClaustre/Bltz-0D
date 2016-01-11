@@ -36,9 +36,8 @@ MODULE MOD_PARAM
   END type Species
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
-     REAL(DOUBLE)      :: Tx
+     REAL(DOUBLE)      :: Tx, EnProd, EnLoss
      CHARACTER(len=10) :: Name
-     REAL(DOUBLE), DIMENSION(:), POINTER :: EnProd, EnLoss
   END type Diagnos
    !-----------------------------------------------------------
 
@@ -50,7 +49,7 @@ MODULE MOD_PARAM
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
   TYPE(Species) :: elec
-  TYPE(Diagnos), DIMENSION(13) :: diag
+  TYPE(Diagnos), DIMENSION(15) :: diag
   TYPE(Species), DIMENSION(NumIon)    :: ion
   TYPE(Species), DIMENSION(0:NumMeta) :: meta ! (0) --> fundamental state
 
@@ -109,10 +108,6 @@ CONTAINS
     ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0
     ALLOCATE ( Meta(0)%SecRec(nx) ) ; Meta(0)%SecRec(:) = 0.d0
     ALLOCATE ( Meta(0)%Nuel(nx)  ) ; Meta(0)%Nuel(:)   = 0.d0
-    DO i = 1, 13
-       ALLOCATE ( diag(i)%EnProd(NumMeta+NumIon+1), Diag(i)%EnLoss(NumMeta+NumIon+1) )
-       diag(i)%EnProd = 0.d0 ; diag(i)%EnLoss = 0.d0 
-    END DO
 
     ALLOCATE ( F(nx) ) ; F(:) = 0.d0
     ALLOCATE ( U(nx) ) ; U(:) = 0.d0
@@ -130,9 +125,6 @@ CONTAINS
        DEALLOCATE ( ion(NumIon)%SecIon )
     END SELECT
 
-    DO i = 1, 13
-       DEALLOCATE( diag(i)%EnProd, Diag(i)%EnLoss )
-    END DO
     DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(0)%SecRec )
     DEALLOCATE ( F, U, Meta(0)%Nuel )
   END SUBROUTINE DelocArray
