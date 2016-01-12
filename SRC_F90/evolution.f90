@@ -342,11 +342,16 @@ CONTAINS
     write(99,"(A,ES15.6)") "* Gain Exct :  ", Diag(1)%EnProd  * qe/(ne*Dt*clock%NumIter)
 
     write(99,"(/,A)") "-------------------------------------------------------"
-    write(99,"(A,ES15.6)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Loss Recb :  ", Diag(8)%EnLoss  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Loss Ionz :  ", Diag(2)%EnLoss  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Loss Exct :  ", Diag(1)%EnLoss  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6,/)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*clock%NumIter)&
+         , Diag(11)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Recb :  ", Diag(8)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+         , Diag(8)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Ionz :  ", Diag(2)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+         , Diag(2)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Exct :  ", Diag(1)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+         , Diag(1)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+    write(99,"(A,ES15.6,F8.2,A,/)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+         , Diag(9)%EnLoss*100.d0/Diag(10)%EnProd, " %"
 
     write(99,"(A)") "### Particle balance :"
     write(99,"(A,ES15.6)") "* Gain ioniz : ", Diag(2)%Tx/ne
