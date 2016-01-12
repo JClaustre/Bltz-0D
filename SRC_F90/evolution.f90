@@ -276,7 +276,7 @@ CONTAINS
     write(99,"(A)")"               _         "
     write(99,"(A)")"              [ ] Hope you enjoyed, "
     write(99,"(A)")"             (* *) /  look forward to seeing you again!     "
-    write(99,"(A)")"              |>|                  -JC-                     "
+    write(99,"(A)")"              |>|                  -C0PO-                     "
     write(99,"(A)")"           __/===\__     "
     write(99,"(A)")"          //| o=o |\\    "
     write(99,"(A)")"        <]  | o=o |  [>  "
