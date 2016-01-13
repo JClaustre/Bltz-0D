@@ -234,11 +234,11 @@ CONTAINS
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 5*60.0 .and. tot .LE. 15*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "Go to take your coffee ... calculation time is estimated to "
+            "You can take your coffee ... calculation time is estimated to "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 15*60.0 .and. tot .LE. 45*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "This is babyfoot time! ... calculation time is estimated to "
+            "Think about something else! ... calculation time is estimated to "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 45*60.0 .and. tot .LE. 3600.) THEN
        write(*,"(2A)", advance="no") tabul, &
