@@ -29,6 +29,9 @@ CONTAINS
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
     REAL(DOUBLE) :: Pwinit, GenPwr                                            !
     CHARACTER(LEN=250)::fileName                                              !
+    ! Pulse variables                                                         !
+    INTEGER :: cycL, switch=0, iter=0                                         !
+    REAL(DOUBLE) :: tps, Ton_up, Ton_dwn, Ton, Toff                           !
     count1 = 0.d0 ; count2 = 0.d0                                             !
     !*****************************                                            !
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
@@ -41,10 +44,12 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 4.d-10 ! Maximum Time-Step allowed
+    MaxDt  = 4.d-10   ! Maximum Time-Step allowed
     Pwinit = sys%Powr ! Keep Power init in memory
-    GenPwr = 0.25d-6 ! Time constant to start the generator.
-
+    Ton     = 1.d-3  ! Total time of the pulse.
+    Ton_up  = 2.d-4   ! Increasing time of the pulse
+    Ton_dwn = 1.5d-4  ! Decreasing time of the pulse
+    Toff    = 1.9d-2 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 500) CALL System_clock (t1, clock_rate)
@@ -62,11 +67,28 @@ CONTAINS
        END IF
        !*************************************
 
-       !**** Increase Power exponantially function of time
-       sys%Powr = Pwinit * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
-       k = k+1
+       ! Iteration in time for pulses
+       tps = tps + clock%Dt
+       IF (switch == 1) THEN
+          if (tps .GE. Toff) THEN
+             switch = 0 ; tps = 0.d0
+             m = 0 ; k = 0
+          END if
+       ELSE IF (switch == 0) THEN
+          !**** Increase Power exponantially function of time
+          IF (tps .LE. (Ton-Ton_dwn)) THEN
+             sys%Powr = Pwinit * (1.d0 - exp( -real(k*Clock%Dt) / Ton_up) )
+             k = k+1
+          ELSE IF (tps .LE. Ton) THEN
+             sys%Powr = sys%Powr * exp( -real(m*Clock%Dt) / Ton_dwn)
+             m = m+1
+          ELSE
+             switch = 1 ; tps = 0.d0
+          END IF
+       END IF
+       !print*, switch, k, sys%Powr, tps
        !**** Heat + Elas + Fk-Pl
-       CALL Heating (sys,meta, U, F)
+       If (switch == 0) CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Excit + De-excit

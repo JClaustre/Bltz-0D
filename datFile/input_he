@@ -6,11 +6,11 @@
 7.60000E+02	  prs (Torr)	Pressure
 1700.000000	  Tp (K)	Temperature
 2.00000E+00	  Tpe (eV)	Electronic Temperature
-0.30000E+00	  Ra (cm)	Cylinder Radius
-1.00000E+00	  L  (cm)       Tube Length
-2.00000E+13	  ne (cm-3)	Initial electron density
-6.36619E+02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-60.00000000   	  Simulation Time (mic-sec)  
+0.10000E+00	  Ra (cm)	Cylinder Radius
+2.30000E+00	  L  (cm)       Tube Length
+2.00000E+12	  ne (cm-3)	Initial electron density
+8.30000E+01   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
+40.0000E+03   	  Simulation Time (mic-sec)  
 1.00000E-12	  Dt ( Time-Step (sec) )
 1.00000E+02	  Emax (Energy grid max (eV) ) 
 5.0000		  save data's every XXX micro-sec
