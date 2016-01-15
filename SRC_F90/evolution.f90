@@ -41,7 +41,7 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 5.d-09 ! Maximum Time-Step allowed
+    MaxDt  = 6.d-09 ! Maximum Time-Step allowed
     Pwinit = sys%Powr ! Keep Power init in memory
     GenPwr = 0.5d-6 ! Time constant to start the generator.
 
