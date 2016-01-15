@@ -8,9 +8,9 @@
 2.00000E+00	  Tpe (eV)	Electronic Temperature
 0.50000E+00	  Ra (cm)	Cylinder Radius
 5.00000E+00	  L  (cm)       Tube Length
-4.00000E+12	  ne (cm-3)	Initial electron density
+4.00000E+02	  ne (cm-3)	Initial electron density
 5.85690E+00   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-40.0000E+03   	  Simulation Time (mic-sec)  
+40.0000E+02   	  Simulation Time (mic-sec)  
 1.00000E-12	  Dt ( Time-Step (sec) )
 1.00000E+02	  Emax (Energy grid max (eV) ) 
 5.0000		  save data's every XXX micro-sec
