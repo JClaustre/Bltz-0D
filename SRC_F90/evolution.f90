@@ -17,7 +17,7 @@ MODULE MOD_EVOL
   USE MOD_READ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -27,7 +27,7 @@ CONTAINS
     INTEGER :: i, j, k, l, m                                                  !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
-    REAL(DOUBLE) :: Pwinit, GenPwr                                            !
+    REAL(DOUBLE) :: Pwinit, Pwrtmp                                            !
     CHARACTER(LEN=250)::fileName                                              !
     ! Pulse variables                                                         !
     INTEGER :: cycL, switch=0, iter=0                                         !
@@ -35,7 +35,7 @@ CONTAINS
     count1 = 0.d0 ; count2 = 0.d0                                             !
     !*****************************                                            !
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
-    write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
+    write(*,"(2A,I14)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     IF (Clock%Rstart == 0) THEN                                               !
        OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
@@ -44,12 +44,12 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 4.d-10   ! Maximum Time-Step allowed
+    MaxDt  = 5.d-9   ! Maximum Time-Step allowed
     Pwinit = sys%Powr ! Keep Power init in memory
     Ton     = 1.d-3  ! Total time of the pulse.
     Ton_up  = 2.d-4   ! Increasing time of the pulse
     Ton_dwn = 1.5d-4  ! Decreasing time of the pulse
-    Toff    = 1.9d-2 
+    Toff    = 2.5d-3 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 500) CALL System_clock (t1, clock_rate)
@@ -69,21 +69,23 @@ CONTAINS
 
        ! Iteration in time for pulses
        tps = tps + clock%Dt
-       IF (switch == 1) THEN
-          if (tps .GE. Toff) THEN
-             switch = 0 ; tps = 0.d0
-             m = 0 ; k = 0
-          END if
-       ELSE IF (switch == 0) THEN
+!       IF (switch == 1) THEN
+!          if (tps .GE. Toff) THEN
+!             switch = 0 ; tps = 0.d0
+!             m = 0 ; k = 0
+!          END if
+       IF (switch == 0) THEN
           !**** Increase Power exponantially function of time
           IF (tps .LE. (Ton-Ton_dwn)) THEN
              sys%Powr = Pwinit * (1.d0 - exp( -real(k*Clock%Dt) / Ton_up) )
              k = k+1
-          ELSE IF (tps .LE. Ton) THEN
-             sys%Powr = sys%Powr * exp( -real(m*Clock%Dt) / Ton_dwn)
+          ELSE IF (tps .LE. Ton+Toff) THEN
+             if (m == 0) Pwrtmp = sys%Powr
+             sys%Powr = Pwrtmp * exp( -real(m*Clock%Dt) / Ton_dwn)
              m = m+1
           ELSE
-             switch = 1 ; tps = 0.d0
+             !switch = 1 
+             m = 0 ; k = 0 ; tps = 0.d0
           END IF
        END IF
        !print*, switch, k, sys%Powr, tps
@@ -142,10 +144,10 @@ CONTAINS
        Clock%SumDt = Clock%SumDt + Clock%Dt
 
        !**** WRITE IN SHELL ******************************************************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A)",advance="no") tabul,&            !
+       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A)",advance="no") tabul,&            !
        "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, "] \r"                                                      !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./Pwinit), "] \r"                                                      !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
