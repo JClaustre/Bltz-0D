@@ -38,7 +38,7 @@ CONTAINS
     write(*,"(A)")"                _         "
     write(*,"(A)")"               [ ] Welcome into my program, "
     write(*,"(A)")"              (* *) /   and have fun in Plasma-Land!         "
-    write(*,"(A)")"               |>|                  -JC-                     "
+    write(*,"(A)")"               |>|                  -C0PO-                   "
     write(*,"(A)")"            __/===\__     "
     write(*,"(A)")"           //| o=o |\\    "
     write(*,"(A)")"         <]  | o=o |  [>  "

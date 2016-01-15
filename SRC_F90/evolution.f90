@@ -17,7 +17,7 @@ MODULE MOD_EVOL
   USE MOD_READ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -41,9 +41,9 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 4.d-10 ! Maximum Time-Step allowed
+    MaxDt  = 5.d-09 ! Maximum Time-Step allowed
     Pwinit = sys%Powr ! Keep Power init in memory
-    GenPwr = 0.25d-6 ! Time constant to start the generator.
+    GenPwr = 0.5d-6 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -120,10 +120,10 @@ CONTAINS
        Clock%SumDt = Clock%SumDt + Clock%Dt
 
        !**** WRITE IN SHELL ******************************************************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A)",advance="no") tabul,&            !
+       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A)",advance="no") tabul,&            !
        "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, "] \r"                                                      !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./Pwinit), "] \r"                                                      !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !

@@ -320,7 +320,7 @@ CONTAINS
     END IF
     SELECT CASE (NumIon)                                                    !
     CASE (3)                                                                !
-       ion(NumIon)%Name = " HE2-EXCIM" ; ion(NumIon)%En = 17.8d0
+       ion(NumIon)%Name = " HE2-DIMER" ; ion(NumIon)%En = ion(2)%En - 3.4 
        write(*,"(4A,F6.2)") tabul, "Init Excimer : ",ion(NumIon)%Name, " | Enrgy (eV) = ", ion(NumIon)%En
     END SELECT
 
@@ -424,7 +424,7 @@ CONTAINS
     READ (90,*) Clock%Rstart
     CLOSE (90)
     !**** Init Clock
-    clock%MaxIter = 400000000
+    clock%MaxIter = int(5E+08)
     IF (Clock%Rstart == 0) clock%SumDt = 0.d0
     !**** Init Grid Variables
     IF (Clock%Rstart == 1) THEN
