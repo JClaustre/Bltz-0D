@@ -24,10 +24,10 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, m                                                  !
+    INTEGER :: i, j, k, l, m, Nnull=0                                         !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
-    REAL(DOUBLE) :: Pwinit, GenPwr                                            !
+    REAL(DOUBLE) :: GenPwr                                                    !
     CHARACTER(LEN=250)::fileName                                              !
     count1 = 0.d0 ; count2 = 0.d0                                             !
     !*****************************                                            !
@@ -42,7 +42,7 @@ CONTAINS
     END IF                                                                    !
     !*************************************************************************!
     MaxDt  = 6.d-09 ! Maximum Time-Step allowed
-    Pwinit = sys%Powr ! Keep Power init in memory
+    sys%IPowr = sys%Powr ! Keep Power init in memory
     GenPwr = 0.5d-6 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
@@ -63,7 +63,7 @@ CONTAINS
        !*************************************
 
        !**** Increase Power exponantially function of time
-       sys%Powr = Pwinit * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
+       sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
        k = k+1
        !**** Heat + Elas + Fk-Pl
        CALL Heating (sys,meta, U, F)
@@ -98,11 +98,12 @@ CONTAINS
        !*************************************
 
        !**** Update densities (Ion + Excited)
+       Nnull = 0
        do i = 1, NumMeta
           meta(i)%Ni = meta(i)%Ni + meta(i)%Updens
           if (i .le. NumIon) ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
           IF (meta(i)%Ni < 0.d0) THEN
-             IF (modulo(l,1000) == 0) write(*,"(A,I4,A)") "ERROR : meta%Ni < 0", i, " "
+             Nnull = Nnull + 1
              meta(i)%Ni = 0.d0
           END IF
        END do
@@ -120,10 +121,10 @@ CONTAINS
        Clock%SumDt = Clock%SumDt + Clock%Dt
 
        !**** WRITE IN SHELL ******************************************************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A)",advance="no") tabul,&            !
+       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,A)",advance="no") tabul,&!
        "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./Pwinit), "] \r"                                                      !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
