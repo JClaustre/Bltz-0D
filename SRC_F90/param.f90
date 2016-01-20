@@ -22,7 +22,7 @@ MODULE MOD_PARAM
      INTEGER :: nx, P0 ! node number and max-node number
      REAL(DOUBLE) :: Emx, Dx ! grid step
      REAL(DOUBLE) :: Ra, L, volume
-     REAL(DOUBLE) :: E, Eef, Freq, Omg, Powr
+     REAL(DOUBLE) :: E, Eef, Freq, Omg, Powr, IPowr
   END type SysVar
   !-----------------------------------------------------------
   TYPE, PUBLIC::Species

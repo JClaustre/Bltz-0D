@@ -452,7 +452,9 @@ CONTAINS
        consv(2) = consv(2) + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
     IF (Clock%Rstart == 1) CLOSE (90)
-    sys%Volume = pi * sys%Ra**2 * sys%L
+    !sys%Volume = pi * sys%Ra**2 * sys%L ! Cylinder
+    sys%Volume = sys%Ra * sys%L * 1.0d-05 ! Cubic
+
     elec%Ni = consv(1)
     write(*,"(2A, F6.2,A)"  ) tabul, "Tpe init : ", 0.66667d0*consv(2)/consv(1), " (eV)"
     write(*,"(2A, ES19.10,A)") tabul, "Ne init  : ", consv(1)*1d-6, " (cm-3) "
