@@ -44,7 +44,7 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt     = 5.d-9    ! Maximum Time-Step allowed
+    MaxDt     = 1.d-12    ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
     Ton       = 3.d-9    ! Total time of the pulse.
     Ton_up    = 1.d-9    ! Increasing time of the pulse
