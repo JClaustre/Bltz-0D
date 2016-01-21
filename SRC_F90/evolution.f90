@@ -24,7 +24,7 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, m                                                  !
+    INTEGER :: i, j, k, l, Nnull=0                                            !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
     REAL(DOUBLE) :: Pwrtmp                                                    !
@@ -68,6 +68,7 @@ CONTAINS
        END IF
        !*************************************
 
+<<<<<<< HEAD
        ! Iteration in time for pulses
        tps = tps + clock%Dt
 !       IF (switch == 1) THEN
@@ -90,6 +91,7 @@ CONTAINS
           END IF
        END IF
        !print*, switch, k, sys%Powr, tps
+
        !**** Heat + Elas + Fk-Pl
        If (switch == 0) CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
@@ -107,7 +109,7 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz dimer 
-       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F, diag)
+       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F)
        !**** Disso Recombination
        CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion
@@ -149,7 +151,7 @@ CONTAINS
        write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,A)",advance="no") tabul,&!
        "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "] ", Nnull, " \r"  !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
@@ -206,23 +208,22 @@ CONTAINS
 
     CLOSE(99)
 
-    CALL Consv_Test(sys, Meta, U, F, Diag, consv)
+    CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
     write(*,"(2A,F6.2,A)"), tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Consv_Test(sys, Meta, U, Fi, Diag, consv)
+  SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: U
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: Fi
-    TYPE(Species), DIMENSION(0:NumMeta), INTENT(IN) :: meta
     REAL(DOUBLE) , DIMENSION(2) , INTENT(INOUT) :: consv
     !LOCAL
     INTEGER      :: i
-    REAL(DOUBLE) :: Coef, Eloss=0.d0, Eprod=0.d0
+    REAL(DOUBLE) :: Coef
     ! **** Particle Conservation : Σ f(i).U(i)^½.ΔU ************************************!
     Coef = 0.d0                                                                         !
     DO i = 1, sys%nx                                                                    !

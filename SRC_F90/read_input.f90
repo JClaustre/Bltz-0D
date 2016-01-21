@@ -318,8 +318,8 @@ CONTAINS
        meta(0)%Ni = meta(0)%Prs / (qe * meta(0)%Tp * 7.5006d-3)
        write(*,"(2A,ES10.2)") tabul, "Gas density is redefined (cm-3) : ", meta(0)%Ni*1d-6
     END IF
-    SELECT CASE (NumIon)                                                    !
-    CASE (3)                                                                !
+    SELECT CASE (NumIon)
+    CASE (3)
        ion(NumIon)%Name = " HE2-DIMER" ; ion(NumIon)%En = ion(2)%En - 3.4d0
        write(*,"(4A,F6.2)") tabul, "Init Excimer : ",ion(NumIon)%Name, " | Enrgy (eV) = ", ion(NumIon)%En
     END SELECT
@@ -424,7 +424,7 @@ CONTAINS
     READ (90,*) Clock%Rstart
     CLOSE (90)
     !**** Init Clock
-    clock%MaxIter = int(4.0d+8)
+    clock%MaxIter = int(5E+08)
     IF (Clock%Rstart == 0) clock%SumDt = 0.d0
     !**** Init Grid Variables
     IF (Clock%Rstart == 1) THEN
