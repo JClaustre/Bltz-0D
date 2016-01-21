@@ -180,11 +180,10 @@ CONTAINS
 
   !***********************************************************************
   ! Second electron with 0 energy from excimer He2*
-  SUBROUTINE Ioniz_Excimer100 (sys, ion, U, Fi, diag)
+  SUBROUTINE Ioniz_Excimer100 (sys, ion, U, Fi)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(:), INTENT(INOUT) :: ion
-    Type(Diagnos), DIMENSION(:), INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
     !LOCAL
@@ -193,7 +192,7 @@ CONTAINS
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src, moy
     Dx = sys%Dx ; prod=0.d0 ; loss = 0.d0 ; moy = 0.d0
-    SELECT CASE (NumIon)
+    SELECT CASE (3)
     CASE (3) 
        Nion = 3
     END SELECT

@@ -24,7 +24,7 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, m, Nnull=0                                         !
+    INTEGER :: i, j, k, l, Nnull=0                                            !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
     REAL(DOUBLE) :: GenPwr                                                    !
@@ -82,7 +82,7 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz dimer 
-       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F, diag)
+       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F)
        !**** Disso Recombination
        CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion
@@ -181,23 +181,22 @@ CONTAINS
 
     CLOSE(99)
 
-    CALL Consv_Test(sys, Meta, U, F, Diag, consv)
+    CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
     write(*,"(2A,F6.2,A)"), tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Consv_Test(sys, Meta, U, Fi, Diag, consv)
+  SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: U
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: Fi
-    TYPE(Species), DIMENSION(0:NumMeta), INTENT(IN) :: meta
     REAL(DOUBLE) , DIMENSION(2) , INTENT(INOUT) :: consv
     !LOCAL
     INTEGER      :: i
-    REAL(DOUBLE) :: Coef, Eloss=0.d0, Eprod=0.d0
+    REAL(DOUBLE) :: Coef
     ! **** Particle Conservation : Σ f(i).U(i)^½.ΔU ************************************!
     Coef = 0.d0                                                                         !
     DO i = 1, sys%nx                                                                    !
