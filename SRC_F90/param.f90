@@ -68,7 +68,8 @@ MODULE MOD_PARAM
   REAL(DOUBLE), PARAMETER :: Ry  = 13.605692  ! Rydberg energy (eV)
   REAL(DOUBLE), PARAMETER :: Nlosh = 2.6868d+25 ! Loschmidt Number (m-3) => (P=1atm, T=0C)
   !REAL(DOUBLE), PARAMETER :: LnC = 10.d0      ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
-  CHARACTER(len=1), PARAMETER :: tabul=char(9) ! tabulation 
+  CHARACTER(len=1), PARAMETER :: tabul=char(9)  ! tabulation 
+  CHARACTER(len=1), PARAMETER :: rchar=achar(13)! retour chariot (==> "\r")
   ! *******************************************************************************
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: F
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: U

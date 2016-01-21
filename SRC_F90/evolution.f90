@@ -24,7 +24,7 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, Nnull=0                                            !
+    INTEGER :: i, j, k, l, m                                                  !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
     REAL(DOUBLE) :: Pwrtmp                                                    !
@@ -44,7 +44,7 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt     = 1.d-12    ! Maximum Time-Step allowed
+    MaxDt     = 1.d-10    ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
     Ton       = 3.d-9    ! Total time of the pulse.
     Ton_up    = 1.d-9    ! Increasing time of the pulse
@@ -57,18 +57,19 @@ CONTAINS
        l = l + 1
        meta(:)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
        !**** Update Time-step
-       IF (1.d0/MaxR .GE. 1.0d-12 .and. l .GT.1) THEN
-          Clock%Dt = 1.0d0 / (MaxR*3.)
-          IF (Clock%Dt .GT. MaxDt) Clock%Dt = MaxDt ! Maximum Time-Step allowed
-          MaxR = 0.d0
+       IF (1.d0/maxR .GT. 1d-13 .and. l .GT.1) THEN
+          Clock%Dt = 1.0d0 / (MaxR*3.d0)
+          IF (Clock%Dt .GE. MaxDt) Clock%Dt = MaxDt ! Maximum Time-Step allowed
+       ELSE
+          Clock%Dt = 1d-13
        END IF
        !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
        IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
            print*,""; print*," NaN ! Pobleme in time step?", elec%Ni, MaxR ; Stop 
        END IF
+       MaxR = 0.d0
        !*************************************
 
-<<<<<<< HEAD
        ! Iteration in time for pulses
        tps = tps + clock%Dt
 !       IF (switch == 1) THEN
@@ -90,7 +91,6 @@ CONTAINS
              m = 0 ; k = 0 ; tps = 0.d0
           END IF
        END IF
-       !print*, switch, k, sys%Powr, tps
 
        !**** Heat + Elas + Fk-Pl
        If (switch == 0) CALL Heating (sys,meta, U, F)
@@ -151,7 +151,7 @@ CONTAINS
        write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,A)",advance="no") tabul,&!
        "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, rchar   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !

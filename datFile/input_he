@@ -3,14 +3,14 @@
 2.13000E+01	  E (V/cm)	Electric field
 3.00000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 1.00000E+04   	  f (Hz)	Heating Frequency
-7.60000E+02	  prs (Torr)	Pressure
+7.60000E+00	  prs (Torr)	Pressure
 500.0000000	  Tp (K)	Temperature
 2.00000E+00	  Tpe (eV)	Electronic Temperature
 1.60000E-02	  Ra (cm)	Cylinder Radius
 5.00000E-02	  L  (cm)       Tube Length
 1.00000E+17	  ne (cm-3)	Initial electron density
 3.12500E+06   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-2.00000E+00   	  Simulation Time (mic-sec)
-1.00000E-12	  Dt ( Time-Step (sec) )
+0.50000E+00   	  Simulation Time (mic-sec)
+1.00000E-13	  Dt ( Time-Step (sec) )
 1.00000E+02	  Emax (Energy grid max (eV) )
 1.0000		  save data's every XXX micro-sec
