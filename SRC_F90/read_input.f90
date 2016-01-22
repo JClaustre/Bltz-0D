@@ -466,7 +466,7 @@ CONTAINS
        END DO                                                               !
        power = power * qe                                                   !
        sys%Powr = power                                                     !
-       write (*,"(2A,ES15.4,AES15.6)") tabul, "Power [W/cm3 | W] fixed to : ", &
+       write (*,"(2A,ES15.4,A,ES15.6)") tabul, "Power [W/cm3 | W] fixed to : ", &
             sys%Powr*1d-6, " |", sys%Powr*sys%volume                        !
     END IF                                                                  !
     !***********************************************************************!

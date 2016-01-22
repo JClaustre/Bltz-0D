@@ -74,7 +74,7 @@ CONTAINS
     INTEGER :: i
     REAL(DOUBLE) :: mua, mum, mue, Da, Dm, De, En, En2
     REAL(DOUBLE) :: Coef, Coef2, Sa, Sm, Se, Smeta1, Smeta2, smeta3
-
+    En = 0.d0 ; En2 = 0.d0
     !**** Normalization of EEDF
     !**** Σ f(u)u½ du = 1
     elec%Ni = 0.d0
@@ -160,6 +160,7 @@ CONTAINS
     INTEGER :: i
     REAL(DOUBLE) :: mua, mum, Da, Dm, Damb, En, En2
     REAL(DOUBLE) :: Ng_atm, Coef, Sa, Sm, Se, Smeta1, Smeta2, smeta3
+    En = 0.d0 ; En2 = 0.d0
 
     elec%Ni = 0.d0
     DO i = 1, sys%nx

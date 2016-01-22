@@ -37,11 +37,10 @@ CONTAINS
     IF (Clock%Rstart == 0) THEN                                               !
        OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
     ELSE IF (Clock%Rstart == 1) THEN                                          !
-       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS = 'APPEND', &            !
-            ACTION="WRITE",STATUS="UNKNOWN")                                  !
+       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="STREAM",ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 6.d-09 ! Maximum Time-Step allowed
+    MaxDt  = 1.d-10 ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
     GenPwr = 0.5d-6 ! Time constant to start the generator.
 
@@ -127,7 +126,7 @@ CONTAINS
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
+          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)") tabul, "Time : ", &            !
                (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06,&     !
                ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N (Td)", (sys%E/meta(0)%Ni)/1d-21
        END IF                                                                     !
@@ -183,7 +182,7 @@ CONTAINS
 
     CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
-    write(*,"(2A,F6.2,A)"), tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
+    write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -246,9 +245,9 @@ CONTAINS
     !***********************************************************************************!
 
     elec%En = Coef
-    write(*,"(2A,2ES15.4)"), tabul, "Gain Power in Heat : ", Diag(10)%EnProd * qe/(clock%Dt*clock%NumIter),&
+    write(*,"(2A,2ES15.4)") tabul, "Gain Power in Heat : ", Diag(10)%EnProd * qe/(clock%Dt*clock%NumIter),&
          Diag(10)%EnProd * qe * sys%volume/(clock%Dt*clock%NumIter)
-    write(*,"(2A,2ES15.4)"), tabul, "Loss Power in Elast: ", Diag(11)%EnLoss * qe/(clock%Dt*clock%NumIter),&
+    write(*,"(2A,2ES15.4)") tabul, "Loss Power in Elast: ", Diag(11)%EnLoss * qe/(clock%Dt*clock%NumIter),&
          Diag(11)%EnLoss * qe * sys%volume/(clock%Dt*clock%NumIter)
 
     Coef = ABS(1.0d0 - elec%En/consv(2))

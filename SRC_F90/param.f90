@@ -252,9 +252,9 @@ CONTAINS
   END SUBROUTINE LoopTime
   !***********************************************************************
   SUBROUTINE tridag(a,b,c,r,u,n) 
-    REAL(DOUBLE) :: gam(50000),a(n),b(n),c(n),u(n),r(n), bet
     INTEGER j,n 
-    if (b(1)==0.d0) Then
+    REAL(DOUBLE) :: gam(50000),a(n),b(n),c(n),u(n),r(n), bet
+    if (b(1) .EQ. 0d0) Then
        print*, 'ERROR : b(1)=0 in tridag' 
        Stop
     End if
@@ -263,7 +263,7 @@ CONTAINS
     do j=2,n 
        gam(j)=c(j-1)/bet 
        bet=b(j)-a(j)*gam(j) 
-       if (bet==0.d0) Then
+       if (bet .EQ. 0d0) Then
           print*, 'ERROR : bet=0 in tridag' 
           Stop
        End if
