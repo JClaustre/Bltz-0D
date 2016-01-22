@@ -104,7 +104,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: i, k, kp, ichi, case
+    INTEGER :: i, k, kp, ichi, cas, nx
     REAL(DOUBLE) :: prod, loss, ratx
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src
@@ -112,8 +112,9 @@ CONTAINS
     REAL(DOUBLE) :: SubDt
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; diag(2)%Tx = 0.d0
+    nx = sys%nx
 
-    case = 1 ! if 0 then "Vidal case" | else "Matte case"
+    cas = 1 ! if 0 then "Vidal case" | else "Matte case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     DO i = 0, NumMeta
@@ -132,20 +133,20 @@ CONTAINS
        DO l = 1, SubCycl
           Src = 0.d0
           Eij = ion(1)%En - meta(i)%En ! ionization threshold
-          IF (case == 0) Eij = Eij + Dx*0.5d0
+          IF (cas == 0) Eij = Eij + Dx*0.5d0
           chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi
           IF (rchi .LT. 0.d0 .OR. Eij .LT. 0.d0) then
              print*, 'probleme rchi<0 in [Ioniz]', i, meta(i)%En; STOP
           END IF
 
-          DO k = 1, sys%nx
+          DO k = 1, nx
              prod= 0.d0 ; loss= 0.d0 ; Coef = 1.d0
              kp = k + ichi
 
              IF (k == ichi+1) Coef = (1.d0-rchi)
              loss = Coef * U(k) * meta(i)%SecIon(1,k) * Fi(k)
-             IF (kp   .LE. sys%nx) prod = U(kp) * meta(i)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
-             IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * meta(i)%SecIon(1,kp+1) * Fi(kp+1)
+             IF (kp   .LE. nx) prod = U(kp) * meta(i)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
+             IF (kp+1 .LE. nx) prod = prod + rchi * U(kp+1) * meta(i)%SecIon(1,kp+1) * Fi(kp+1)
              !**** Excited states balance
              IF (k .GE. ichi+1) Then
                 coef = 1.d0
@@ -155,17 +156,15 @@ CONTAINS
              !**** UpDate Distribution Function
              Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / dsqrt(U(k))
           END DO
-          IF ( case == 0 ) THEN
+          IF ( cas == 0 ) THEN
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx
+             !**** Diagnostic
+             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
           ELSE
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
              Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
-          END IF
-          !**** Diagnostic
-          IF ( case == 0 ) THEN
-             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
-          ELSE
-             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij)
+             !**** Diagnostic
+             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1 * Dx * Eij
           END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
           ion(1)%Ni  = ion(1)%Ni  + SubDt * Src * coef1 * Dx
