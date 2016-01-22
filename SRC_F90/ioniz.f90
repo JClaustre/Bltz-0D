@@ -104,7 +104,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: i, k, kp, ichi, case
+    INTEGER :: i, k, kp, ichi, cas
     REAL(DOUBLE) :: prod, loss, ratx
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src
@@ -113,7 +113,7 @@ CONTAINS
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; diag(2)%Tx = 0.d0
 
-    case = 1 ! if 0 then "Vidal case" | else "Matte case"
+    cas = 1 ! if 0 then "Vidal case" | else "Matte case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     DO i = 0, NumMeta
@@ -132,7 +132,7 @@ CONTAINS
        DO l = 1, SubCycl
           Src = 0.d0
           Eij = ion(1)%En - meta(i)%En ! ionization threshold
-          IF (case == 0) Eij = Eij + Dx*0.5d0
+          IF (cas == 0) Eij = Eij + Dx*0.5d0
           chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi
           IF (rchi .LT. 0.d0 .OR. Eij .LT. 0.d0) then
              print*, 'probleme rchi<0 in [Ioniz]', i, meta(i)%En; STOP
@@ -155,16 +155,14 @@ CONTAINS
              !**** UpDate Distribution Function
              Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / dsqrt(U(k))
           END DO
-          IF ( case == 0 ) THEN
+          IF ( cas == 0 ) THEN
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx
+             !**** Diagnostic
+             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
           ELSE
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
              Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
-          END IF
-          !**** Diagnostic
-          IF ( case == 0 ) THEN
-             diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
-          ELSE
+             !**** Diagnostic
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij)
           END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
