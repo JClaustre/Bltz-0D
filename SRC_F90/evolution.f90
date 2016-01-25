@@ -35,7 +35,6 @@ CONTAINS
     count1 = 0.d0 ; count2 = 0.d0                                             !
     !*****************************                                            !
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
-    write(*,"(2A,I14)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     IF (Clock%Rstart == 0) THEN                                               !
        OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
@@ -44,12 +43,12 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")                                  !
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt     = 1.d-10    ! Maximum Time-Step allowed
+    MaxDt     = 1.d-8    ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Ton       = 3.d-9    ! Total time of the pulse.
-    Ton_up    = 1.d-9    ! Increasing time of the pulse
-    Ton_dwn   = 1.d-9    ! Decreasing time of the pulse
-    Toff      = 60.d-9 
+    Ton       = 1.d-3    ! Total time of the pulse.
+    Ton_up    = 2.d-4    ! Increasing time of the pulse
+    Ton_dwn   = 1.5d-4   ! Decreasing time of the pulse
+    Toff      = 5.d-3 
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -151,7 +150,7 @@ CONTAINS
        write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,A)",advance="no") tabul,&!
        "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, rchar   !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, "\r"    !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
