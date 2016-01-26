@@ -44,10 +44,10 @@ CONTAINS
     !*************************************************************************!
     MaxDt     = 1.d-8    ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Ton       = 1.d-3    ! Total time of the pulse.
-    Ton_up    = 2.d-4    ! Increasing time of the pulse
-    Ton_dwn   = 1.5d-4   ! Decreasing time of the pulse
-    Toff      = 5.d-3 
+    Ton       = 1.d-6    ! Total time of the pulse.
+    Ton_up    = 2.d-7    ! Increasing time of the pulse
+    Ton_dwn   = 1.5d-7   ! Decreasing time of the pulse
+    Toff      = 5.d-6 
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)

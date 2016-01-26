@@ -43,7 +43,7 @@ MODULE MOD_PARAM
 
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
-  INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
+  INTEGER, PARAMETER :: NumIon  = 2  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
   TYPE(Time)    :: Clock
