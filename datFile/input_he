@@ -1,4 +1,4 @@
-800		  Number of grid points 
+400		  Number of grid points 
 0          	  Restart simulation ( 0  - no restart | 1 - restart )
 2.13000E+01	  E (V/cm)	Electric field
 3.00000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)

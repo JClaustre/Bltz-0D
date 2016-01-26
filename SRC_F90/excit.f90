@@ -405,6 +405,58 @@ CONTAINS
   END SUBROUTINE Exc_Impli
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  SUBROUTINE DExc_Dimer(sys, meta, U, Fi, diag)
+    !INTENT
+    TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
+    Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
+    !LOCAL
+    INTEGER :: k, km, ichi, nx
+    REAL(DOUBLE) :: Dx, coef, coef1
+    REAL(DOUBLE) :: C_Dxc, prod, loss
+    REAL(DOUBLE) :: chi, rchi, E_ij
+    REAL(DOUBLE) :: Sd
+    REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
+    !********************
+    Dx = sys%Dx ; nx = sys%nx
+    !********************
+
+    coef1 = ion(3)%Ni * gama
+    !********************************************************
+    Sd = 0.d0
+    E_ij = ion(3)%En
+    chi = E_ij/Dx ; ichi = int(chi) ; rchi = chi - ichi
+    DO k = 1, nx
+       km = k - ichi
+       Fo(k) = Fi(k)
+       prod= 0.d0 ; loss= 0.d0 ; coef = 1.d0
+       !**** De-Excitation
+       loss = U(k) * ion(3)%SecExc(1,k) * Fi(k)
+       IF (km   .GT. 0) prod = U(km) * ion(3)%SecExc(1,km)* (1.d0-rchi) * Fo(km)
+       IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * ion(3)%SecExc(1,km-1) * Fo(km-1)
+       C_Dxc = coef1 * (prod - loss) / sqrt(U(k))
+       !**************************** 
+
+       !**** Excited states balance
+       IF (k .LE. (nx-ichi-1) ) Sd = Sd + ( U(k) * ion(3)%SecExc(1,k) * Fi(k)* gama*Dx)
+       !**************************** 
+
+       !**** UpDate EEDF
+       Fi(k) = Fi(k) + Clock%Dt * ( C_Dxc )
+       !**************************** 
+    END DO
+    !**** Diagnostic
+    diag(12)%EnProd = diag(12)%EnProd + Clock%Dt * Sd*ion(3)%Ni* E_ij
+    !*****************
+    !**** UpDate Density
+    ion(3)%UpDens = ion(3)%UpDens - Clock%Dt*Sd*ion(3)%Ni
+    
+    if (Sd .GT. MaxR) MaxR = Sd
+  END SUBROUTINE DExc_Dimer
+
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init_ExcDxc(sys, meta, Fosc, Q, A)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -527,6 +579,16 @@ CONTAINS
           END if
        END DO
     END DO
+
+    !**** De-excitation from Excimer He2*
+    !**** He2* + e- --> 2He+ + e-
+    SELECT CASE (NumIon)
+    CASE (3) 
+       coef = sqrt(pi) * 4.d-15 / (2.d0 * gama)
+       DO k = 1, sys%nx
+          ion(NumIon)%SecExc(1,k) = coef * IdU(k,Dx)**(-0.5d0)
+       END DO
+    END SELECT
 
   END SUBROUTINE Init_ExcDxc
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

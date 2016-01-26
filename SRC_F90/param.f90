@@ -43,7 +43,7 @@ MODULE MOD_PARAM
 
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
-  INTEGER, PARAMETER :: NumIon  = 2  ! He+ | He2+ | He2*
+  INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
   TYPE(Time)    :: Clock
@@ -102,6 +102,7 @@ CONTAINS
     SELECT CASE (NumIon)
     CASE (3)
        ALLOCATE ( ion(NumIon)%SecIon(1 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
+       ALLOCATE ( ion(NumIon)%SecExc(1 ,nx) ) ; ion(NumIon)%SecExc(:,:) = 0.d0
     END SELECT
     
     ALLOCATE ( Meta(0)%SecTot(nx) ) ; Meta(0)%SecTot(:) = 0.d0
@@ -122,7 +123,7 @@ CONTAINS
     END DO
     SELECT CASE (NumIon)
     CASE (3) 
-       DEALLOCATE ( ion(NumIon)%SecIon )
+       DEALLOCATE ( ion(NumIon)%SecIon, ion(NumIon)%SecExc )
     END SELECT
 
     DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(0)%SecRec )
