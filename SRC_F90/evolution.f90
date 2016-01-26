@@ -39,8 +39,7 @@ CONTAINS
     IF (Clock%Rstart == 0) THEN                                               !
        OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
     ELSE IF (Clock%Rstart == 1) THEN                                          !
-       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS = 'APPEND', &            !
-            ACTION="WRITE",STATUS="UNKNOWN")                                  !
+       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="STREAM",ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
     MaxDt     = 1.d-8    ! Maximum Time-Step allowed
@@ -52,7 +51,7 @@ CONTAINS
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
-       if (l == 500) CALL System_clock (t1, clock_rate)
+       if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
        meta(:)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
        !**** Update Time-step
@@ -101,6 +100,8 @@ CONTAINS
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Begin (sys, meta, U, F, diag)
        END SELECT
+       !**** De-excit Dimer molecule (He2*)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** Ioniz He+
        SELECT CASE (IonX)
        CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
@@ -108,7 +109,7 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz dimer 
-       IF (NumIon == 3) CALL Ioniz_Excimer100 (sys, ion, U, F)
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
        !**** Disso Recombination
        CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion
@@ -127,7 +128,7 @@ CONTAINS
        Nnull = 0
        do i = 1, NumMeta
           meta(i)%Ni = meta(i)%Ni + meta(i)%Updens
-          if (i .le. NumIon) ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
+          if (i .LE. NumIon) ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
           IF (meta(i)%Ni < 0.d0) THEN
              Nnull = Nnull + 1
              meta(i)%Ni = 0.d0
@@ -141,8 +142,8 @@ CONTAINS
        END DO
        elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
        !**** Evaluate Calculation Time
-       if (l == 600) CALL System_clock (t2, clock_rate)
-       if (l == 600) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
+       if (l == 300) CALL System_clock (t2, clock_rate)
+       if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
        !**** UpDate Simulation Time
        Clock%SumDt = Clock%SumDt + Clock%Dt
 
@@ -153,7 +154,7 @@ CONTAINS
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, "\r"    !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)"), tabul, "Time : ", &            !
+          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)") tabul, "Time : ", &            !
                (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06,&     !
                ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N (Td)", (sys%E/meta(0)%Ni)/1d-21
        END IF                                                                     !
@@ -209,7 +210,7 @@ CONTAINS
 
     CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
-    write(*,"(2A,F6.2,A)"), tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
+    write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -267,14 +268,18 @@ CONTAINS
     Coef = Coef - Diag(10)%EnProd                                                       !
     !**** (10-2) **** Energy loss due to Elastic collisions                             !
     Coef = Coef + Diag(11)%EnLoss                                                       !
+    !**** (12) **** Energy gain due to De-excit collisions from Dimer molecule          !
+    Coef = Coef - Diag(12)%EnProd                                                       !
+    !**** (13) Energy gain and loss due to ionization/3-body recombination from Dimer   !
+    Coef = Coef + (Diag(13)%EnLoss-Diag(13)%EnProd)                                     !
     !**** (3)=radiative trans | (4)=l-xchnge reaction                                   !
     !**** (7)=3 body convert  |                                                         !
     !***********************************************************************************!
 
     elec%En = Coef
-    write(*,"(2A,2ES15.4)"), tabul, "Gain Power in Heat : ", Diag(10)%EnProd * qe/(clock%Dt*clock%NumIter),&
+    write(*,"(2A,2ES15.4)") tabul, "Gain Power in Heat : ", Diag(10)%EnProd * qe/(clock%Dt*clock%NumIter),&
          Diag(10)%EnProd * qe * sys%volume/(clock%Dt*clock%NumIter)
-    write(*,"(2A,2ES15.4)"), tabul, "Loss Power in Elast: ", Diag(11)%EnLoss * qe/(clock%Dt*clock%NumIter),&
+    write(*,"(2A,2ES15.4)") tabul, "Loss Power in Elast: ", Diag(11)%EnLoss * qe/(clock%Dt*clock%NumIter),&
          Diag(11)%EnLoss * qe * sys%volume/(clock%Dt*clock%NumIter)
 
     Coef = ABS(1.0d0 - elec%En/consv(2))

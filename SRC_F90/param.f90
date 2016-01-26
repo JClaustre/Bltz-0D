@@ -43,7 +43,7 @@ MODULE MOD_PARAM
 
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
-  INTEGER, PARAMETER :: NumIon  = 2  ! He+ | He2+ | He2*
+  INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
   TYPE(Time)    :: Clock
@@ -102,7 +102,8 @@ CONTAINS
 
     SELECT CASE (NumIon)
     CASE (3)
-       ALLOCATE ( ion(NumIon)%SecIon(1 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
+       ALLOCATE ( ion(NumIon)%SecIon(2 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
+       ALLOCATE ( ion(NumIon)%SecExc(1 ,nx) ) ; ion(NumIon)%SecExc(:,:) = 0.d0
     END SELECT
     
     ALLOCATE ( Meta(0)%SecTot(nx) ) ; Meta(0)%SecTot(:) = 0.d0
@@ -123,7 +124,7 @@ CONTAINS
     END DO
     SELECT CASE (NumIon)
     CASE (3) 
-       DEALLOCATE ( ion(NumIon)%SecIon )
+       DEALLOCATE ( ion(NumIon)%SecIon, ion(NumIon)%SecExc )
     END SELECT
 
     DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(0)%SecRec )
@@ -221,7 +222,7 @@ CONTAINS
     REAL(DOUBLE) :: sec, tot
     sec = 0.d0 ; tot = 0.d0
     sec = real(t2-t1) / real(ClockR)
-    Nloop = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt) + 600
+    Nloop = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt) + 300
 
     tot = sec * Nloop /100.d0
 
@@ -253,9 +254,9 @@ CONTAINS
   END SUBROUTINE LoopTime
   !***********************************************************************
   SUBROUTINE tridag(a,b,c,r,u,n) 
-    REAL(DOUBLE) :: gam(50000),a(n),b(n),c(n),u(n),r(n), bet
     INTEGER j,n 
-    if (b(1)==0.d0) Then
+    REAL(DOUBLE) :: gam(50000),a(n),b(n),c(n),u(n),r(n), bet
+    if (b(1) .EQ. 0d0) Then
        print*, 'ERROR : b(1)=0 in tridag' 
        Stop
     End if
@@ -264,7 +265,7 @@ CONTAINS
     do j=2,n 
        gam(j)=c(j-1)/bet 
        bet=b(j)-a(j)*gam(j) 
-       if (bet==0.d0) Then
+       if (bet .EQ. 0d0) Then
           print*, 'ERROR : bet=0 in tridag' 
           Stop
        End if

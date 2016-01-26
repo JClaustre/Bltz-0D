@@ -29,6 +29,7 @@ endif
 # ******************************************************************** #
 ifeq ($(USEDEBUGG),1)
 	FLAGS += -g -O0 -Wall -fbounds-check -fbacktrace -fbackslash
+	FLAGS += -fimplicit-none -pedantic
 else
 	FLAGS += -O2 -fbackslash -march=native -funroll-loops -pipe
 endif

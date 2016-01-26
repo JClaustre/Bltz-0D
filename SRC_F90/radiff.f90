@@ -74,7 +74,7 @@ CONTAINS
     INTEGER :: i
     REAL(DOUBLE) :: mua, mum, mue, Da, Dm, De, En, En2
     REAL(DOUBLE) :: Coef, Coef2, Sa, Sm, Se, Smeta1, Smeta2, smeta3
-
+    En = 0.d0 ; En2 = 0.d0
     !**** Normalization of EEDF
     !**** Σ f(u)u½ du = 1
     elec%Ni = 0.d0
@@ -91,7 +91,7 @@ CONTAINS
     DO i = 1, sys%nx
        if (meta(0)%SecMtm(i) .ne. 0.d0) Coef2 = Coef * U(i) / meta(0)%SecMtm(i)
        De = De + Coef2*F(i)
-       if (i < sys%nx-1) mue = mue - Coef2 *(F(i+1)-F(i)) / sys%Dx
+       if (i < sys%nx-1) mue = mue - Coef2 * (F(i+1)-F(i)) / sys%Dx
     END DO
     !**** Atomic & Molecular Ion
     mua = 2.68d19*1d2  / (2.96d-3 * dsqrt(meta(0)%Tp*qok) + 3.11d-2) / meta(0)%Ni ! cf. Santos
@@ -160,6 +160,7 @@ CONTAINS
     INTEGER :: i
     REAL(DOUBLE) :: mua, mum, Da, Dm, Damb, En, En2
     REAL(DOUBLE) :: Ng_atm, Coef, Sa, Sm, Se, Smeta1, Smeta2, smeta3
+    En = 0.d0 ; En2 = 0.d0
 
     elec%Ni = 0.d0
     DO i = 1, sys%nx

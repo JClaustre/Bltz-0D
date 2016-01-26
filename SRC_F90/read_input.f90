@@ -468,7 +468,7 @@ CONTAINS
        END DO                                                               !
        power = power * qe                                                   !
        sys%Powr = power                                                     !
-       write (*,"(2A,ES15.4,AES15.6)") tabul, "Power [W/cm3 | W] fixed to : ", &
+       write (*,"(2A,ES15.4,A,ES15.6)") tabul, "Power [W/cm3 | W] fixed to : ", &
             sys%Powr*1d-6, " |", sys%Powr*sys%volume                        !
     END IF                                                                  !
     !***********************************************************************!
@@ -478,7 +478,7 @@ CONTAINS
        ion(2)%Ni = elec%Ni * 0.9d0                                          !
        ion(1)%Ni = elec%Ni * 0.1d0                                          !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 0.d0                                     !
+       CASE (3) ; ion(NumIon)%Ni = 1.0d+10                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
           meta(i)%Ni = 1.0d+10                                              !
