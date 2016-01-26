@@ -426,7 +426,7 @@ CONTAINS
        DO j=i+1, NumMeta
           Eij=Meta(j)%En-Meta(i)%En
           ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
-          Rp=0.5d0 * (Fosc(i,j)*Ry/Eij)**(-0.7d0)
+          Rp=0.5d0 * (Fosc(i,j)*Ry/Eij)**(-0.7d0) 
           !**** 1S1<-->2s3
           IF (i == 0 .and. j == 1) THEN 
              DO k=1, sys%nx
