@@ -91,7 +91,7 @@ CONTAINS
     DO i = 1, sys%nx
        if (meta(0)%SecMtm(i) .ne. 0.d0) Coef2 = Coef * U(i) / meta(0)%SecMtm(i)
        De = De + Coef2*F(i)
-       if (i < sys%nx-1) mue = mue - Coef2 *(F(i+1)-F(i)) / sys%Dx
+       if (i < sys%nx-1) mue = mue - Coef2 * (F(i+1)-F(i)) / sys%Dx
     END DO
     !**** Atomic & Molecular Ion
     mua = 2.68d19*1d2  / (2.96d-3 * dsqrt(meta(0)%Tp*qok) + 3.11d-2) / meta(0)%Ni ! cf. Santos

@@ -1,4 +1,4 @@
-400		  Number of grid points 
+600		  Number of grid points 
 0          	  Restart simulation ( 0  - no restart | 1 - restart )
 2.13000E+01	  E (V/cm)	Electric field
 3.00000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
@@ -10,7 +10,7 @@
 5.00000E+00	  L  (cm)       Tube Length
 2.00000E+12	  ne (cm-3)	Initial electron density
 5.85690E+00   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-0.100000000   	  Simulation Time (mic-sec)  
+5.000000000   	  Simulation Time (mic-sec)  
 1.00000E-12	  Dt ( Time-Step (sec) )
 2.00000E+02	  Emax (Energy grid max (eV) ) 
 5.0000		  save data's every XXX micro-sec

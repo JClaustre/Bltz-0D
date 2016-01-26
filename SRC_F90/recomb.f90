@@ -24,7 +24,7 @@ CONTAINS
 
     !LOCAL
     INTEGER :: i
-    REAL(DOUBLE) :: coef, recmb, Dx, rcmb_ex
+    REAL(DOUBLE) :: coef, recmb, Dx
     REAL(DOUBLE) :: energI, energF, U3
     REAL(DOUBLE), DIMENSION(4) :: tx
     tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/)
@@ -52,12 +52,6 @@ CONTAINS
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
     diag(8)%Tx =  recmb * Dx
     !****************
-    !**** He2* : Excimer recombination He2* + e- --> 2He + e-
-    SELECT CASE (NumIon)
-    CASE (3) 
-       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(NumIon)%Ni
-       ion(NumIon)%UpDens = ion(NumIon)%UpDens - Clock%Dt * rcmb_ex 
-    END SELECT
   END SUBROUTINE Recomb
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Recomb_Norm (sys, meta, U, Fi, diag)
@@ -69,7 +63,7 @@ CONTAINS
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     !LOCAL
     INTEGER :: i
-    REAL(DOUBLE) :: coef, recmb, part, En1, En2, rcmb_ex
+    REAL(DOUBLE) :: coef, recmb, part, En1, En2
     En1  = 0.d0 ; En2 = 0.d0 ; part = 0.d0
     recmb = 5.0d-09 * 1.d-6 * (meta(0)%Tp / (elec%Tp)) ! m3 s-1
     coef = recmb * Clock%Dt * elec%Ni * ion(2)%Ni
@@ -90,14 +84,8 @@ CONTAINS
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
     diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
-    !**** He2* : Excimer SuperElastic He2* + e- --> 2He + e-
-    SELECT CASE (NumIon)
-    CASE (3) 
-       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(NumIon)%Ni
-       ion(NumIon)%UpDens = ion(NumIon)%UpDens - Clock%Dt * rcmb_ex 
-    END SELECT
-
   END SUBROUTINE Recomb_Norm
+
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Conv_3Body (meta, ion)
     !INTENT
@@ -149,6 +137,7 @@ CONTAINS
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
     END SELECT
   END SUBROUTINE Conv_3Body
+
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init_Recomb (sys, meta)
     !INTENT
@@ -192,7 +181,7 @@ CONTAINS
     END DO
     meta(0)%SecRec(:) = meta(0)%SecRec(:) * 1d-20
     meta(0)%SecRec(sys%nx) = 0.d0
-
   END SUBROUTINE Init_Recomb
+
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_RECOMB

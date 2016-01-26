@@ -179,18 +179,19 @@ CONTAINS
 
   !***********************************************************************
   ! Second electron with 0 energy from excimer He2*
-  SUBROUTINE Ioniz_Excimer100 (sys, ion, U, Fi)
+  SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(:), INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: i, k, kp, ichi, case, Nion
-    REAL(DOUBLE) :: prod, loss
-    REAL(DOUBLE) :: Eij, chi, rchi, Dx
-    REAL(DOUBLE) :: Coef, coef1, cnst, Src, moy
-    Dx = sys%Dx ; prod=0.d0 ; loss = 0.d0 ; moy = 0.d0
+    INTEGER :: k, kp, km, ichi, case, Nion
+    REAL(DOUBLE) :: prod, loss, rcmb, ionz
+    REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
+    REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr
+    REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
+    Dx = sys%Dx ; br = 0.5d0
     SELECT CASE (3)
     CASE (3) 
        Nion = 3
@@ -199,42 +200,61 @@ CONTAINS
     case = 0 ! if 0 then "Francois case" | else "J-P case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
-    Src = 0.d0
+    Si = 0.d0 ; Sr = 0.d0
     coef1 = gama * ion(Nion)%Ni
+    coef2 = gama * ion(2)%Ni
     Eij = ion(2)%En - ion(Nion)%En ! ionization threshold
     IF (case == 0) Eij = Eij + Dx*0.5d0
     chi = Eij/Dx ; ichi = int(chi) ; rchi = chi - ichi
-    IF (rchi .LT. 0.d0 .OR. Eij .LT. 0.d0) then
-       print*, 'probleme rchi<0 in [Ioniz]', i, meta(i)%En; STOP
-    END IF
 
     DO k = 1, sys%nx
        prod= 0.d0 ; loss= 0.d0 ; Coef = 1.d0
        kp = k + ichi
-
+       km = k - ichi
+       Fo(k) = Fi(k)
+       !**** Ionization process
        IF (k == ichi+1) Coef = (1.d0-rchi)
        loss = Coef * U(k) * ion(Nion)%SecIon(1,k) * Fi(k)
        IF (kp   .LE. sys%nx) prod = U(kp) * ion(Nion)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
        IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * ion(Nion)%SecIon(1,kp+1) * Fi(kp+1)
+       ionz = (prod - loss) * coef1 / dsqrt(U(k))
+
+       !**** 3-body recombination
+       prod= 0.d0 ; loss= 0.d0
+       loss = U(k) * ion(Nion)%SecIon(2,k) * Fi(k)
+       IF (km   .GT. 0) prod = U(km) * ion(Nion)%SecIon(2,km)* (1.d0-rchi) * Fo(km)
+       IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * ion(Nion)%SecIon(2,km-1) * Fo(km-1)
+       rcmb = (prod - loss) * coef2 / dsqrt(U(k))
+
        !**** Excited states balance
        IF (k .GE. ichi+1) Then
           coef = 1.d0
           if (k == ichi+1) coef = (1.d0-rchi) * (1.d0- (rchi/chi) )
-          Src = Src + ( coef * U(k) * ion(Nion)%SecIon(1,k) * Fi(k) )
+          Si = Si + ( coef * U(k) * ion(Nion)%SecIon(1,k) * Fi(k)*coef1 )
        END IF
-       !**** UpDate Distribution Function
-       Fi(k) = Fi(k) + Clock%Dt * (prod-loss) * coef1 / dsqrt(U(k))
+       IF (k .LE. (sys%nx-ichi-1) ) Sr = Sr + ( U(k) * ion(Nion)%SecIon(2,k) * Fi(k)*coef2 )
+
+       !**** UpDate Electron Distribution Function
+       Fi(k) = Fi(k) + Clock%Dt * (ionz + rcmb)
     END DO
 
     IF ( case == 0 ) THEN
-       Fi(1) = Fi(1) + Clock%Dt * Src * coef1* cnst * Dx
+       Fi(1) = Fi(1) + Clock%Dt * (Si - Sr) * cnst * Dx
+       !**** Diagnostic
+       diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx*(Eij-Dx*0.5d0)
+       diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx*(Eij-Dx*0.5d0)
     ELSE
-       Fi(1) = Fi(1) + Clock%Dt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
-       Fi(2) = Fi(2) - Clock%Dt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
+       Fi(1) = Fi(1) + Clock%Dt * (Si-Sr) * cnst * Dx * 3.d0 / 2.d0
+       Fi(2) = Fi(2) - Clock%Dt * (Si-Sr) * cnst * Dx / (2.d0 * dsqrt(3.d0))
+       !**** Diagnostic
+       diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx * Eij
+       diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx * Eij
     END IF
-    ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Src * coef1 * Dx
-    ion(1)%Updens  = ion(1)%Updens  + Clock%Dt * Src * coef1 * Dx
-  END SUBROUTINE Ioniz_Excimer100
+    !**** br == branching ratio
+    ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
+    meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
+    ion(1)%Updens    = ion(1)%Updens    + Clock%Dt * (Si-Sr) * Dx
+  END SUBROUTINE Ioniz_Dimer100
   !***********************************************************************
 
   !***********************************************************************
@@ -243,8 +263,8 @@ CONTAINS
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     !LOCAL
-    INTEGER :: i, j, k, l, npts
-    REAL(DOUBLE) :: Dx, Du, Eij, U
+    INTEGER :: i, j, k, l, npts, ichi
+    REAL(DOUBLE) :: Dx, Du, Eij, U, rchi
     REAL(DOUBLE), DIMENSION(200) :: SecRead, EnRead
     Dx = sys%Dx
 
@@ -289,29 +309,41 @@ CONTAINS
     !**** He(n>2,l,s) --> He+
     DO i=3, NumMeta
        Eij=ion(1)%En-meta(i)%En
-       IF(Eij .LE. 0.d0) GOTO 9905
-       DO k=1,sys%Nx
-          U=IdU(k,Dx)/Eij
-          IF(U.GT.1.d0) meta(i)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
-               ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
-          meta(i)%SecIon(1,k) = meta(i)%SecIon(1,k) * 1d-20
-       END DO
-       meta(i)%SecIon(1,sys%nx) = 0.d0
-9905 END DO
-    !**** Ionization from Excimer He2*
-    !**** He2* + e- --> He2+ + 2e-
+       IF(Eij .GT. 0.d0) THEN
+          DO k=1,sys%Nx
+             U=IdU(k,Dx)/Eij
+             IF(U.GT.1.d0) meta(i)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
+                  ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
+             meta(i)%SecIon(1,k) = meta(i)%SecIon(1,k) * 1d-20
+          END DO
+          meta(i)%SecIon(1,sys%nx) = 0.d0
+       END IF
+    END DO
+
+    !**** Ionization/Recombination from Dimer He2*
+    !**** He2* + e- <--> He2+ + 2e-
     SELECT CASE (NumIon)
     CASE (3) 
        Eij=ion(2)%En-ion(NumIon)%En
-       IF (Eij .GT. 0.d0) THEN
-          DO k = 1, sys%nx
-             U=IdU(k,Dx)/Eij
-             IF(U.GT.1.d0) ion(NumIon)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
-                  ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
-             ion(NumIon)%SecIon(1,k) = ion(NumIon)%SecIon(1,k) * 1d-20
-          END DO
-       END IF
+       DO k = 1, sys%nx
+          U=IdU(k,Dx)/Eij
+          IF(U.GT.1.d0) ion(NumIon)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
+               ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
+          ion(NumIon)%SecIon(1,k) = ion(NumIon)%SecIon(1,k) * 1d-20
+       END DO
+       !**** Klein-Rosseland relation
+       ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
+       DO k = 1, sys%nx
+          Du=IdU(k,Dx)/Eij
+          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = ((Du)/(Du+1.d0))&
+               * ( (1.0d0-rchi) * ion(NumIon)%SecIon(2,k+ichi) )
+          if(k .LE. sys%nx-ichi-1) ion(NumIon)%SecIon(2,k) = ion(NumIon)%SecIon(2,k) &
+               + ((Du)/(Du+1.d0))* ( rchi * ion(NumIon)%SecIon(2,k+ichi+1) )
+       END DO
+       ion(NumIon)%SecIon(1,sys%nx) = 0.d0
+       ion(NumIon)%SecIon(2,sys%nx) = 0.d0
     END SELECT
+
   END SUBROUTINE Init_ioniz
   !***********************************************************************
 

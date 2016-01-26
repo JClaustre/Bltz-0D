@@ -101,7 +101,7 @@ CONTAINS
 
     SELECT CASE (NumIon)
     CASE (3)
-       ALLOCATE ( ion(NumIon)%SecIon(1 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
+       ALLOCATE ( ion(NumIon)%SecIon(2 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
        ALLOCATE ( ion(NumIon)%SecExc(1 ,nx) ) ; ion(NumIon)%SecExc(:,:) = 0.d0
     END SELECT
     
@@ -221,7 +221,7 @@ CONTAINS
     REAL(DOUBLE) :: sec, tot
     sec = 0.d0 ; tot = 0.d0
     sec = real(t2-t1) / real(ClockR)
-    Nloop = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt) + 600
+    Nloop = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt) + 300
 
     tot = sec * Nloop /100.d0
 

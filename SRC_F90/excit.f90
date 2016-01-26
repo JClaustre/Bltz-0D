@@ -405,16 +405,16 @@ CONTAINS
   END SUBROUTINE Exc_Impli
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE DExc_Dimer(sys, meta, U, Fi, diag)
+  SUBROUTINE Dexc_Dimer(sys, U, ion, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
-    TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
+    TYPE(Species), DIMENSION(NumIon), INTENT(INOUT) :: ion
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: k, km, ichi, nx
-    REAL(DOUBLE) :: Dx, coef, coef1
+    INTEGER :: k, km, ichi, nx, Nion
+    REAL(DOUBLE) :: Dx, coef1
     REAL(DOUBLE) :: C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
     REAL(DOUBLE) :: Sd
@@ -422,39 +422,44 @@ CONTAINS
     !********************
     Dx = sys%Dx ; nx = sys%nx
     !********************
+    SELECT CASE (3) ! used For the compilation
+    CASE (3) 
+       Nion = 3
+    END SELECT
 
-    coef1 = ion(3)%Ni * gama
+    coef1 = ion(Nion)%Ni * gama
     !********************************************************
     Sd = 0.d0
-    E_ij = ion(3)%En
+    E_ij = ion(Nion)%En
     chi = E_ij/Dx ; ichi = int(chi) ; rchi = chi - ichi
     DO k = 1, nx
        km = k - ichi
        Fo(k) = Fi(k)
-       prod= 0.d0 ; loss= 0.d0 ; coef = 1.d0
+       prod= 0.d0 ; loss= 0.d0
        !**** De-Excitation
-       loss = U(k) * ion(3)%SecExc(1,k) * Fi(k)
-       IF (km   .GT. 0) prod = U(km) * ion(3)%SecExc(1,km)* (1.d0-rchi) * Fo(km)
-       IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * ion(3)%SecExc(1,km-1) * Fo(km-1)
-       C_Dxc = coef1 * (prod - loss) / sqrt(U(k))
+       loss = U(k) * ion(Nion)%SecExc(1,k) * Fi(k)
+       IF (km   .GT. 0) prod = U(km) * ion(Nion)%SecExc(1,km)* (1.d0-rchi) * Fo(km)
+       IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * ion(Nion)%SecExc(1,km-1) * Fo(km-1)
+       C_Dxc = coef1 * (prod - loss) / dsqrt(U(k))
        !**************************** 
 
        !**** Excited states balance
-       IF (k .LE. (nx-ichi-1) ) Sd = Sd + ( U(k) * ion(3)%SecExc(1,k) * Fi(k)* gama*Dx)
+       IF (k .LE. (nx-ichi-1) ) Sd = Sd + ( U(k) * ion(Nion)%SecExc(1,k) * Fi(k)* gama*Dx)
        !**************************** 
 
        !**** UpDate EEDF
-       Fi(k) = Fi(k) + Clock%Dt * ( C_Dxc )
+       Fi(k) = Fi(k) + Clock%Dt *  C_Dxc
        !**************************** 
     END DO
     !**** Diagnostic
-    diag(12)%EnProd = diag(12)%EnProd + Clock%Dt * Sd*ion(3)%Ni* E_ij
+    diag(12)%EnProd = diag(12)%EnProd + Clock%Dt * Sd*ion(Nion)%Ni* E_ij
     !*****************
     !**** UpDate Density
-    ion(3)%UpDens = ion(3)%UpDens - Clock%Dt*Sd*ion(3)%Ni
+    ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
     
     if (Sd .GT. MaxR) MaxR = Sd
-  END SUBROUTINE DExc_Dimer
+
+  END SUBROUTINE Dexc_Dimer
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Init_ExcDxc(sys, meta, Fosc, Q, A)
@@ -558,18 +563,19 @@ CONTAINS
        DO j=i+1, NumMeta
           Eij=Meta(j)%En-Meta(i)%En
           coef = real(meta(i)%Deg / meta(j)%Deg)
-          IF(Eij .LE. 0.d0) GOTO 366
-          ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
-          DO k=1,sys%Nx
-             Du=IdU(k,Dx)/Eij
-             if(k .LE. sys%nx-ichi) meta(j)%SecExc(i,k) = coef*((Du)/(Du+1.d0))&
-                  * ( (1.0d0-rchi) * meta(i)%SecExc(j,k+ichi) )
-             if(k .LE. sys%nx-ichi-1) meta(j)%SecExc(i,k) = meta(j)%SecExc(i,k) &
-                  + coef*((Du)/(Du+1.d0))* ( rchi * meta(i)%SecExc(j,k+ichi+1) )
-          END DO
-          meta(i)%SecExc(j,sys%nx) = 0.d0
-          meta(j)%SecExc(i,sys%nx) = 0.d0
-366    END DO
+          IF(Eij .GT. 0.d0) THEN 
+             ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
+             DO k=1,sys%Nx
+                Du=IdU(k,Dx)/Eij
+                if(k .LE. sys%nx-ichi) meta(j)%SecExc(i,k) = coef*((Du)/(Du+1.d0))&
+                     * ( (1.0d0-rchi) * meta(i)%SecExc(j,k+ichi) )
+                if(k .LE. sys%nx-ichi-1) meta(j)%SecExc(i,k) = meta(j)%SecExc(i,k) &
+                     + coef*((Du)/(Du+1.d0))* ( rchi * meta(i)%SecExc(j,k+ichi+1) )
+             END DO
+             meta(i)%SecExc(j,sys%nx) = 0.d0
+             meta(j)%SecExc(i,sys%nx) = 0.d0
+          END IF
+       END DO
     END DO
 
     DO i=0, NumMeta-1
@@ -588,6 +594,7 @@ CONTAINS
        DO k = 1, sys%nx
           ion(NumIon)%SecExc(1,k) = coef * IdU(k,Dx)**(-0.5d0)
        END DO
+       ion(NumIon)%SecExc(1,sys%nx) = 0.d0
     END SELECT
 
   END SUBROUTINE Init_ExcDxc
