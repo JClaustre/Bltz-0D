@@ -131,9 +131,21 @@ CONTAINS
   END SUBROUTINE DelocArray
   ! **********************************************************
 
-  !***********************************************************************
+  !****************** USEFULL FUNCTION ***********************
+  !**** Following Subroutines :
+  !**** - Write_Out1D
+  !**** - Write_Out2D
+  !**** - Write_Out2D
+  !**** - PrinTime
+  !**** - LoopTime
+  !**** - tridag
+
+  ! **********************************************************
+
+
+  !***********************************************************
   !                    SUBROUTINE Write_Out1D
-  !***********************************************************************
+  !***********************************************************
   SUBROUTINE Write_Out1D( array, FileName )
     !INTENT
     REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: array
@@ -148,9 +160,9 @@ CONTAINS
     END DO
     CLOSE(99)
   END SUBROUTINE Write_Out1D
-  !***********************************************************************
+  !***********************************************************
   !                    SUBROUTINE Write_Out2D
-  !***********************************************************************
+  !***********************************************************
   SUBROUTINE Write_Out2D( array, FileName )
     !INTENT
     REAL(DOUBLE), DIMENSION(:,:), INTENT(IN) :: array
@@ -168,9 +180,10 @@ CONTAINS
     END DO
     CLOSE(99)
   END SUBROUTINE Write_Out2D
-  !***********************************************************************
+
+  !***********************************************************
   !                    SUBROUTINE Write_Out3D
-  !***********************************************************************
+  !***********************************************************
   SUBROUTINE Write_Out3D( array, FileName )
     !INTENT
     REAL(DOUBLE), DIMENSION(:,:,:), INTENT(IN) :: array
@@ -191,7 +204,7 @@ CONTAINS
     END DO
     CLOSE(99)
   END SUBROUTINE Write_Out3D
-  !***********************************************************************
+  !***********************************************************
   SUBROUTINE PrinTime (t1, t2, rate)
     !INTENT
     INTEGER, INTENT(IN) :: t1, t2, rate
@@ -214,7 +227,7 @@ CONTAINS
     write(*,"(2A,I3,2(A,I2),A)") tabul, "Elapsed CPU Time : ", &
          Hrs, "h", min, ":", int(sec), "s"
   END SUBROUTINE PrinTime
-  !***********************************************************************
+  !***********************************************************
   SUBROUTINE LoopTime(t1, t2, clockR, Nloop)
     INTEGER, INTENT(IN)    :: t1, t2, clockR
     INTEGER, INTENT(INOUT) :: Nloop
@@ -251,7 +264,7 @@ CONTAINS
        write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")"
     END IF
   END SUBROUTINE LoopTime
-  !***********************************************************************
+  !***********************************************************    
   SUBROUTINE tridag(a,b,c,r,u,n) 
     INTEGER j,n 
     REAL(DOUBLE) :: gam(50000),a(n),b(n),c(n),u(n),r(n), bet
@@ -274,5 +287,167 @@ CONTAINS
        u(j)=u(j)-gam(j+1)*u(j+1) 
     end do
   END SUBROUTINE tridag
-  !***********************************************************************
+
+  !***********************************************************
+  FUNCTION arth(first,increment,n)
+    REAL(DOUBLE), INTENT(IN) :: first,increment
+    INTEGER, INTENT(IN) :: n
+    REAL(DOUBLE), DIMENSION(n) :: arth
+    INTEGER :: k,k2
+    REAL(DOUBLE) :: temp
+    if (n > 0) arth(1)=first
+    if (n <= 16) then
+       do k=2,n
+          arth(k)=arth(k-1)+increment
+       end do
+    else
+       do k=2,8
+          arth(k)=arth(k-1)+increment
+       end do
+       temp=increment*8
+       k=8
+       do
+          if (k >= n) exit
+          k2=k+k
+          arth(k+1:min(k2,n))=temp+arth(1:min(k,n-k))
+          temp=temp+temp
+          k=k2
+       end do
+    end if
+  END FUNCTION arth
+
+  !***********************************************************
+  FUNCTION gammln(xx)
+    REAL, INTENT(IN) :: xx
+    REAL :: gammln
+    !Returns the value ln[Γ( xx )] for xx > 0.
+    REAL(DOUBLE) :: tmp,x
+    !Internal arithmetic will be done in double precision, a nicety that
+    !you can omit if five-figure accuracy is good enough.
+    REAL(DOUBLE) :: stp = 2.5066282746310005d0
+    REAL(DOUBLE), DIMENSION(6) :: coef 
+
+    coef = (/76.18009172947146d0,-86.50532032941677d0,24.01409824083091d0,&
+    -1.231739572450155d0,0.1208650973866179d-02,-0.5395239384953d-05/)
+    !call assert(xx > 0.0, ’gammln_s arg’)
+    x=xx
+    tmp=x+5.5d0
+    tmp=(x+0.5d0)*log(tmp)-tmp
+    gammln=tmp+log(stp*(1.000000000190015d0+&
+         sum(coef(:)/arth(x+1.0d0,1.0d0,size(coef))))/x)
+  END FUNCTION gammln
+
+  !***********************************************************    
+  FUNCTION gser(a,x,gln)
+    REAL, INTENT(IN) :: a,x
+    REAL, OPTIONAL, INTENT(OUT) :: gln
+    REAL :: gser
+    INTEGER, PARAMETER :: ITMAX=100
+    REAL, PARAMETER :: EPS=1.0d-10
+    !Returns the incomplete gamma function P (a, x) evaluated by its
+    !series representation as gamser . Also optionally returns ln Γ(a)
+    !as gln .
+    INTEGER :: n
+    REAL :: ap,del,summ
+    if (x == 0.0) then
+       gser=0.0
+       RETURN
+    end if
+    ap=a
+    summ=1.0/a
+    del=summ
+    do n=1,ITMAX
+       ap=ap+1.0
+       del=del*x/ap
+       summ=summ+del
+       if (abs(del) < abs(summ)*EPS) exit
+    end do
+    if (n > ITMAX) print*, "a too large, ITMAX too small in gser_s"
+    if (present(gln)) then
+       gln=gammln(a)
+       gser=summ*exp(-x+a*log(x)-gln)
+    else
+       gser=summ*exp(-x+a*log(x)-gammln(a))
+    end if
+  END FUNCTION gser
+
+  FUNCTION gcf(a,x,gln)
+    REAL, INTENT(IN) :: a,x
+    REAL, OPTIONAL, INTENT(OUT) :: gln
+    REAL :: gcf
+    INTEGER, PARAMETER :: ITMAX=100
+    REAL(DOUBLE), PARAMETER :: EPS=1.0d-10,FPMIN=1.0d-30
+    !Returns the incomplete gamma function Q(a, x) evaluated by its
+    !continued fraction repre- sentation as gammcf . Also optionally
+    !returns ln Γ(a) as gln .  Parameters: ITMAX is the maximum
+    !allowed number of iterations; EPS is the relative accu- racy;
+    !FPMIN is a number near the smallest representable floating-point
+    !number.
+    INTEGER :: i
+    REAL :: an,b,c,d,del,h
+    if (x == 0.0) then
+       gcf=1.0
+       RETURN
+    end if
+    b=x+1.0-a
+    !Set up for evaluating continued fraction by modified Lentz’s
+    !method (§5.2) with b 0 = 0.
+    c=1.0/FPMIN
+    d=1.0/b
+    h=d
+    do i=1,ITMAX
+       !Iterate to convergence.
+       an=-i*(i-a)
+       b=b+2.0
+       d=an*d+b
+       if (abs(d) < FPMIN) d=FPMIN
+       c=b+an/c
+       if (abs(c) < FPMIN) c=FPMIN
+       d=1.0/d
+       del=d*c
+       h=h*del
+       if (abs(del-1.0) <= EPS) exit
+    end do
+    if (i > ITMAX) print*, "a too large, ITMAX too small in gcf_s"
+    if (present(gln)) then
+       gln=gammln(a)
+       gcf=exp(-x+a*log(x)-gln)*h
+       !Put factors in front.
+    else
+       gcf=exp(-x+a*log(x)-gammln(a))*h
+    end if
+  END FUNCTION gcf
+
+  !***********************************************************
+  FUNCTION gammp(a,x)
+    REAL, INTENT(IN) :: a,x
+    REAL :: gammp
+    !Returns the incomplete gamma function P (a, x).
+    !call assert( x >= 0.0, a > 0.0, ’gammp_s args’)
+    if (x<a+1.0) then
+       !Use the series representation.
+       gammp=gser(a,x)
+    else
+       !Use the continued fraction representation and take its
+       !complement.
+       gammp=1.0-gcf(a,x)
+    end if
+  END FUNCTION gammp
+
+  !***********************************************************
+  FUNCTION gammq(a,x)
+    REAL, INTENT(IN) :: a,x
+    REAL :: gammq
+    !Returns the incomplete gamma function Q(a, x) ≡ 1 − P (a, x).
+    !call assert( x >= 0.0, a > 0.0, ’gammq_s args’)
+    if (x<a+1.0) then
+       !Use the series representation and take its complement.
+       gammq=1.0-gser(a,x)
+    else
+       !Use the continued fraction representation.
+       gammq=gcf(a,x)
+    end if
+  END FUNCTION gammq
+
+  !***********************************************************
 END MODULE MOD_PARAM
