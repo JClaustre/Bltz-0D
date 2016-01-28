@@ -371,6 +371,7 @@ CONTAINS
     end if
   END FUNCTION gser
 
+  !***********************************************************
   FUNCTION gcf(a,x,gln)
     REAL, INTENT(IN) :: a,x
     REAL, OPTIONAL, INTENT(OUT) :: gln
