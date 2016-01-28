@@ -109,10 +109,11 @@ CONTAINS
           END IF
        END do
        !**** UpDate Density (electron) + Tpe
-       elec%Ni = 0.d0 ; elec%Tp = 0.d0
+       elec%Ni = 0.d0 ; elec%Tp = 0.d0; elec%J = 0.d0
        DO i = 1, sys%nx 
           elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
           elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
+          elec%J  = elec%J  + ( F(i) * U(i) * gama*qe * sys%Dx )
        END DO
        elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
        !**** Evaluate Calculation Time
@@ -128,9 +129,10 @@ CONTAINS
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2)") tabul, "Time : ", &            !
+          write(*,"(2A,F7.2,A,4ES13.4,2(A,ES10.2))") tabul, "Time : ", &            !
                (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06,&     !
-               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N (Td)", (sys%E/meta(0)%Ni)/1d-21
+               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N (Td)", &
+               (sys%E/meta(0)%Ni)/1d-21, " Current (A/m2)", elec%J
        END IF                                                                     !
        !**************************************************************************!
 
