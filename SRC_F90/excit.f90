@@ -590,10 +590,7 @@ CONTAINS
     !**** He2* + e- --> 2He+ + e-
     SELECT CASE (NumIon)
     CASE (3) 
-       coef = sqrt(pi) * 4.d-15 / (2.d0 * gama)
-       DO k = 1, sys%nx
-          ion(NumIon)%SecExc(1,k) = coef * IdU(k,Dx)**(-0.5d0)
-       END DO
+       ion(NumIon)%SecExc(1,:) = 6.74d-21
        ion(NumIon)%SecExc(1,sys%nx) = 0.d0
     END SELECT
 
