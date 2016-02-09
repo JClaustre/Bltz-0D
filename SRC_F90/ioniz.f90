@@ -265,6 +265,7 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j, k, l, npts, ichi
     REAL(DOUBLE) :: Dx, Du, Eij, U, rchi
+    REAL(DOUBLE) :: A, B, C
     REAL(DOUBLE), DIMENSION(200) :: SecRead, EnRead
     Dx = sys%Dx
 
@@ -320,26 +321,19 @@ CONTAINS
        END IF
     END DO
 
-    !**** Ionization/Recombination from Dimer He2*
+    !**** Ionization(1)/Recombination(2) from Dimer He2*
     !**** He2* + e- <--> He2+ + 2e-
     SELECT CASE (NumIon)
     CASE (3) 
        Eij=ion(2)%En-ion(NumIon)%En
+       A = 9.93844d-15 ; B = 9.8416d-1 ; C = 1.292d-02
        DO k = 1, sys%nx
-          U=IdU(k,Dx)/Eij
-          IF(U.GT.1.d0) ion(NumIon)%SecIon(1,k) = 3.49d0*(Ry/Eij)**2 * &
-               ((U-1.d0)/U**2.14d0) * log(1.25d0*U)
-          ion(NumIon)%SecIon(1,k) = ion(NumIon)%SecIon(1,k) * 1d-20
+          U=IdU(k,Dx)
+          ion(NumIon)%SecIon(1,k) = 1d-04*( A*log(U/Eij)/(Eij*U) ) * (1.d0-B*exp(C)*exp(-C*U/Eij))
+          IF (U .LE. Eij) ion(NumIon)%SecIon(1,k) = 0.d0
        END DO
-       !**** Klein-Rosseland relation
-       ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
-       DO k = 1, sys%nx
-          Du=IdU(k,Dx)/Eij
-          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = ((Du)/(Du+1.d0))&
-               * ( (1.0d0-rchi) * ion(NumIon)%SecIon(2,k+ichi) )
-          if(k .LE. sys%nx-ichi-1) ion(NumIon)%SecIon(2,k) = ion(NumIon)%SecIon(2,k) &
-               + ((Du)/(Du+1.d0))* ( rchi * ion(NumIon)%SecIon(2,k+ichi+1) )
-       END DO
+       !**** Fowler relation
+
        ion(NumIon)%SecIon(1,sys%nx) = 0.d0
        ion(NumIon)%SecIon(2,sys%nx) = 0.d0
     END SELECT
