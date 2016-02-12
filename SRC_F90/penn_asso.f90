@@ -22,8 +22,8 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
-    INTEGER :: i, j, k, l, ichi
-    REAL(DOUBLE) :: asso, Penn, beta, Dx
+    INTEGER :: i, j, k, l, ichi, Nion
+    REAL(DOUBLE) :: asso, Penn, beta, Dx, Ndens
     REAL(DOUBLE) :: Eij, chi, rchi, coef1, coef2
     REAL(DOUBLE) :: ratx
     !*********************************
@@ -89,6 +89,48 @@ CONTAINS
           meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
        END DO
     END DO
+
+    ! Involving Dimer Penning processes 
+    SELECT CASE (NumIon)
+    CASE (3)
+       Nion = 3
+       ! #1 He* + He2* --> He+ + He + e
+       !               --> He2+ + He + e
+       ! #2 He2* + He2* --> He+ + He + e  (case with i==0)
+       !                --> He2+ + He + e
+       DO i = 0, 3
+          If (i == 0) Ndens = ion(Nion)%Ni
+          IF (i .GT. 0) Ndens = meta(i)%Ni
+          DO l = 1, 2
+             IF (l .EQ. 1) Penn  =  0.3d0* Ndens*ion(Nion)%Ni * beta
+             IF (l .EQ. 2) Penn  =  0.7d0* Ndens*ion(Nion)%Ni * beta
+             Eij = ion(Nion)%En + meta(i)%En - ion(l)%En ! Penning threshold
+             IF (i == 0) Eij = 2d0*ion(Nion)%En - ion(l)%En 
+             chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
+             IF (ichi == 0) ichi = 1
+             rchi = ( Eij - U(ichi) ) / Dx
+
+             DO k = 1, sys%nx
+                coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
+                coef2 = rchi / (sqrt(U(ichi+1))*Dx)
+                IF (k .NE. ichi  ) coef1 = 0.d0
+                IF (k .NE. ichi+1) coef2 = 0.d0
+                Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
+             END DO
+             ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
+             !**** Diagnostic
+             diag(14)%EnProd = diag(14)%EnProd + Eij*Clock%Dt * Penn
+             diag(14)%Tx = diag(14)%Tx + Penn
+          END DO
+          !**** Update population
+          Penn = Ndens * ion(Nion)%Ni * beta
+          IF (i .GT. 0) meta(i)%Updens   = meta(i)%Updens   - Clock%Dt * Penn
+          If (i == 0) ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
+          ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
+       END DO
+
+    END SELECT
+
   END SUBROUTINE Penn_Assoc
   !***********************************************************************
 

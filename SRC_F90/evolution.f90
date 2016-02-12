@@ -248,6 +248,8 @@ CONTAINS
     Coef = Coef - Diag(12)%EnProd                                                       !
     !**** (13) Energy gain and loss due to ionization/3-body recombination from Dimer   !
     Coef = Coef + (Diag(13)%EnLoss-Diag(13)%EnProd)                                     !
+    !**** (14) Energy gain due to Penning reaction btween Dimer and metastable          !
+    Coef = Coef - Diag(14)%EnProd                                                       !
     !**** (3)=radiative trans | (4)=l-xchnge reaction                                   !
     !**** (7)=3 body convert  |                                                         !
     !***********************************************************************************!
