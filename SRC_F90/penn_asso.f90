@@ -99,11 +99,13 @@ CONTAINS
        ! #2 He2* + He2* --> He+ + He + e  (case with i==0)
        !                --> He2+ + He + e
        DO i = 0, 3
+          beta = 2.5d-09* 1d-6
+          IF (i == 0) beta = 1.5d-09* 1d-6
           If (i == 0) Ndens = ion(Nion)%Ni
           IF (i .GT. 0) Ndens = meta(i)%Ni
           DO l = 1, 2
-             IF (l .EQ. 1) Penn  =  0.3d0* Ndens*ion(Nion)%Ni * beta
-             IF (l .EQ. 2) Penn  =  0.7d0* Ndens*ion(Nion)%Ni * beta
+             IF (l .EQ. 1) Penn  =  0.15d0* Ndens*ion(Nion)%Ni * beta
+             IF (l .EQ. 2) Penn  =  0.85d0* Ndens*ion(Nion)%Ni * beta
              Eij = ion(Nion)%En + meta(i)%En - ion(l)%En ! Penning threshold
              IF (i == 0) Eij = 2d0*ion(Nion)%En - ion(l)%En 
              chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
