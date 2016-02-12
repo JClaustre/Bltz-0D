@@ -332,8 +332,16 @@ CONTAINS
           ion(NumIon)%SecIon(1,k) = 1d-04*( A*log(U/Eij)/(Eij*U) ) * (1.d0-B*exp(C)*exp(-C*U/Eij))
           IF (U .LE. Eij) ion(NumIon)%SecIon(1,k) = 0.d0
        END DO
-       !**** Fowler relation
-
+       !**** Recomb/Ioniz cross-section relation
+       ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
+       print*, rchi
+       DO k = 1, sys%nx
+          Du=IdU(k,Dx)/Eij
+          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = (sqrt(Pi)/4.d0)*((Du)/(Du+1.d0))&
+               * ( (1.0d0-rchi) * ion(NumIon)%SecIon(1,k+ichi) )
+          if(k .LE. sys%nx-ichi-1) ion(NumIon)%SecIon(2,k) = ion(NumIon)%SecIon(2,k) &
+               + (sqrt(Pi)/4.d0)*((Du)/(Du+1.d0))* ( rchi * ion(NumIon)%SecIon(1,k+ichi+1) )
+       END DO
        ion(NumIon)%SecIon(1,sys%nx) = 0.d0
        ion(NumIon)%SecIon(2,sys%nx) = 0.d0
     END SELECT
