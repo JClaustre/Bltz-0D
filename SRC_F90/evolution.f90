@@ -85,7 +85,7 @@ CONTAINS
        !**** Ioniz dimer 
        IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
        !**** Disso Recombination
-       !CALL Recomb       (sys, meta, U, F, Diag)
+       CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion
        CALL Conv_3Body   (meta, ion)
        !**** Penning + Associative ioniz
