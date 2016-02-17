@@ -334,7 +334,6 @@ CONTAINS
        END DO
        !**** Recomb/Ioniz cross-section relation
        ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
-       print*, rchi
        DO k = 1, sys%nx
           Du=IdU(k,Dx)/Eij
           if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = (sqrt(Pi)/4.d0)*((Du)/(Du+1.d0))&

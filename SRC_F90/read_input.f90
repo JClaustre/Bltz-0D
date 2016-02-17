@@ -470,6 +470,7 @@ CONTAINS
             sys%Powr*1d-6, " |", sys%Powr*sys%volume                        !
     END IF                                                                  !
     !***********************************************************************!
+    Tg_p(:) = meta(0)%Tp * qok
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !

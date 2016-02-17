@@ -15,6 +15,7 @@ MODULE MOD_EVOL
   USE MOD_RADIFF
   USE MOD_CHAUF
   USE MOD_READ
+  USE MOD_TPGAZ
   IMPLICIT NONE
 
   INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
@@ -61,6 +62,8 @@ CONTAINS
        END IF
        !*************************************
 
+       !**** Neutral temperature calculation
+       CALL TP_Neutral (sys, elec, meta, Tg_p)
        !**** Increase Power exponantially function of time
        sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
        k = k+1
@@ -116,6 +119,7 @@ CONTAINS
           elec%J  = elec%J  + ( F(i) * U(i) * gama*qe * sys%Dx )
        END DO
        elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
+
        !**** Evaluate Calculation Time
        if (l == 300) CALL System_clock (t2, clock_rate)
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
@@ -129,10 +133,10 @@ CONTAINS
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,4ES13.4,2(A,ES10.2))") tabul, "Time : ", &            !
+          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2,A,F7.1)") tabul, "Time :", &          !
                (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06,&     !
-               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N (Td)", &
-               (sys%E/meta(0)%Ni)/1d-21, " Current (A/m2)", elec%J
+               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N(Td)", &
+               (sys%E/meta(0)%Ni)/1d-21, " Tg(K)", meta(0)%Tp*qok
        END IF                                                                     !
        !**************************************************************************!
 
@@ -186,6 +190,7 @@ CONTAINS
 
     CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
+    CALL Write_Out1D( Tg_p, "Tg_p.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION

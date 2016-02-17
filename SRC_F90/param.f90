@@ -42,6 +42,7 @@ MODULE MOD_PARAM
    !-----------------------------------------------------------
 
   ! *******************************************************************************
+  INTEGER, PARAMETER :: node = 100
   INTEGER, PARAMETER :: Lv=44
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
@@ -76,6 +77,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(NumMeta)          :: Sn   ! Associative rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
+  REAL(DOUBLE), DIMENSION(node) :: Tg_p
   REAL(DOUBLE) :: MaxR
 
 CONTAINS
