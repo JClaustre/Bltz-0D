@@ -62,8 +62,9 @@ CONTAINS
        END IF
        !*************************************
        
+
        !**** Neutral temperature calculation
-       !CALL TP_Neutral (sys, elec, meta, Tg_p)
+       CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
           sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
@@ -173,7 +174,7 @@ CONTAINS
              write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
           END DO                                                                  !
           CLOSE(90)                                                               !
-          CALL Write_Out1D( Tg_p, "Tg_p.dat")                                     !
+          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                     !
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
