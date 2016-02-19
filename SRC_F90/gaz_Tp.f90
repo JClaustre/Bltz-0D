@@ -79,8 +79,6 @@ CONTAINS
     ! *******************************************
     OneD%Tg(:) = R(:)+OneD%Tg(:) ; OneD%Tg(OneD%nx) = Tp0
     OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
-!    meta(0)%Tp = OneD%Tg(1) * koq
-!    meta(0)%Ni = OneD%ng(1)
 
     meta(0)%Tp = ( sum(OneD%Tg(1:80)) / (80) ) * koq
     IF ((meta(0)%Tp*qok) .GE. 2400) THEN

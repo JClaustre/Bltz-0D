@@ -62,7 +62,6 @@ CONTAINS
        END IF
        !*************************************
        
-
        !**** Neutral temperature calculation
        CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
