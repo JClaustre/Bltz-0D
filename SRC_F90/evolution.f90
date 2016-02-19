@@ -18,7 +18,7 @@ MODULE MOD_EVOL
   USE MOD_TPGAZ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -38,12 +38,12 @@ CONTAINS
     IF (Clock%Rstart == 0) THEN                                               !
        OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
     ELSE IF (Clock%Rstart == 1) THEN                                          !
-       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="STREAM",ACTION="WRITE",STATUS="UNKNOWN")
+       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="APPEND",ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
     MaxDt  = 1.d-07 ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    GenPwr = 0.5d-6 ! Time constant to start the generator.
+    GenPwr = 0.1d-6 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -61,12 +61,14 @@ CONTAINS
            print*,""; print*," NaN ! Pobleme in time step?", elec%Ni, MaxR ; Stop 
        END IF
        !*************************************
-
+       
        !**** Neutral temperature calculation
-       CALL TP_Neutral (sys, elec, meta, Tg_p)
+       !CALL TP_Neutral (sys, elec, meta, Tg_p)
        !**** Increase Power exponantially function of time
-       sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
-       k = k+1
+       IF (Clock%Rstart == 0) THEN 
+          sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
+          k = k+1
+       END IF
        !**** Heat + Elas + Fk-Pl
        CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
@@ -144,11 +146,11 @@ CONTAINS
        IF (modulo(l,100)==0) Then                                                 !
           SELECT CASE (NumIon)                                                    !
           CASE (3)                                                                !
-             write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, elec%Ni*1d-06,&   !
+             write(99,"(49ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp, elec%Ni*1d-06,&
                   ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, ion(NumIon)%Ni*1d-06, &       !
                   (meta(i)%Ni*1d-06,i=1,NumMeta)                                  !
           CASE DEFAULT                                                            !
-             write(99,"(47ES15.4)") (Clock%SumDt*1e6), elec%Tp, elec%Ni*1d-06,&   !
+             write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp, elec%Ni*1d-06,&
                   ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)!
           END SELECT                                                              !
           !****                                                                   !
@@ -171,6 +173,7 @@ CONTAINS
              write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
           END DO                                                                  !
           CLOSE(90)                                                               !
+          CALL Write_Out1D( Tg_p, "Tg_p.dat")                                     !
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
@@ -190,7 +193,6 @@ CONTAINS
 
     CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
-    CALL Write_Out1D( Tg_p, "Tg_p.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION

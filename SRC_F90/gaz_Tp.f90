@@ -11,7 +11,7 @@ MODULE MOD_TPGAZ
   USE MOD_DGTSV
   IMPLICIT NONE
 
-  REAL(DOUBLE), PARAMETER :: Tp0 = 900.d0
+  REAL(DOUBLE), PARAMETER :: Tp0 = 600.d0
 
 CONTAINS
   
@@ -68,7 +68,8 @@ CONTAINS
     END IF
     ! *******************************************
     Tg_p(:) = R(:)
-    meta(0)%Tp = maxval(R) * koq
+    meta(0)%Tp = ( sum(R(1:node/2)) / (node/2) ) * koq
+    meta(0)%Ni = meta(0)%Prs / (qe * meta(0)%Tp * 7.5006d-3)
 
   CONTAINS
     FUNCTION OffDiag(Coef, k, Kpa, Dx)

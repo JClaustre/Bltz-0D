@@ -155,12 +155,12 @@ CONTAINS
     !LOCAL
     INTEGER :: i
 
-    OPEN(UNIT=99,File="./datFile/"//TRIM(ADJUSTL(FileName)),&
+    OPEN(UNIT=0999,File="./datFile/"//TRIM(ADJUSTL(FileName)),&
          ACTION="WRITE",STATUS="UNKNOWN")
     DO i = lbound(array,1), ubound(array,1)
-       write(99,*) i, array(i)
+       write(0999,*) i, array(i)
     END DO
-    CLOSE(99)
+    CLOSE(0999)
   END SUBROUTINE Write_Out1D
   !***********************************************************
   !                    SUBROUTINE Write_Out2D
