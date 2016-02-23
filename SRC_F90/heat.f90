@@ -210,7 +210,7 @@ CONTAINS
 
     !******PARAMETRES COLLISIONS ELASTIQUES*************
     alpha1 = (2.d0 * MassR)   !(2.*me/Mhe)
-    alpha2 = (meta(0)%Tp) / Dx 
+    alpha2 = (meta(0)%Tp) / Dx
     !*****************CALCUL DES QUANTITES INITIALES**************************
     part= 0.d0
     do i=1,nx

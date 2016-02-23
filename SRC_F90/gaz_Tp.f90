@@ -23,18 +23,18 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     TYPE(profil1D), INTENT(INOUT) :: OneD
     !LOCAL
-    INTEGER :: k
+    INTEGER :: k, Nmoy
     INTEGER :: info = 0 !used for the DGTSV routine
-    REAL(DOUBLE) :: Dx, Coef, Coef2, Aux
+    REAL(DOUBLE) :: Dx, Coef, Coef2
     REAL(DOUBLE) :: A, B, C, D
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: Kpa
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
     OneD%nx = SIZE(OneD%Tg)
     ALLOCATE ( Kpa(OneD%nx), DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
-
+    Nmoy = 901
     Dx = sys%Ra / real(OneD%nx-1)
-    DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
+    DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0 ; Kpa = 0.d0
 
     DO k = 1, OneD%nx
        OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dx / sys%Ra))
@@ -43,9 +43,9 @@ CONTAINS
 
     DO k = 1, OneD%nx-1
        Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx*real(k)* Dx**2)
-       Coef2 = 2.d0* OneD%ne(k) * me * Clock%Dt * meta(0)%Nuel(k) / (mhe*OneD%ng(k))
+       Coef2 = 2.d0* MassR * Clock%Dt * meta(0)%Nuel(k)*OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
-       Di(1) = -1.d0 ; Du(1) = 1.d0  
+       Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0!Dx * meta(0)%Tp*qok
 
        IF (k == 1) THEN
@@ -59,10 +59,10 @@ CONTAINS
           A = Off1(Coef,k,Kpa,Dx)
           B = Off2(k,OneD%Tg,0.71d0)
           D = A*( 1.d0 - B )
-          Du(k)   = - A*( 1.d0 + B )
+          Du(k) = - A*( 1.d0 + B )
 
-          Di (k)  = 1.0d0 + C + D + Coef2
-          R (k)   = R (k) + A*(OneD%Tg(k+1) - OneD%Tg(k)) + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
+          Di (k)  = 1.0d0 + C + D !+ Coef2
+          R (k)   = R (k) + A*(OneD%Tg(k+1) - OneD%Tg(k)) !+ Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
        END IF
     END DO
     ! Upper Boundary conditions (Dirichlet)
@@ -80,15 +80,16 @@ CONTAINS
     OneD%Tg(:) = R(:)+OneD%Tg(:) ; OneD%Tg(OneD%nx) = Tp0
     OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
 
-    meta(0)%Tp = ( sum(OneD%Tg(1:80)) / (80) ) * koq
+    meta(0)%Tp = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
     IF ((meta(0)%Tp*qok) .GE. 2400) THEN
        meta(0)%Tp = 2400 * koq
     ELSE
-       meta(0)%Ni = ( sum(OneD%ng(1:80)) / (80) )
+       meta(0)%Ni = ( sum(OneD%ng(1:Nmoy)) / (Nmoy) )
     END IF
+    CALL Write_Out1D( OneD%Tg, "Tg.dat")
 
     DEALLOCATE (Kpa, DL, DI, DU, R)
-
+    Stop
   CONTAINS
     FUNCTION Off1(Coef, k, Kpa, Dx)
       INTEGER     , INTENT(IN) :: k
