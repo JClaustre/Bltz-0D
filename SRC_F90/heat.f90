@@ -197,7 +197,7 @@ CONTAINS
     TYPE(SysVar), INTENT(IN)  :: sys
     REAL(DOUBLE), DIMENSION(:), INTENT(INOUT) :: F
     REAL(DOUBLE), DIMENSION(:), INTENT(IN)    :: U
-    TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
+    TYPE(Species), DIMENSION(0:), INTENT(INOUT)  :: meta
     !LOCAL
     INTEGER      :: i, nx
     REAL(DOUBLE) :: Dx, XX,YY,ZZ, En, En2

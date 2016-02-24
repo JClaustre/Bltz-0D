@@ -135,10 +135,10 @@ CONTAINS
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,4ES13.4,A,ES10.2,A,F7.1)") tabul, "Time :", &          !
-               (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06,&     !
-               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, " | E/N(Td)", &
-               (sys%E/meta(0)%Ni)/1d-21, " Tg(K)", meta(0)%Tp*qok
+          write(*,"(2A,F7.2,A,3ES13.4,A,ES10.2,2(A,F7.1))") tabul, "Time :", &    !
+               (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, ion(1)%Ni*1d-06,&      !
+               ion(2)%Ni*1d-06, " | E/N(Td)", (sys%E/meta(0)%Ni)/1d-21, " Tg(K)",&!
+               meta(0)%Tp*qok, " | Pg(Torr)", meta(0)%Prs                         !
        END IF                                                                     !
        !**************************************************************************!
 

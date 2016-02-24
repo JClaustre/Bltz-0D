@@ -42,7 +42,7 @@ MODULE MOD_PARAM
   !-----------------------------------------------------------
   TYPE, PUBLIC::profil1D
      INTEGER :: nx
-     REAL(DOUBLE), DIMENSION(901) :: Tg, ng, ne
+     REAL(DOUBLE), DIMENSION(100) :: Tg, Pg, ng, ne
   END type profil1D
    !-----------------------------------------------------------
 

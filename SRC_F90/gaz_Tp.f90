@@ -23,27 +23,30 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     TYPE(profil1D), INTENT(INOUT) :: OneD
     !LOCAL
-    INTEGER :: k, Nmoy
+    INTEGER :: k, Nmoy, SizeE
     INTEGER :: info = 0 !used for the DGTSV routine
-    REAL(DOUBLE) :: Dx, Coef, Coef2
-    REAL(DOUBLE) :: A, B, C, D
+    REAL(DOUBLE) :: Dx, Coef, Coef2, nuMoy
+    REAL(DOUBLE) :: A, B, C!, D
+    REAL(DOUBLE) :: tm, tp, t2m, t2p
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: Kpa
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
     OneD%nx = SIZE(OneD%Tg)
     ALLOCATE ( Kpa(OneD%nx), DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
-    Nmoy = 901
+    Nmoy = int(OneD%nx/2)
     Dx = sys%Ra / real(OneD%nx-1)
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0 ; Kpa = 0.d0
 
     DO k = 1, OneD%nx
        OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dx / sys%Ra))
-       Kpa(k)= 0.152d0 * (OneD%Tg(k)/300.d0)**0.71
+       Kpa(k)= 0.156d0 * (OneD%Tg(k)/300.d0)**0.71
     END DO
+    SizeE = size(meta(0)%Nuel(:))
+    nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
        Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx*real(k)* Dx**2)
-       Coef2 = 2.d0* MassR * Clock%Dt * meta(0)%Nuel(k)*OneD%ne(k) / OneD%ng(k)
+       Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0!Dx * meta(0)%Tp*qok
@@ -51,22 +54,31 @@ CONTAINS
        IF (k == 1) THEN
           A = Off1(Coef,1,Kpa,Dx)
           B = Off2(1,OneD%Tg,0.71d0)
-       ELSE 
-          Dl(k-1) = - A*( 1.d0 - B )
-          C = A*( 1.d0 + B )
-          R (k) = - A*(OneD%Tg(k) - OneD%Tg(k-1))
+       ELSE
+          tm = OneD%Tg(k)   - OneD%Tg(k-1) 
+          tp = OneD%Tg(k+1) - OneD%Tg(k) 
+          T2p = ( OneD%Tg(k+1) + OneD%Tg(k) ) * 0.5d0
+          T2m = ( OneD%Tg(k-1) + OneD%Tg(k) ) * 0.5d0
+
+          !Dl(k-1) = - A*( 1.d0 - B )
+          Dl(k-1) = - A*( 1.d0 - tm*0.71d0/(2.d0*T2m) )
+          C = A!*( 1.d0 + B )
+          !R (k) = - A*(OneD%Tg(k) - OneD%Tg(k-1))
 
           A = Off1(Coef,k,Kpa,Dx)
           B = Off2(k,OneD%Tg,0.71d0)
-          D = A*( 1.d0 - B )
-          Du(k) = - A*( 1.d0 + B )
+          !D = A*( 1.d0 - B )
+          !Du(k) = - A*( 1.d0 + B )
+          Du(k) = - A*( 1.d0 + tp*0.71d0/(2.d0*T2p)  )
 
-          Di (k)  = 1.0d0 + C + D !+ Coef2
-          R (k)   = R (k) + A*(OneD%Tg(k+1) - OneD%Tg(k)) !+ Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
+          !Di (k) = 1.0d0 + C + D + Coef2
+          Di (k) = 1.0d0 + A*(1.d0-tp*0.71d0/(2.d0*T2p)) + C*(1.d0 + tm*0.71d0/(2.d0*T2m)) + Coef2
+          !R (k)  = R (k) + A*(OneD%Tg(k+1) - OneD%Tg(k)) + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
+          R (k)  = A*tp-C*tm + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
        END IF
     END DO
     ! Upper Boundary conditions (Dirichlet)
-    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx-1) = 0.d0 
+    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx) = 0.d0 
     R(OneD%nx) = Tp0
 
     ! Calcul de la solution **************************
@@ -77,19 +89,16 @@ CONTAINS
        STOP
     END IF
     ! *******************************************
-    OneD%Tg(:) = R(:)+OneD%Tg(:) ; OneD%Tg(OneD%nx) = Tp0
-    OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    OneD%Tg(1:OneD%nx-1) = R(1:OneD%nx-1)+OneD%Tg(1:OneD%nx-1)
+    OneD%Tg(OneD%nx) = R(OneD%nx)
+    OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    !OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
 
-    meta(0)%Tp = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
-    IF ((meta(0)%Tp*qok) .GE. 2400) THEN
-       meta(0)%Tp = 2400 * koq
-    ELSE
-       meta(0)%Ni = ( sum(OneD%ng(1:Nmoy)) / (Nmoy) )
-    END IF
-    CALL Write_Out1D( OneD%Tg, "Tg.dat")
-
+    meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
+    meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
+    !meta(0)%Ni = ( sum(OneD%ng(1:Nmoy)) / (Nmoy) )
     DEALLOCATE (Kpa, DL, DI, DU, R)
-    Stop
+
   CONTAINS
     FUNCTION Off1(Coef, k, Kpa, Dx)
       INTEGER     , INTENT(IN) :: k
