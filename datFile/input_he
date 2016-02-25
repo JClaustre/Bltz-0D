@@ -13,4 +13,4 @@
 1.000000000   	  Simulation Time (mic-sec)  
 1.00000E-12	  Dt ( Time-Step (sec) )
 1.50000E+02	  Emax (Energy grid max (eV) ) 
-.10000		  save data's every XXX micro-sec
+0.10000		  save data's every XXX micro-sec

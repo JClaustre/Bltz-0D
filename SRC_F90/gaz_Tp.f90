@@ -23,10 +23,10 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     TYPE(profil1D), INTENT(INOUT) :: OneD
     !LOCAL
-    INTEGER :: k, Nmoy, SizeE
+    INTEGER :: k, Nmoy, SizeE, Med
     INTEGER :: info = 0 !used for the DGTSV routine
     REAL(DOUBLE) :: Dx, Coef, Coef2, nuMoy
-    REAL(DOUBLE) :: A, B, C!, D
+    REAL(DOUBLE) :: A, B, C, D
     REAL(DOUBLE) :: tm, tp, t2m, t2p
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
@@ -43,40 +43,39 @@ CONTAINS
     nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
-       Coef = 0.666667d0*Clock%Dt / (meta(0)%Ni*kb* Dx**2)
+       Coef = 0.666667d0*Clock%Dt / (meta(0)%Ni*kb*Dx**2)
        Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k-1) / meta(0)%Ni
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
-       R(1) = 0.d0!Dx * meta(0)%Tp*qok
-
+       R(1) = 0.d0
+       Med = 1
        IF (k == 1) THEN
-          A = Off1(Coef,1,OneD%Tg,Dx)/(Dx*real(k))
+          A = Off1(Coef,1,OneD%Tg,Dx, Med)
           B = Off2(1,OneD%Tg,0.71d0)
        ELSE
-          tm = OneD%Tg(k)   - OneD%Tg(k-1) 
-          tp = OneD%Tg(k+1) - OneD%Tg(k) 
-          T2p = ( OneD%Tg(k+1) + OneD%Tg(k) ) * 0.5d0
-          T2m = ( OneD%Tg(k-1) + OneD%Tg(k) ) * 0.5d0
+          
+          IF (k-1 == 1) THEN
+             Dl(k-1) = - A*( 1.d0 - B )/(Dx*real(k))
+             C = A/(Dx*real(k))
+             D = B
+          ELSE
+             Dl(k-1) = - A*( 1.d0 - B )
+             C = A ; D = B
+          END IF
+          
+          A = Off1(Coef,k,OneD%Tg,Dx, Med)/(Dx*real(k))
+          B = Off2(k,OneD%Tg,0.71d0)
+          Du(k) = - A*( 1.d0 + B )
 
-          !Dl(k-1) = - A*( 1.d0 - B )
-          Dl(k-1) = - A*( 1.d0 - tm*0.71d0/(2.d0*T2m) )
-          C = A!*( 1.d0 + B )
-          !R (k) = - A*(OneD%Tg(k) - OneD%Tg(k-1))
-
-          A = Off1(Coef,k,OneD%Tg,Dx)/(Dx*real(k))
-          !D = A*( 1.d0 - B )
-          !Du(k) = - A*( 1.d0 + B )
-          Du(k) = - A*( 1.d0 + tp*0.71d0/(2.d0*T2p)  )
-
-          !Di (k) = 1.0d0 + C + D + Coef2
-          Di (k) = 1.0d0 + A*(1.d0-tp*0.71d0/(2.d0*T2p)) + C*(1.d0 + tm*0.71d0/(2.d0*T2m)) !+ Coef2
-          !R (k)  = R (k) + A*(OneD%Tg(k+1) - OneD%Tg(k)) + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
-          R (k)  = A*tp-C*tm !+ Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
+          Di (k) = 1.0d0 + A*(1.d0-B) + C*(1.d0 + D) + Coef2 
+          R (k)  = A*(OneD%Tg(k+1)-OneD%Tg(k)) - C*(OneD%Tg(k)-OneD%Tg(k-1))&
+               + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
        END IF
     END DO
-    ! Upper Boundary conditions (Dirichlet)
-    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx-1) = 0.d0 
-    R(OneD%nx) = Tp0
+    ! Upper Boundary conditions (Dirichlet) 
+    ! Carefull /!\ here we solve W = T^k+1 - T^k
+    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx) = 0.d0 
+    R(OneD%nx) = 0.d0
 
     ! Calcul de la solution **************************
     CALL DGTSV (OneD%nx, 1, DL, DI, DU, R, OneD%nx, info)
@@ -86,25 +85,24 @@ CONTAINS
        STOP
     END IF
     ! *******************************************
-    OneD%Tg(1:OneD%nx-1) = R(1:OneD%nx-1)+OneD%Tg(1:OneD%nx-1)
-    OneD%Tg(OneD%nx) = R(OneD%nx)
+    OneD%Tg(:OneD%nx-1) = R(:OneD%nx-1)+OneD%Tg(:OneD%nx-1)
+    OneD%Tg(OneD%nx) = Tp0
     OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
-    !OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
 
     meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
     meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
-    !meta(0)%Ni = ( sum(OneD%ng(1:Nmoy)) / (Nmoy) )
     DEALLOCATE (DL, DI, DU, R)
 
   CONTAINS
-    FUNCTION Off1(Coef, k, Tg, Dx)
-      INTEGER     , INTENT(IN) :: k
+    FUNCTION Off1(Coef, k, Tg, Dx, M)
+      INTEGER     , INTENT(IN) :: k, M
       REAL(DOUBLE), INTENT(IN) :: Coef, Dx
       REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Tg
       REAL(DOUBLE) :: Off1
       ! LOCAL
       REAL(DOUBLE) :: r, Kap
-      kap = 156.d0 * ((Tg(k+1)+Tg(k))/300.d0)**0.71 / 2.d0
+      IF (M == 1) kap = 0.156d0   * ((Tg(k+1)+Tg(k))/300.d0)**0.710 / 2.d0
+      IF (M == 2) kap = 0.02623d0 * ((Tg(k+1)+Tg(k))/300.d0)**0.788 / 2.d0
       r = 0.5d0 * ( real(k)*Dx + real(k+1)*Dx )
       Off1 = Coef * Kap * r
     END FUNCTION Off1
@@ -115,8 +113,8 @@ CONTAINS
       REAL(DOUBLE) :: nu, Off2
       REAL(DOUBLE) :: Tp, Tp2
       Tp = Tg(k+1) - Tg(k) 
-      Tp2 = ( Tg(k+1) + Tg(k) ) * 0.5d0
-      Off2 = nu * Tp / (2.d0*Tp2)
+      Tp2 = ( Tg(k+1) + Tg(k) )
+      Off2 = nu * Tp / Tp2
     END FUNCTION Off2
 
   END SUBROUTINE TP_Neutral
