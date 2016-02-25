@@ -10,7 +10,7 @@
 1.00000E+00	  L  (cm)       Tube Length
 1.70000E+13	  ne (cm-3)	Initial electron density
 6.36620E+02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-300.0000000   	  Simulation Time (mic-sec)  
+1.000000000   	  Simulation Time (mic-sec)  
 1.00000E-12	  Dt ( Time-Step (sec) )
 1.50000E+02	  Emax (Energy grid max (eV) ) 
-4.0000		  save data's every XXX micro-sec
+.10000		  save data's every XXX micro-sec

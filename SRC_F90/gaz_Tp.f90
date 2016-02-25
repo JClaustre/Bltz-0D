@@ -28,31 +28,29 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Coef, Coef2, nuMoy
     REAL(DOUBLE) :: A, B, C!, D
     REAL(DOUBLE) :: tm, tp, t2m, t2p
-    REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: Kpa
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
     OneD%nx = SIZE(OneD%Tg)
-    ALLOCATE ( Kpa(OneD%nx), DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
+    ALLOCATE ( DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
     Nmoy = int(OneD%nx/2)
     Dx = sys%Ra / real(OneD%nx-1)
-    DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0 ; Kpa = 0.d0
+    DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
 
     DO k = 1, OneD%nx
-       OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dx / sys%Ra))
-       Kpa(k)= 0.156d0 * (OneD%Tg(k)/300.d0)**0.71
+       OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k)*Dx / sys%Ra))
     END DO
     SizeE = size(meta(0)%Nuel(:))
     nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
-       Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx*real(k)* Dx**2)
-       Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k) / OneD%ng(k)
+       Coef = 0.666667d0*Clock%Dt / (meta(0)%Ni*kb* Dx**2)
+       Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k-1) / meta(0)%Ni
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0!Dx * meta(0)%Tp*qok
 
        IF (k == 1) THEN
-          A = Off1(Coef,1,Kpa,Dx)
+          A = Off1(Coef,1,OneD%Tg,Dx)/(Dx*real(k))
           B = Off2(1,OneD%Tg,0.71d0)
        ELSE
           tm = OneD%Tg(k)   - OneD%Tg(k-1) 
@@ -65,20 +63,19 @@ CONTAINS
           C = A!*( 1.d0 + B )
           !R (k) = - A*(OneD%Tg(k) - OneD%Tg(k-1))
 
-          A = Off1(Coef,k,Kpa,Dx)
-          B = Off2(k,OneD%Tg,0.71d0)
+          A = Off1(Coef,k,OneD%Tg,Dx)/(Dx*real(k))
           !D = A*( 1.d0 - B )
           !Du(k) = - A*( 1.d0 + B )
           Du(k) = - A*( 1.d0 + tp*0.71d0/(2.d0*T2p)  )
 
           !Di (k) = 1.0d0 + C + D + Coef2
-          Di (k) = 1.0d0 + A*(1.d0-tp*0.71d0/(2.d0*T2p)) + C*(1.d0 + tm*0.71d0/(2.d0*T2m)) + Coef2
+          Di (k) = 1.0d0 + A*(1.d0-tp*0.71d0/(2.d0*T2p)) + C*(1.d0 + tm*0.71d0/(2.d0*T2m)) !+ Coef2
           !R (k)  = R (k) + A*(OneD%Tg(k+1) - OneD%Tg(k)) + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
-          R (k)  = A*tp-C*tm + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
+          R (k)  = A*tp-C*tm !+ Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
        END IF
     END DO
     ! Upper Boundary conditions (Dirichlet)
-    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx) = 0.d0 
+    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx-1) = 0.d0 
     R(OneD%nx) = Tp0
 
     ! Calcul de la solution **************************
@@ -97,17 +94,17 @@ CONTAINS
     meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
     meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
     !meta(0)%Ni = ( sum(OneD%ng(1:Nmoy)) / (Nmoy) )
-    DEALLOCATE (Kpa, DL, DI, DU, R)
+    DEALLOCATE (DL, DI, DU, R)
 
   CONTAINS
-    FUNCTION Off1(Coef, k, Kpa, Dx)
+    FUNCTION Off1(Coef, k, Tg, Dx)
       INTEGER     , INTENT(IN) :: k
       REAL(DOUBLE), INTENT(IN) :: Coef, Dx
-      REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Kpa
+      REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Tg
       REAL(DOUBLE) :: Off1
       ! LOCAL
       REAL(DOUBLE) :: r, Kap
-      kap = 0.5d0 * ( Kpa(k+1) + Kpa(k) )
+      kap = 156.d0 * ((Tg(k+1)+Tg(k))/300.d0)**0.71 / 2.d0
       r = 0.5d0 * ( real(k)*Dx + real(k+1)*Dx )
       Off1 = Coef * Kap * r
     END FUNCTION Off1
