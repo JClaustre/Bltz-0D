@@ -67,9 +67,14 @@ CONTAINS
           B = Off2(k,OneD%Tg,0.71d0)
           Du(k) = - A*( 1.d0 + B )
 
-          Di (k) = 1.0d0 + A*(1.d0-B) + C*(1.d0 + D) + Coef2 
-          R (k)  = A*(OneD%Tg(k+1)-OneD%Tg(k)) - C*(OneD%Tg(k)-OneD%Tg(k-1))&
-               + Coef2 * (elec%Tp*qok - OneD%Tg(k)) 
+          Di (k) = 1.0d0 + A*(1.d0-B) + C*(1.d0 + D) 
+          R (k)  = A*(OneD%Tg(k+1)-OneD%Tg(k)) - C*(OneD%Tg(k)-OneD%Tg(k-1))
+
+          IF (k .LE. OneD%bnd) THEN
+             Di (k) = Di (k) + Coef2 
+             R (k)  = R (k)  + Coef2 * (elec%Tp*qok - OneD%Tg(k))
+          END IF
+
        END IF
     END DO
     ! Upper Boundary conditions (Dirichlet) 

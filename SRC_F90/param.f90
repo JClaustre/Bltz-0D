@@ -41,8 +41,8 @@ MODULE MOD_PARAM
   END type Diagnos
   !-----------------------------------------------------------
   TYPE, PUBLIC::profil1D
-     INTEGER :: nx
-     REAL(DOUBLE), DIMENSION(100) :: Tg, Pg, ng, ne
+     INTEGER :: nx, bnd
+     REAL(DOUBLE), DIMENSION(500) :: Tg, Pg, ng, ne
   END type profil1D
    !-----------------------------------------------------------
 
