@@ -135,10 +135,10 @@ CONTAINS
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(2A,F7.2,A,3ES13.4,A,ES10.2,2(A,F7.1))") tabul, "Time :", &    !
-               (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, ion(1)%Ni*1d-06,&      !
-               ion(2)%Ni*1d-06, " | E/N(Td)", (sys%E/meta(0)%Ni)/1d-21, " Tg(K)",&!
-               meta(0)%Tp*qok, " | Pg(Torr)", meta(0)%Prs                         !
+          write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
+               " μs", meta(1)%Ni*1d-06, ion(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
+               (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",& !
+               OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs                      !
        END IF                                                                     !
        !**************************************************************************!
 
@@ -329,6 +329,7 @@ CONTAINS
     write(99,"(A,ES11.3)")  "* Gas density (cm-3): ", meta(0)%Ni*1d-6
     write(99,"(A,F8.2)")    "* Gas Pressure (Torr): ", meta(0)%Prs
     write(99,"(2(A,F7.2))") "* Gas Temperature (°K | eV): ", meta(0)%Tp*qok, " | ", meta(0)%Tp
+    write(99,"((A,F7.2))" ) "* Gas Tp at the tube bound (°K): ", meta(0)%Tp*qok
     write(99,"(A)") ""
     write(99,"(A)") "ELEC | IONS PARAMETERS"
     write(99,"(A)") "--------------------"

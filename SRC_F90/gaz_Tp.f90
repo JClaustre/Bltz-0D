@@ -11,8 +11,6 @@ MODULE MOD_TPGAZ
   USE MOD_DGTSV
   IMPLICIT NONE
 
-  REAL(DOUBLE), PARAMETER :: Tp0 = 600.d0
-
 CONTAINS
   
   !***********************************************************************
@@ -25,19 +23,18 @@ CONTAINS
     !LOCAL
     INTEGER :: k, Nmoy, SizeE, Med
     INTEGER :: info = 0 !used for the DGTSV routine
-    REAL(DOUBLE) :: Dx, Coef, Coef2, nuMoy
-    REAL(DOUBLE) :: A, B, C, D
-    REAL(DOUBLE) :: tm, tp, t2m, t2p
+    REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, nuMoy, beta
+    REAL(DOUBLE) :: A, B, C, D, ri
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
-    OneD%nx = SIZE(OneD%Tg)
     ALLOCATE ( DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
-    Nmoy = int(OneD%nx/2)
-    Dx = sys%Ra / real(OneD%nx-1)
+    Nmoy = int(OneD%bnd/2)
+    Dx = OneD%Dx
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
 
-    DO k = 1, OneD%nx
-       OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k)*Dx / sys%Ra))
+    Dxx = sys%Ra / real(OneD%bnd-1)
+    DO k = 1, OneD%bnd
+       OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
     END DO
     SizeE = size(meta(0)%Nuel(:))
     nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
@@ -48,29 +45,36 @@ CONTAINS
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0
-       Med = 1
+
+       ! Temporary variables
+       ri = Dx * real(k)
+       Med = 1 ; beta = 0.71d0
+       IF (k .GT. OneD%bnd) THEN
+          Med = 2 ; beta = 0.788d0
+       END IF
+
        IF (k == 1) THEN
           A = Off1(Coef,1,OneD%Tg,Dx, Med)
-          B = Off2(1,OneD%Tg,0.71d0)
+          B = Off2(1,OneD%Tg,beta)
        ELSE
           
           IF (k-1 == 1) THEN
-             Dl(k-1) = - A*( 1.d0 - B )/(Dx*real(k))
-             C = A/(Dx*real(k))
+             Dl(k-1) = - A*( 1.d0 - B )/ri
+             C = A/ri
              D = B
           ELSE
              Dl(k-1) = - A*( 1.d0 - B )
              C = A ; D = B
           END IF
           
-          A = Off1(Coef,k,OneD%Tg,Dx, Med)/(Dx*real(k))
-          B = Off2(k,OneD%Tg,0.71d0)
+          A = Off1(Coef,k,OneD%Tg,Dx, Med)/ri
+          B = Off2(k,OneD%Tg,beta)
           Du(k) = - A*( 1.d0 + B )
 
           Di (k) = 1.0d0 + A*(1.d0-B) + C*(1.d0 + D) 
           R (k)  = A*(OneD%Tg(k+1)-OneD%Tg(k)) - C*(OneD%Tg(k)-OneD%Tg(k-1))
 
-          IF (k .LE. OneD%bnd) THEN
+          IF (k .LT. OneD%bnd) THEN
              Di (k) = Di (k) + Coef2 
              R (k)  = R (k)  + Coef2 * (elec%Tp*qok - OneD%Tg(k))
           END IF
@@ -91,11 +95,12 @@ CONTAINS
     END IF
     ! *******************************************
     OneD%Tg(:OneD%nx-1) = R(:OneD%nx-1)+OneD%Tg(:OneD%nx-1)
-    OneD%Tg(OneD%nx) = Tp0
-    OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    !OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
 
     meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
     meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
+    meta(0)%Ni  = ( sum(OneD%Ng(1:Nmoy)) / (Nmoy) )
     DEALLOCATE (DL, DI, DU, R)
 
   CONTAINS
@@ -106,8 +111,10 @@ CONTAINS
       REAL(DOUBLE) :: Off1
       ! LOCAL
       REAL(DOUBLE) :: r, Kap
-      IF (M == 1) kap = 0.156d0   * ((Tg(k+1)+Tg(k))/300.d0)**0.710 / 2.d0
-      IF (M == 2) kap = 0.02623d0 * ((Tg(k+1)+Tg(k))/300.d0)**0.788 / 2.d0
+      !**** Thermic conductivity coefficient for Helium
+      IF (M == 1) kap = 0.156d0   * ((Tg(k+1)+Tg(k))/300.d0)**0.710 *0.5d0
+      !**** Thermic conductivity coefficient for Air
+      IF (M == 2) kap = 0.02623d0 * ((Tg(k+1)+Tg(k))/300.d0)**0.788 *0.5d0
       r = 0.5d0 * ( real(k)*Dx + real(k+1)*Dx )
       Off1 = Coef * Kap * r
     END FUNCTION Off1
@@ -115,8 +122,8 @@ CONTAINS
     FUNCTION Off2(k, Tg, nu)
       INTEGER     , INTENT(IN) :: k
       REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Tg
-      REAL(DOUBLE) :: nu, Off2
-      REAL(DOUBLE) :: Tp, Tp2
+      REAL(DOUBLE), INTENT(IN) :: nu
+      REAL(DOUBLE) :: Off2, Tp, Tp2
       Tp = Tg(k+1) - Tg(k) 
       Tp2 = ( Tg(k+1) + Tg(k) )
       Off2 = nu * Tp / Tp2

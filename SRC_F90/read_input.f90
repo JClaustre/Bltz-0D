@@ -470,9 +470,16 @@ CONTAINS
             sys%Powr*1d-6, " |", sys%Powr*sys%volume                        !
     END IF                                                                  !
     !***********************************************************************!
-    OneD%Tg(:) = meta(0)%Tp * qok
-    OneD%ng(:) =  meta(0)%Ni!meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
-    OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    !**** 1D profil for gas temperature calculation
+    OneD%SLab = sys%Ra ! (m)
+    OneD%nx = size(OneD%Tg)
+    OneD%Dx = (sys%ra + OneD%SLab) / real(OneD%nx-1)
+    OneD%bnd = int(sys%Ra / OneD%Dx)
+
+    OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
+    OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
+    OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    OneD%Pg(:) =  meta(0)%Prs!OneD%ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
