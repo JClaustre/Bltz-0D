@@ -40,8 +40,8 @@ CONTAINS
     nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
-       Coef = 0.666667d0*Clock%Dt / (meta(0)%Ni*kb*Dx**2)
-       Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k-1) / meta(0)%Ni
+       Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
+       Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0
