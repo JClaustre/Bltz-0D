@@ -33,13 +33,18 @@ CONTAINS
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
 
     Dxx = sys%Ra / real(OneD%bnd-1)
-    DO k = 1, OneD%bnd
-       OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
-    END DO
     SizeE = size(meta(0)%Nuel(:))
     nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
+       IF (k .LE. OneD%bnd) THEN
+          Med = 1 ; beta = 0.71d0
+          OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
+       ELSE
+          OneD%ne(k) = 0.d0
+          Med = 2 ; beta = 0.788d0
+       END IF
+
        Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
        Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
@@ -48,23 +53,16 @@ CONTAINS
 
        ! Temporary variables
        ri = Dx * real(k)
-       Med = 1 ; beta = 0.71d0
-       IF (k .GT. OneD%bnd) THEN
-          Med = 2 ; beta = 0.788d0
-       END IF
-
        IF (k == 1) THEN
           A = Off1(Coef,1,OneD%Tg,Dx, Med)
           B = Off2(1,OneD%Tg,beta)
        ELSE
-          
+
+          Dl(k-1) = - A*( 1.d0 - B )
+          C = A ; D = B
           IF (k-1 == 1) THEN
              Dl(k-1) = - A*( 1.d0 - B )/ri
-             C = A/ri
-             D = B
-          ELSE
-             Dl(k-1) = - A*( 1.d0 - B )
-             C = A ; D = B
+             C = A/ri ; D = B
           END IF
           
           A = Off1(Coef,k,OneD%Tg,Dx, Med)/ri
@@ -95,12 +93,16 @@ CONTAINS
     END IF
     ! *******************************************
     OneD%Tg(:OneD%nx-1) = R(:OneD%nx-1)+OneD%Tg(:OneD%nx-1)
-    !OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
-    OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
-
     meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
-    meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
-    meta(0)%Ni  = ( sum(OneD%Ng(1:Nmoy)) / (Nmoy) )
+
+    IF (meta(0)%N0 == 1) THEN
+       OneD%Pg(:) =  OneD%Ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+       meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
+    ELSE
+       OneD%ng(:) =  OneD%Pg(:) / (qe * OneD%Tg(:) * koq * 7.5006d-3)
+       meta(0)%Ni  = ( sum(OneD%Ng(1:Nmoy)) / (Nmoy) )
+    END IF
+
     DEALLOCATE (DL, DI, DU, R)
 
   CONTAINS

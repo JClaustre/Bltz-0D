@@ -478,8 +478,13 @@ CONTAINS
 
     OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
     OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
-    OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
-    OneD%Pg(:) =  OneD%ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    IF (meta(0)%N0 == 1) THEN
+       OneD%ng(:) =  meta(0)%Ni
+       OneD%Pg(:) =  OneD%ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    ELSE
+       OneD%Pg(:) =  meta(0)%Prs
+       OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
+    END IF
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
