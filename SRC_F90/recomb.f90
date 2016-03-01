@@ -61,29 +61,33 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
+
     !LOCAL
     INTEGER :: i
-    REAL(DOUBLE) :: coef, recmb, part, En1, En2
-    En1  = 0.d0 ; En2 = 0.d0 ; part = 0.d0
-    recmb = 5.0d-09 * 1.d-6 * (meta(0)%Tp / (elec%Tp)) ! m3 s-1
-    coef = recmb * Clock%Dt * elec%Ni * ion(2)%Ni
+    REAL(DOUBLE) :: coef, recmb, Dx
+    REAL(DOUBLE) :: energI, energF, U3
+    Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0
+    energI = 0.d0 ; energF = 0.d0
 
-    do i = 1, sys%nx
-       En1 = Fi(i) * U(i)**1.5d0 * sys%Dx
-       part = part + Fi(i) * sqrt(U(i)) * sys%Dx
-    end do
-
-    elec%Ni = part - coef
-    ion(2)%UpDens  = ion(2)%UpDens  - coef
-    meta(1)%UpDens = meta(1)%UpDens + coef
-    do i = 1, sys%nx
-       Fi(i) = Fi(i) * elec%Ni / part
-       En2 = Fi(i) * U(i)**1.5d0 * sys%Dx
-    END do
+    DO i = 1, sys%nx
+       U3 = U(i)*U(i)*U(i)
+       !**** Initial Energy density
+       energI = energI + Fi(i) * sqrt(U3) * sys%Dx
+       !****************************************************
+       coef = U(i) * 1.06d-22 * Fi(i) * gama * ion(2)%Ni
+       recmb = recmb + coef
+       Fi(i) = Fi(i) - Clock%Dt * coef / dsqrt( U(i) )
+       !**** Final Energy density
+       energF = energF + Fi(i) * sqrt(U3) * sys%Dx
+       !****************************************************
+    END DO
+    ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * recmb * Dx
+    meta(1)%Updens = meta(1)%Updens + Clock%Dt * recmb * Dx
 
     !**** Diagnostic
-    diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
-    diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
+    diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
+    diag(8)%Tx =  recmb * Dx
+    !****************
   END SUBROUTINE Recomb_Norm
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

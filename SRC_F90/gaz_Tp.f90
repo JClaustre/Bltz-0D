@@ -21,7 +21,7 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     TYPE(profil1D), INTENT(INOUT) :: OneD
     !LOCAL
-    INTEGER :: k, Nmoy, SizeE, Med
+    INTEGER :: k, Nmoy, Med
     INTEGER :: info = 0 !used for the DGTSV routine
     REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, beta
     REAL(DOUBLE) :: A, B, C, D, ri
@@ -96,11 +96,11 @@ CONTAINS
     meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
 
     IF (meta(0)%N0 == 1) THEN
-       OneD%Pg(:) =  OneD%Ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
-       meta(0)%Prs = ( sum(OneD%Pg(1:Nmoy)) / (Nmoy) )
+       OneD%Pg(:)  = meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+       meta(0)%Prs = meta(0)%Ni * qe * meta(0)%Tp *7.5006d-3
     ELSE
-       OneD%ng(:) =  OneD%Pg(:) / (qe * OneD%Tg(:) * koq * 7.5006d-3)
-       meta(0)%Ni  = ( sum(OneD%Ng(1:Nmoy)) / (Nmoy) )
+       OneD%ng(:) = meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
+       meta(0)%Ni = meta(0)%Prs / (qe * meta(0)%Tp *7.5006d-3)
     END IF
 
     DEALLOCATE (DL, DI, DU, R)
