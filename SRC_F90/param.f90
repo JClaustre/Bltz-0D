@@ -42,8 +42,8 @@ MODULE MOD_PARAM
   !-----------------------------------------------------------
   TYPE, PUBLIC::profil1D
      INTEGER :: nx, bnd
-     REAL(DOUBLE) :: SLab, Dx
-     REAL(DOUBLE), DIMENSION(500) :: Tg, Pg, ng, ne
+     REAL(DOUBLE) :: SLab, Dx, nuMoy
+     REAL(DOUBLE), DIMENSION(500) :: Tg, Pg, ng, ne, nu
   END type profil1D
    !-----------------------------------------------------------
 

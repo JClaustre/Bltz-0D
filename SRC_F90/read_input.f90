@@ -444,6 +444,7 @@ CONTAINS
     DO i = 1, sys%nx
        U(i)  = IdU(i,sys%Dx)
        meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+       OneD%nuMoy = OneD%nuMoy + meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        !**** Maxwllian distribution function
        F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
        IF (Clock%Rstart == 1) READ(90,*) j, F(i)
@@ -483,6 +484,7 @@ CONTAINS
     OneD%nx = size(OneD%Tg)
     OneD%Dx = (sys%ra + OneD%SLab) / real(OneD%nx-1)
     OneD%bnd = int(sys%Ra / OneD%Dx)
+    OneD%nuMoy = OneD%nuMoy / sys%nx
 
     IF (Clock%Rstart == 0)  THEN
        OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder

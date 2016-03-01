@@ -23,7 +23,7 @@ CONTAINS
     !LOCAL
     INTEGER :: k, Nmoy, SizeE, Med
     INTEGER :: info = 0 !used for the DGTSV routine
-    REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, nuMoy, beta
+    REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, beta
     REAL(DOUBLE) :: A, B, C, D, ri
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
@@ -33,13 +33,12 @@ CONTAINS
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
 
     Dxx = sys%Ra / real(OneD%bnd-1)
-    SizeE = size(meta(0)%Nuel(:))
-    nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
        IF (k .LT. OneD%bnd) THEN
           Med = 1 ; beta = 0.71d0
           OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
+          OneD%nu(k) = OneD%ng(k)* OneD%nuMoy
        ELSE
           OneD%ne(k) = 0.d0
           Med = 2 ; beta = 0.788d0
@@ -47,7 +46,7 @@ CONTAINS
 
        IF (k .LT. OneD%bnd) Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
        IF (k .GE. OneD%bnd) Coef = Clock%Dt / (1.29516d+03*Dx**2)
-       Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k) / OneD%ng(k)
+       Coef2 = 2.d0* MassR * Clock%Dt * OneD%nu(k) *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0
