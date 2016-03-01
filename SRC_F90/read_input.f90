@@ -310,7 +310,7 @@ CONTAINS
     write(*,"(A)") ' ......... Done'
     !**************************************
     IF (meta(0)%N0 == 1) THEN
-       write(*,"(2A,ES10.2)") tabul, "Using Gas density entry Ng (cm-3) : ", meta(0)%Ni
+       write(*,"(2A,ES10.2)") tabul, "Using Gas density entry Ng (cm-3) : ", meta(0)%Ni*1d-6
        meta(0)%Prs = meta(0)%Ni * qe * meta(0)%Tp *7.5006d-3
        write(*,"(2A,F8.2)") tabul, "Pressure is redefined (Torr) : ", meta(0)%Prs
     ELSEIF (meta(0)%N0 == 0) THEN
