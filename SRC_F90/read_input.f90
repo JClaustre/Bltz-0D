@@ -451,7 +451,15 @@ CONTAINS
        consv(1) = consv(1) + F(i)*U(i)**(0.5d0)*sys%Dx
        consv(2) = consv(2) + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
-    IF (Clock%Rstart == 1) CLOSE (90)
+
+    IF (Clock%Rstart == 1) THEN
+       CLOSE (90)
+       OPEN (UNIT=99,FILE='./datFile/Rstart/Tg.dat',STATUS='OLD')
+       DO  i = 1, size(OneD%Tg)
+          READ(99,*) j, OneD%Tg(i)
+       END DO
+       CLOSE (99)
+    END IF
     sys%Volume = pi * sys%Ra**2 * sys%L
     elec%Ni = consv(1)
     write(*,"(2A, F6.2,A)"  ) tabul, "Tpe init : ", 0.66667d0*consv(2)/consv(1), " (eV)"
@@ -476,8 +484,11 @@ CONTAINS
     OneD%Dx = (sys%ra + OneD%SLab) / real(OneD%nx-1)
     OneD%bnd = int(sys%Ra / OneD%Dx)
 
-    OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
-    OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
+    IF (Clock%Rstart == 0)  THEN
+       OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
+       OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
+    END IF
+
     IF (meta(0)%N0 == 1) THEN
        OneD%ng(:) =  meta(0)%Ni
        OneD%Pg(:) =  OneD%ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
@@ -488,8 +499,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.9d0                                          !
-       ion(1)%Ni = elec%Ni * 0.1d0                                          !
+       ion(2)%Ni = elec%Ni * 0.3d0                                          !
+       ion(1)%Ni = elec%Ni * 0.7d0                                          !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 1.0d+10                                  !
        END SELECT                                                           !
@@ -532,6 +543,12 @@ CONTAINS
     SELECT CASE (NumIon) 
     CASE (3) ; write(990,"(ES15.6)") ion(NumIon)%Ni
     END SELECT
+    CLOSE(990)
+    !**** Save neutral gas temperature profile
+    OPEN(UNIT=990,File="./datFile/Rstart/Tg.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    DO i = 1, OneD%nx
+       write(990,"(I6, ES15.6)") i, OneD%Tg(i)
+    END DO
     CLOSE(990)
     !**** Save Parameters
     OPEN(UNIT=990,File="./datFile/Rstart/Rs_input_he",ACTION="WRITE",STATUS="UNKNOWN")

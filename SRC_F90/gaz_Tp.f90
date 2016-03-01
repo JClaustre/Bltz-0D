@@ -28,7 +28,7 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
 
     ALLOCATE ( DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
-    Nmoy = int(OneD%bnd/2)
+    Nmoy = int(OneD%bnd)
     Dx = OneD%Dx
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
 
@@ -37,7 +37,7 @@ CONTAINS
     nuMoy = sum(meta(0)%Nuel(1:SizeE-1)) / (SizeE-1)
 
     DO k = 1, OneD%nx-1
-       IF (k .LE. OneD%bnd) THEN
+       IF (k .LT. OneD%bnd) THEN
           Med = 1 ; beta = 0.71d0
           OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
        ELSE
@@ -45,7 +45,8 @@ CONTAINS
           Med = 2 ; beta = 0.788d0
        END IF
 
-       Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
+       IF (k .LT. OneD%bnd) Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
+       IF (k .GE. OneD%bnd) Coef = Clock%Dt / (1.29516d+03*Dx**2)
        Coef2 = 2.d0* MassR * Clock%Dt * nuMoy *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
@@ -104,6 +105,7 @@ CONTAINS
     END IF
 
     DEALLOCATE (DL, DI, DU, R)
+    !CALL Write_Out1D( OneD%Pg,  "Tg.dat")
 
   CONTAINS
     FUNCTION Off1(Coef, k, Tg, Dx, M)
@@ -114,9 +116,9 @@ CONTAINS
       ! LOCAL
       REAL(DOUBLE) :: r, Kap
       !**** Thermic conductivity coefficient for Helium
-      IF (M == 1) kap = 0.156d0   * ((Tg(k+1)+Tg(k))/300.d0)**0.710 *0.5d0
+      IF (M == 1) kap = 0.156d0   * ((Tg(k+1)+Tg(k)) *0.5d0/300.d0)**0.710
       !**** Thermic conductivity coefficient for Air
-      IF (M == 2) kap = 0.02623d0 * ((Tg(k+1)+Tg(k))/300.d0)**0.788 *0.5d0
+      IF (M == 2) kap = 0.02623d0 * ((Tg(k+1)+Tg(k)) *0.5d0/300.d0)**0.788
       r = 0.5d0 * ( real(k)*Dx + real(k+1)*Dx )
       Off1 = Coef * Kap * r
     END FUNCTION Off1
