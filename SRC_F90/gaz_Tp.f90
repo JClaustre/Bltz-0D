@@ -46,22 +46,21 @@ CONTAINS
           Med = 1 ; beta = 0.71d0
           OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
           OneD%nu(k) = OneD%ng(k)* OneD%nuMoy
-       ELSE IF (k .GE. OneD%bnd) THEN
-          Med = 3
        ELSE
           OneD%ne(k) = 0.d0
-          Med = 2 ; beta = 0.788d0
+          Med = 1 ; beta = 0.71d0!beta = 0.788d0
        END IF
 
-       IF (k .LT. OneD%bnd) Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
+       ! Temporary variables
+       ri = OneD%ng(k) * Dx * real(k)
+       IF (k .LT. OneD%bnd) Coef = 0.666667d0*Clock%Dt / (kb*Dx**2)
        IF (k .GE. OneD%bnd) Coef = Clock%Dt / (Cp*Dx**2)
        Coef2 = 2.d0* MassR * Clock%Dt * OneD%nu(k) *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
        R(1) = 0.d0
 
-       ! Temporary variables
-       ri = Dx * real(k)
+
        IF (k == 1) THEN
           A = Off1(Coef,1,OneD%Tg,Dx, Med)
           B = Off2(1,OneD%Tg,beta)
@@ -71,7 +70,8 @@ CONTAINS
           C = A ; D = B
           IF (k-1 == 1) THEN
              Dl(k-1) = - A*( 1.d0 - B )/ri
-             C = A/ri ; D = B
+             C = A/ri
+             D = B
           END IF
 
           A = Off1(Coef,k,OneD%Tg,Dx, Med)/ri
@@ -81,10 +81,10 @@ CONTAINS
           Di (k) = 1.0d0 + A*(1.d0-B) + C*(1.d0 + D) 
           R (k)  = A*(OneD%Tg(k+1)-OneD%Tg(k)) - C*(OneD%Tg(k)-OneD%Tg(k-1))
 
-          IF (k .LT. OneD%bnd) THEN
-             Di (k) = Di (k) + Coef2 
-             R (k)  = R (k)  + Coef2 * (elec%Tp*qok - OneD%Tg(k))
-          END IF
+!          IF (k .LT. OneD%bnd) THEN
+!             Di (k) = Di (k) + Coef2 
+!             R (k)  = R (k)  + Coef2 * (elec%Tp*qok - OneD%Tg(k))
+!          END IF
           KPA_TEST(k) = Off3(k, OneD%Tg, Dx, Med)
        END IF
     END DO
