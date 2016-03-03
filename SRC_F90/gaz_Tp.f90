@@ -24,28 +24,37 @@ CONTAINS
     INTEGER :: k, Nmoy, Med
     INTEGER :: info = 0 !used for the DGTSV routine
     REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, beta
-    REAL(DOUBLE) :: A, B, C, D, ri
-    REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R
-
-    ALLOCATE ( DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx) )
+    REAL(DOUBLE) :: A, B, C, D, ri, Cp
+    REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R, KPA_TEST
+    
+    ALLOCATE ( DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx), KPA_TEST(OneD%nx) )
     Nmoy = int(OneD%bnd)
     Dx = OneD%Dx
-    DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
+    DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0 ; KPA_TEST = 0.d0
+    Cp = 1.292d3 ! specific heat in air at 300 K
 
     Dxx = sys%Ra / real(OneD%bnd-1)
 
+!    Do k = 1, OneD%nx 
+!       IF (k .LT. OneD%bnd) KPA_TEST(k) = 0.156d0/(300.d0)**0.710
+!       IF (k .GE. OneD%bnd) KPA_TEST(k) = 0.02623d0/(300.d0)**0.788
+!    END Do
+
     DO k = 1, OneD%nx-1
+
        IF (k .LT. OneD%bnd) THEN
           Med = 1 ; beta = 0.71d0
           OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
           OneD%nu(k) = OneD%ng(k)* OneD%nuMoy
+       ELSE IF (k .GE. OneD%bnd) THEN
+          Med = 3
        ELSE
           OneD%ne(k) = 0.d0
           Med = 2 ; beta = 0.788d0
        END IF
 
        IF (k .LT. OneD%bnd) Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx**2)
-       IF (k .GE. OneD%bnd) Coef = Clock%Dt / (1.29516d+03*Dx**2)
+       IF (k .GE. OneD%bnd) Coef = Clock%Dt / (Cp*Dx**2)
        Coef2 = 2.d0* MassR * Clock%Dt * OneD%nu(k) *OneD%ne(k) / OneD%ng(k)
        ! Lower boundary condition (Neumann Null)
        Di(1) = 1.d0 ; Du(1) = -1.d0  
@@ -64,7 +73,7 @@ CONTAINS
              Dl(k-1) = - A*( 1.d0 - B )/ri
              C = A/ri ; D = B
           END IF
-          
+
           A = Off1(Coef,k,OneD%Tg,Dx, Med)/ri
           B = Off2(k,OneD%Tg,beta)
           Du(k) = - A*( 1.d0 + B )
@@ -76,7 +85,7 @@ CONTAINS
              Di (k) = Di (k) + Coef2 
              R (k)  = R (k)  + Coef2 * (elec%Tp*qok - OneD%Tg(k))
           END IF
-
+          KPA_TEST(k) = Off3(k, OneD%Tg, Dx, Med)
        END IF
     END DO
     ! Upper Boundary conditions (Dirichlet) 
@@ -102,10 +111,11 @@ CONTAINS
        OneD%ng(:) = meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
        meta(0)%Ni = meta(0)%Prs / (qe * meta(0)%Tp *7.5006d-3)
     END IF
+    CALL Write_Out1D( KPA_TEST,  "Tg.dat")
 
-    DEALLOCATE (DL, DI, DU, R)
-    !CALL Write_Out1D( OneD%Pg,  "Tg.dat")
-
+    DEALLOCATE (DL, DI, DU, R, KPA_TEST)
+    !CALL Write_Out1D( OneD%Tg,  "Tg.dat")
+    !Stop
   CONTAINS
     FUNCTION Off1(Coef, k, Tg, Dx, M)
       INTEGER     , INTENT(IN) :: k, M
@@ -118,7 +128,7 @@ CONTAINS
       IF (M == 1) kap = 0.156d0   * ((Tg(k+1)+Tg(k)) *0.5d0/300.d0)**0.710
       !**** Thermic conductivity coefficient for Air
       IF (M == 2) kap = 0.02623d0 * ((Tg(k+1)+Tg(k)) *0.5d0/300.d0)**0.788
-      r = 0.5d0 * ( real(k)*Dx + real(k+1)*Dx )
+      r = 0.5d0 * ( real(k) + real(k+1) )*Dx
       Off1 = Coef * Kap * r
     END FUNCTION Off1
 
@@ -131,6 +141,22 @@ CONTAINS
       Tp2 = ( Tg(k+1) + Tg(k) )
       Off2 = nu * Tp / Tp2
     END FUNCTION Off2
+
+    FUNCTION Off3(k, Tg, Dx, M)
+      INTEGER     , INTENT(IN) :: k, M
+      REAL(DOUBLE), INTENT(IN) :: Dx
+      REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Tg
+      REAL(DOUBLE) :: Off3
+      ! LOCAL
+      REAL(DOUBLE) :: r, Kap
+      !**** Thermic conductivity coefficient for Helium
+      IF (M == 1) kap = 0.156d0   * (Tg(k)/300.d0)**0.710
+      !**** Thermic conductivity coefficient for Air
+      IF (M == 2) kap = 0.02623d0 * (Tg(k)/300.d0)**0.788
+      IF (M == 3) kap = 0.02623d0 * (Tg(k)/300.d0)**0.788 &
+           + 0.156d0   * (Tg(k)/300.d0)**0.710
+      Off3 = -Kap * (Tg(k+1) - Tg(k)) /Dx 
+    END FUNCTION Off3
 
   END SUBROUTINE TP_Neutral
 

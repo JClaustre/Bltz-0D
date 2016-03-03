@@ -351,7 +351,12 @@ CONTAINS
     meta(0)%SecMtM(:) = meta(0)%SecMtM(:) * 1e-20
     meta(0)%SecMtM(sys%nx) = 0.d0
     !**************************************
-
+    !**** Cross-Sec Electron-Ion Momentum transfer
+    DO i = 1, sys%nx
+       U0 = IdU(i,sys%Dx)
+       LnC = 23.d0 - log((elec%Ni*1d-6)**0.5d0 / elec%Tp**1.5d0)
+       elec%SecEI(i) = qe**4  * LnC / (16.d0*pi*eps**2*U0)
+    END DO
     !**************************************
     !**** Calcul Degenerescence
     DO i=0,NumMeta
@@ -451,6 +456,7 @@ CONTAINS
 
        consv(1) = consv(1) + F(i)*U(i)**(0.5d0)*sys%Dx
        consv(2) = consv(2) + F(i)*U(i)**(1.5d0)*sys%Dx
+       elec%Nuei(i) = gama*dsqrt(U(i))*elec%SecEI(i)*elec%Ni
     END DO
 
     IF (Clock%Rstart == 1) THEN
@@ -489,6 +495,7 @@ CONTAINS
     IF (Clock%Rstart == 0)  THEN
        OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
        OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
+       !OneD%Tg(:)  = 300.d0 ! Room temperature (K)
     END IF
 
     IF (meta(0)%N0 == 1) THEN
@@ -501,8 +508,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.3d0                                          !
-       ion(1)%Ni = elec%Ni * 0.7d0                                          !
+       ion(2)%Ni = elec%Ni * 0.5d0                                          !
+       ion(1)%Ni = elec%Ni * 0.5d0                                          !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 1.0d+10                                  !
        END SELECT                                                           !

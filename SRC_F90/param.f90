@@ -30,8 +30,8 @@ MODULE MOD_PARAM
      REAL(DOUBLE)      :: Ni, Tp, Prs, En, Deg, Damb
      REAL(DOUBLE)      :: Dfree, mobl, Updens, J
      CHARACTER(len=10) :: Name
-     REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, Nuel
-     REAL(DOUBLE), DIMENSION(:), POINTER :: SecRec, SecTot, SecMtM
+     REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, Nuel, Nuei
+     REAL(DOUBLE), DIMENSION(:), POINTER :: SecRec, SecTot, SecMtM, SecEI
      REAL(DOUBLE), DIMENSION(:,:), POINTER :: SecIon, SecExc
   END type Species
   !-----------------------------------------------------------
@@ -83,8 +83,8 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(NumMeta)          :: Sn   ! Associative rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
-  REAL(DOUBLE) :: MaxR
-
+  REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
+  REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
 CONTAINS
 
   ! **********************************************************
@@ -119,6 +119,8 @@ CONTAINS
 
     ALLOCATE ( F(nx) ) ; F(:) = 0.d0
     ALLOCATE ( U(nx) ) ; U(:) = 0.d0
+    ALLOCATE ( elec%SecEI(nx) ) ; elec%SecEI(:) = 0.d0
+    ALLOCATE ( elec%Nuei(nx) )  ; elec%Nuei(:)  = 0.d0
 
   END SUBROUTINE AllocArray
   ! **********************************************************

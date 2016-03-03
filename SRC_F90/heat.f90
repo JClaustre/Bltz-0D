@@ -24,7 +24,7 @@ CONTAINS
     INTEGER :: i, l, nx
     REAL(DOUBLE) :: part
     REAL(DOUBLE) :: hdu, tt, nu, v3, cnst, cn, err
-    REAL(DOUBLE) :: y00, yy1, yy2, xx, truc, small, LnC
+    REAL(DOUBLE) :: y00, yy1, yy2, xx, truc, small
     REAL(DOUBLE), DIMENSION(:) , ALLOCATABLE :: f1_new
     REAL(DOUBLE), DIMENSION(:) , ALLOCATABLE :: II,JJ
     REAL(DOUBLE), DIMENSION(:) , ALLOCATABLE :: utt, usq, A, B, C, D
