@@ -495,12 +495,11 @@ CONTAINS
     IF (Clock%Rstart == 0)  THEN
        OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
        OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
-       !OneD%Tg(:)  = 300.d0 ! Room temperature (K)
     END IF
 
     IF (meta(0)%N0 == 1) THEN
        OneD%ng(:) =  meta(0)%Ni
-       OneD%Pg(:) =  OneD%ng(:) * (qe * OneD%Tg(:) * koq * 7.5006d-3)
+       OneD%Pg(:) =  meta(0)%Ni * (qe * OneD%Tg(:) * koq * 7.5006d-3)
     ELSE
        OneD%Pg(:) =  meta(0)%Prs
        OneD%ng(:) =  meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
@@ -508,8 +507,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.5d0                                          !
-       ion(1)%Ni = elec%Ni * 0.5d0                                          !
+       ion(2)%Ni = elec%Ni * 0.8d0                                          !
+       ion(1)%Ni = elec%Ni * 0.2d0                                          !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 1.0d+10                                  !
        END SELECT                                                           !

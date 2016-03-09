@@ -173,7 +173,7 @@ CONTAINS
              write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
           END DO                                                                  !
           CLOSE(90)                                                               !
-          !CALL Write_Out1D( OneD%Tg, "Tg.dat")                                     !
+          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                     !
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
