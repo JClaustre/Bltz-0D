@@ -29,7 +29,7 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(:), ALLOCATABLE :: DL, DI, DU, R, TEST
     
     ALLOCATE ( DL(OneD%nx), DI(OneD%nx), DU(OneD%nx), R(OneD%nx), TEST(OneD%nx) )
-    Nmoy = int(OneD%bnd/2)
+    Nmoy = int(OneD%bnd)
     Dx = OneD%Dx
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0 ; TEST = 0.d0
     Cp = 1.004d3 * 1.292d0 * 273.15d0 ! Cp*rho = Cp(300 K) * rho_0*T_0/Tg
@@ -37,7 +37,7 @@ CONTAINS
     Dxx = sys%Ra / real(OneD%bnd-1)
 
     k = OneD%bnd
-    DO l = 1, 20
+    DO l = 1, 10
        Kpa_H = 1.560d-1 * (OneD%Tg(k)/300.d0)**0.710
        Kpa_A = 2.623d-2 * (OneD%Tg(k)/300.d0)**0.788
        Tw = ( Kpa_H * (4.d0*OneD%Tg(k-1) - OneD%Tg(k-2)) &
@@ -59,7 +59,7 @@ CONTAINS
        ELSE
           Med = 2 ; beta = 0.788d0
        END IF
-       !IF (k.GT.1) TEST(k) = Off3(k, OneD%Tg, Dx, Med)
+       !TEST(k) = Off3(k, OneD%Tg, Dx, Med)
        
        ! Temporary variables
        ri = Dx * real(k)
@@ -96,7 +96,7 @@ CONTAINS
           END IF
           
           IF (k == OneD%bnd) THEN
-             Dl(k) = 0.d0 ; Di(k) = 1.d0 ; Du(k) = 0.d0
+             Dl(k-1) = 0.d0 ; Di(k) = 1.d0 ; Du(k) = 0.d0
              R(k) = 0.d0
           END IF
        END IF
@@ -104,7 +104,7 @@ CONTAINS
     END DO
     ! Upper Boundary conditions (Dirichlet) 
     ! Carefull /!\ here we solve W = T^k+1 - T^k
-    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx) = 0.d0 
+    Di(OneD%nx) = 1.d0 ; Dl(OneD%nx-1) = 0.d0 
     R(OneD%nx) = 0.d0
 
     ! Calcul de la solution **************************
@@ -115,7 +115,7 @@ CONTAINS
        STOP
     END IF
     ! *******************************************
-    OneD%Tg(:) = R(:)+OneD%Tg(:)
+    OneD%Tg(:) = R(:)+OneD%Tg(:) ; OneD%Tg(OneD%nx) = 300.d0
     meta(0)%Tp  = ( sum(OneD%Tg(1:Nmoy)) / (Nmoy) ) * koq
 
     IF (meta(0)%N0 == 1) THEN
@@ -125,7 +125,7 @@ CONTAINS
        OneD%ng(:) = meta(0)%Prs / (qe * OneD%Tg(:) * koq * 7.5006d-3)
        meta(0)%Ni = meta(0)%Prs / (qe * meta(0)%Tp *7.5006d-3)
     END IF
-    !CALL Write_Out1D( KPA_TEST,  "Tg.dat")
+    !CALL Write_Out1D( TEST,  "Tg.dat")
 
     DEALLOCATE (DL, DI, DU, R, TEST)
     !CALL Write_Out1D( OneD%Tg,  "Tg.dat")
@@ -142,7 +142,7 @@ CONTAINS
       IF (M == 1) kap = 1.560d-1 * ((Tg(k+1)+Tg(k))/600.d0)**0.710
       !**** Thermic conductivity coefficient for Air
       IF (M == 2) kap = 2.623d-2 * ((Tg(k+1)+Tg(k))/600.d0)**0.788
-      r = 0.5d0 * ( real(k) + real(k+1) )*Dx
+      r = 0.5d0 * ( k + k+1 )*Dx
       Off1 = Coef * Kap * r
     END FUNCTION Off1
 
@@ -167,7 +167,7 @@ CONTAINS
       IF (M == 1) kap = 0.156d0   * (Tg(k)/300.d0)**0.710
       !**** Thermic conductivity coefficient for Air
       IF (M == 2) kap = 0.02623d0 * (Tg(k)/300.d0)**0.788
-      Off3 = -Kap * 0.5*(Tg(k+1) - Tg(k-1)) /Dx 
+      Off3 = -Kap * (Tg(k+1) - Tg(k)) /Dx 
     END FUNCTION Off3
 
   END SUBROUTINE TP_Neutral

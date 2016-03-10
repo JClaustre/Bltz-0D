@@ -430,6 +430,7 @@ CONTAINS
     CLOSE (90)
     !**** Init Clock
     clock%MaxIter = int(5E+08)
+
     IF (Clock%Rstart == 0) clock%SumDt = 0.d0
     !**** Init Grid Variables
     IF (Clock%Rstart == 1) THEN
@@ -451,7 +452,7 @@ CONTAINS
        meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        OneD%nuMoy = OneD%nuMoy + meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        !**** Maxwllian distribution function
-       F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
+       IF (i.LT.sys%nx) F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
        IF (Clock%Rstart == 1) READ(90,*) j, F(i)
 
        consv(1) = consv(1) + F(i)*U(i)**(0.5d0)*sys%Dx
@@ -494,7 +495,8 @@ CONTAINS
 
     IF (Clock%Rstart == 0)  THEN
        OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
-       OneD%Tg(OneD%bnd:)  = 300.d0 ! Room temperature (K)
+       OneD%Tg(OneD%bnd:)   = 300.d0 ! Room temperature (K)
+       !OneD%Tg  = 300!meta(0)%Tp * qok ! Room temperature (K)
     END IF
 
     IF (meta(0)%N0 == 1) THEN

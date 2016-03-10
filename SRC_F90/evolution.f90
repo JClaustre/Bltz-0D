@@ -18,7 +18,7 @@ MODULE MOD_EVOL
   USE MOD_TPGAZ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS

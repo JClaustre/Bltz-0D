@@ -132,6 +132,7 @@ CONTAINS
     !**** Power calculation
     power = 0.d0
     do i = 1, nx
+       meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        nucp  = meta(0)%Nuel(i)
        Uc = qome * nucp / (nucp**2 + sys%Freq**2)
        IF (i .LT. nx) Df = F(i+1) - F(i)
@@ -191,6 +192,7 @@ CONTAINS
     DEALLOCATE ( f0,nuc )
   END SUBROUTINE Heating
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+
   !*********** SUBROUTINE Collisions Elastiques ***************!
   SUBROUTINE Elastic (sys,meta,U,F)
     !INTENT
@@ -216,6 +218,7 @@ CONTAINS
     do i=1,nx
        part= part + F(i)*u(i)**(0.5d0)*Dx  ! nombre de particules initiale
        En  = En   + F(i)*u(i)**(1.5d0)*Dx
+       meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
     end do
     !****NORMALISATION DE LA FONCTION DE DISTRIBUTION ***********************
     do i=1,nx
