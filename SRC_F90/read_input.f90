@@ -494,8 +494,12 @@ CONTAINS
     OneD%nuMoy = OneD%nuMoy / sys%nx
 
     IF (Clock%Rstart == 0)  THEN
-       OneD%Tg(:OneD%bnd-1) = meta(0)%Tp * qok ! Gas temperature in the cylinder
-       OneD%Tg(OneD%bnd:)   = 300.d0 ! Room temperature (K)
+       OneD%Tg(:OneD%bnd-2) = meta(0)%Tp * qok ! Gas temperature in the cylinder
+       OneD%Tg(OneD%bnd-1) = 600.d0 ! Gas temperature in the cylinder
+       Do i = OneD%bnd, OneD%nx
+          OneD%Tg(i) = (i-OneD%bnd)*OneD%Dx*(300.d0-600.d0)/OneD%SLab&
+               + 600.d0 ! Room temperature (K)
+       END Do
        !OneD%Tg  = 300!meta(0)%Tp * qok ! Room temperature (K)
     END IF
 

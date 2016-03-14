@@ -36,15 +36,17 @@ CONTAINS
 
     Dxx = sys%Ra / real(OneD%bnd-1)
 
-    k = OneD%bnd
-    DO l = 1, 10
-       Kpa_H = 1.560d-1 * (OneD%Tg(k)/300.d0)**0.710
-       Kpa_A = 2.623d-2 * (OneD%Tg(k)/300.d0)**0.788
-       Tw = ( Kpa_H * (4.d0*OneD%Tg(k-1) - OneD%Tg(k-2)) &
-            + Kpa_A * (4.d0*OneD%Tg(k+1) - OneD%Tg(k+2)) ) &
-            / (3.d0*(Kpa_H+Kpa_A))
-       OneD%Tg(k) = Tw
-    END DO
+    IF (OneD%nx.Gt.OneD%bnd) THEN
+       k = OneD%bnd
+       DO l = 1, 10
+          Kpa_H = 1.560d-1 * (OneD%Tg(k)/300.d0)**0.710
+          Kpa_A = 2.623d-2 * (OneD%Tg(k)/300.d0)**0.788
+          Tw = ( Kpa_H * (4.d0*OneD%Tg(k-1) - OneD%Tg(k-2)) &
+               + Kpa_A * (4.d0*OneD%Tg(k+1) - OneD%Tg(k+2)) ) &
+               / (3.d0*(Kpa_H+Kpa_A))
+          OneD%Tg(k) = Tw
+       END DO
+    END IF
 
     ! Lower boundary condition (Neumann Null)
     Di(1) = 1.d0 ; Du(1) = -1.d0  
