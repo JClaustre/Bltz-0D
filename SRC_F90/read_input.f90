@@ -487,7 +487,7 @@ CONTAINS
     END IF                                                                  !
     !***********************************************************************!
     !**** 1D profil for gas temperature calculation
-    OneD%SLab = sys%Ra ! (m)
+    OneD%SLab = 0.00005 ! (m)
     OneD%nx = size(OneD%Tg)
     OneD%Dx = (sys%ra + OneD%SLab) / real(OneD%nx-1)
     OneD%bnd = int(sys%Ra / OneD%Dx)
