@@ -267,6 +267,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Du, Eij, U, rchi
     REAL(DOUBLE) :: A, B, C
     REAL(DOUBLE), DIMENSION(200) :: SecRead, EnRead
+    REAL(DOUBLE), DIMENSION(6,0:18) :: fit
     Dx = sys%Dx
 
     !**************************************
@@ -300,6 +301,14 @@ CONTAINS
        END DO
        meta(l)%SecIon(1,sys%nx) = 0.d0
        !**************************************
+       READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
+    END DO
+
+    !**** Fitting Coefficients for ionization in Supp data Santos 
+    !**** (J.Phys.D: Appl.Phys 47 2014)
+    DO l = 1, 6
+       READ(51,*) Npts
+       READ(51,*)(fit(l,i), i=0,Npts-1)
        READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
     END DO
     CLOSE(51)
@@ -336,10 +345,10 @@ CONTAINS
        ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
        DO k = 1, sys%nx
           Du=IdU(k,Dx)/Eij
-          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = (sqrt(Pi)/4.d0)*((Du)/(Du+1.d0))&
+          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = (sqrt(Pi)/4.d0)*((Du+1.d0)/Du)&
                * ( (1.0d0-rchi) * ion(NumIon)%SecIon(1,k+ichi) )
           if(k .LE. sys%nx-ichi-1) ion(NumIon)%SecIon(2,k) = ion(NumIon)%SecIon(2,k) &
-               + (sqrt(Pi)/4.d0)*((Du)/(Du+1.d0))* ( rchi * ion(NumIon)%SecIon(1,k+ichi+1) )
+               + (sqrt(Pi)/4.d0)*((Du+1.d0)/Du)* ( rchi * ion(NumIon)%SecIon(1,k+ichi+1) )
        END DO
        ion(NumIon)%SecIon(1,sys%nx) = 0.d0
        ion(NumIon)%SecIon(2,sys%nx) = 0.d0

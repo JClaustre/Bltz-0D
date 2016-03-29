@@ -74,7 +74,7 @@ CONTAINS
        !**** Initial Energy density
        energI = energI + Fi(i) * sqrt(U3) * sys%Dx
        !****************************************************
-       coef = U(i) * 1.06d-22 * Fi(i) * gama * ion(2)%Ni
+       coef = U(i) * 1.06d-20 * Fi(i) * gama * ion(2)%Ni
        recmb = recmb + coef
        Fi(i) = Fi(i) - Clock%Dt * coef / dsqrt( U(i) )
        !**** Final Energy density
@@ -89,6 +89,45 @@ CONTAINS
     diag(8)%Tx =  recmb * Dx
     !****************
   END SUBROUTINE Recomb_Norm
+
+  !***********************************************************************
+  SUBROUTINE Recomb_Alves (sys, meta, U, Fi, diag)
+    !INTENT
+    TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
+    TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
+    !LOCAL
+    INTEGER :: i
+    REAL(DOUBLE) :: coef, recmb, part, En1, En2, rcmb_ex
+    En1  = 0.d0 ; En2 = 0.d0 ; part = 0.d0
+    recmb = 5.0d-09 * 1.d-6 * (meta(0)%Tp / (elec%Tp)) ! m3 s-1
+    coef = recmb * Clock%Dt * elec%Ni * ion(2)%Ni
+
+    do i = 1, sys%nx
+       En1 = Fi(i) * U(i)**1.5d0 * sys%Dx
+       part = part + Fi(i) * sqrt(U(i)) * sys%Dx
+    end do
+
+    elec%Ni = part - coef
+    ion(2)%UpDens  = ion(2)%UpDens  - coef
+    meta(1)%UpDens = meta(1)%UpDens + coef
+    do i = 1, sys%nx
+       Fi(i) = Fi(i) * elec%Ni / part
+       En2 = Fi(i) * U(i)**1.5d0 * sys%Dx
+    END do
+
+    !**** Diagnostic
+    diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
+    diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
+    !**** He2* : Excimer SuperElastic He2* + e- --> 2He + e-
+!    IF (NumIon == 3) Then
+!       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(3)%Ni
+!       ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
+!    END IF
+  END SUBROUTINE Recomb_Alves
+  !***********************************************************************
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Conv_3Body (meta, ion)
@@ -128,15 +167,19 @@ CONTAINS
     SELECT CASE (NumIon)
     CASE (3)
        !**** He(2P3) + 2He --> He2* + He
+       !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        excim = 1.6d-32 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
-       !**** He2* + He --> He(2P3) + He
+       !**** He2* + He --> He(2P3) + 2He
+       !**** rate from Belmonte et al (J.Phys.D:Appl.Phys 40 7343 2007)
        excim = 3.6d-14 *1d-06 * ion(NumIon)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  - Clock%Dt * excim
+       !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        !**** He(2S3) + 2He --> He2* + He
-       excim = 1.5d-34 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
+       excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
+            * meta(3)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
     END SELECT
