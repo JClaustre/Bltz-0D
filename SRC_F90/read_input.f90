@@ -389,7 +389,7 @@ CONTAINS
     !**************************************
     !**** Associative process
     !**** He(n,l,s)+He --> He2+ + e
-    CALL Init_Asso(Sn, 0)
+    CALL Init_Asso(Sn, 1)
     !**************************************
     !**** l-change atomic process
     !**** He(n,l,s)+He <--> He(n,l',s)+He
@@ -422,7 +422,7 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     !LOCAL
     INTEGER :: i, j
-    REAL(DOUBLE) :: power, Uc, Df
+    REAL(DOUBLE) :: power, Uc, Df, Tp_tmp
     !**** Look for Restart or not
     OPEN  (UNIT=90,FILE='./datFile/input_he',STATUS='OLD')
     READ (90,*) sys%Nx
@@ -487,19 +487,28 @@ CONTAINS
     END IF                                                                  !
     !***********************************************************************!
     !**** 1D profil for gas temperature calculation
-    OneD%SLab = sys%Ra ! (m)
+    OneD%SLab = 0.0!sys%Ra ! (m)
     OneD%nx = size(OneD%Tg)
-    OneD%Dx = (sys%ra + OneD%SLab) / real(OneD%nx-1)
-    OneD%bnd = int(sys%Ra / OneD%Dx)
+    OneD%Dx = (sys%Ra + OneD%SLab) / real(OneD%nx-1)
+    IF (OneD%SLab .NE. 0.d0) THEN
+       OneD%bnd = int(sys%Ra / OneD%Dx)
+    ELSE
+       OneD%Bnd = OneD%nx
+    END IF
     OneD%nuMoy = OneD%nuMoy / sys%nx
 
     IF (Clock%Rstart == 0)  THEN
-       OneD%Tg(:OneD%bnd-2) = meta(0)%Tp * qok ! Gas temperature in the cylinder
-       OneD%Tg(OneD%bnd-1) = 600.d0 ! Gas temperature in the cylinder
-       Do i = OneD%bnd, OneD%nx
-          OneD%Tg(i) = (i-OneD%bnd)*OneD%Dx*(300.d0-600.d0)/OneD%SLab&
-               + 600.d0 ! Room temperature (K)
-       END Do
+       ! Gas temperature in the cylinder (Parabolic profile)
+       Tp_tmp = (3.d0/2.d0) * (meta(0)%Tp*qok - 600.d0/3.d0)
+       DO i = 1, OneD%bnd
+          OneD%Tg(i) = Tp_tmp - ((i-1)*OneD%Dx / sys%Ra)**2 * (Tp_tmp-600.d0)
+       END DO
+       IF (OneD%SLab .NE. 0.d0) THEN
+          Do i = OneD%bnd+1, OneD%nx
+             OneD%Tg(i) = (i-OneD%bnd+1)*OneD%Dx*(300.d0-600.d0)/OneD%SLab&
+                  + 600.d0 ! Room temperature (K)
+          END Do
+       END IF
        !OneD%Tg  = 300!meta(0)%Tp * qok ! Room temperature (K)
     END IF
 
