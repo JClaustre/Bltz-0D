@@ -141,20 +141,6 @@ CONTAINS
       Off2 = nu * Tp / Tp2
     END FUNCTION Off2
 
-    FUNCTION Off3(k, Tg, Dx, M)
-      INTEGER     , INTENT(IN) :: k, M
-      REAL(DOUBLE), INTENT(IN) :: Dx
-      REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Tg
-      REAL(DOUBLE) :: Off3
-      ! LOCAL
-      REAL(DOUBLE) :: r, Kap
-      !**** Thermic conductivity coefficient for Helium
-      IF (M == 1) kap = 0.156d0   * (Tg(k)/300.d0)**0.710
-      !**** Thermic conductivity coefficient for Air
-      IF (M == 2) kap = 0.02623d0 * (Tg(k)/300.d0)**0.788
-      Off3 = -Kap * (Tg(k+1) - Tg(k)) /Dx 
-    END FUNCTION Off3
-
   END SUBROUTINE TP_Neutral
     !***********************************************************************
 
@@ -179,7 +165,7 @@ CONTAINS
 
     ! Lower boundary condition (Neumann Null)
     Di(1) = 1.d0 ; Du(1) = -1.d0  
-    R(1) = OneD%Tg(2) - OneD%Tg(1)!0.d0
+    R(1) = Tp_g(2) - Tp_g(1)
     !****************************************
     DO k = 1, OneD%nx-1
 
