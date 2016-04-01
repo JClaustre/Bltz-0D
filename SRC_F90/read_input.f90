@@ -73,7 +73,7 @@ CONTAINS
     READ (90,*) meta(0)%Ni, meta(0)%N0
     READ (90,*) sys%Freq
     READ (90,*) meta(0)%Prs
-    READ (90,*) meta(0)%Tp
+    READ (90,*) meta(0)%Tp, OneD%Tw
     READ (90,*) elec%Tp
     READ (90,*) sys%Ra
     READ (90,*) sys%L
@@ -389,7 +389,7 @@ CONTAINS
     !**************************************
     !**** Associative process
     !**** He(n,l,s)+He --> He2+ + e
-    CALL Init_Asso(Sn, 1)
+    CALL Init_Asso(Sn, 2)
     !**************************************
     !**** l-change atomic process
     !**** He(n,l,s)+He <--> He(n,l',s)+He
@@ -499,17 +499,16 @@ CONTAINS
 
     IF (Clock%Rstart == 0)  THEN
        ! Gas temperature in the cylinder (Parabolic profile)
-       Tp_tmp = (3.d0/2.d0) * (meta(0)%Tp*qok - 600.d0/3.d0)
+       Tp_tmp = (3.d0/2.d0) * (meta(0)%Tp*qok - OneD%Tw/3.d0)
        DO i = 1, OneD%bnd
-          OneD%Tg(i) = Tp_tmp - ((i-1)*OneD%Dx / sys%Ra)**2 * (Tp_tmp-600.d0)
+          OneD%Tg(i) = Tp_tmp - ((i-1)*OneD%Dx / sys%Ra)**2 * (Tp_tmp-OneD%Tw)
        END DO
        IF (OneD%SLab .NE. 0.d0) THEN
           Do i = OneD%bnd+1, OneD%nx
-             OneD%Tg(i) = (i-OneD%bnd+1)*OneD%Dx*(300.d0-600.d0)/OneD%SLab&
-                  + 600.d0 ! Room temperature (K)
+             OneD%Tg(i) = (i-OneD%bnd+1)*OneD%Dx*(300.d0-OneD%Tw)/OneD%SLab&
+                  + OneD%Tw ! Room temperature (K)
           END Do
        END IF
-       !OneD%Tg  = 300!meta(0)%Tp * qok ! Room temperature (K)
     END IF
 
     IF (meta(0)%N0 == 1) THEN
@@ -583,7 +582,7 @@ CONTAINS
     WRITE (990,"(ES15.6,I2)") meta(0)%Ni, meta(0)%N0
     WRITE (990,"(ES15.6)") sys%Freq
     WRITE (990,"(ES15.6)") meta(0)%Prs
-    WRITE (990,"(ES15.6)") meta(0)%Tp
+    WRITE (990,"(2ES15.6)") meta(0)%Tp, OneD%Tw
     WRITE (990,"(ES15.6)") elec%Tp
     WRITE (990,"(ES15.6)") sys%Ra
     WRITE (990,"(ES15.6)") sys%L

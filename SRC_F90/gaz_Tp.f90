@@ -25,6 +25,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, beta
     REAL(DOUBLE) :: A, B, C, D
     REAL(DOUBLE) :: ri, Cp, Tw, Kpa_H, Kpa_A
+    REAL(DOUBLE) :: subDt
     REAL(DOUBLE), DIMENSION(OneD%nx) :: DL, DI, DU, R, Tp_g
     
     Nmoy = int(OneD%bnd)
@@ -32,13 +33,15 @@ CONTAINS
     DL = 0.d0 ; DI = 0.d0; DU = 0.d0 ; R = 0.d0
     Tp_g = OneD%Tg
     Cp = 1.004d3 * 1.292d0 * 273.15d0 ! Cp*rho = Cp(300 K) * rho_0*T_0/Tg
+    subDt = 1.d-05
 
     Dxx = sys%Ra / real(OneD%bnd-1)
 
     IF (OneD%nx.Gt.OneD%bnd) THEN
        k = OneD%bnd
        DO l = 1, 10
-          Kpa_H = 1.560d-1 * (Tp_g(k)/300.d0)**0.710
+          Kpa_H = 2.682d-3 * (1.d0 + 1.123d-3*meta(0)%Prs*1.33322d-3)&
+               *Tp_g(k)**(0.71d0 * (1.d0-2d-4*meta(0)%Prs*1.33322d-3))
           Kpa_A = 2.623d-2 * (Tp_g(k)/300.d0)**0.788
           Tw = ( Kpa_H * (4.d0*Tp_g(k-1) - Tp_g(k-2)) &
                + Kpa_A * (4.d0*Tp_g(k+1) - Tp_g(k+2)) ) &
@@ -46,7 +49,6 @@ CONTAINS
           OneD%Tg(k) = Tw
        END DO
     END IF
-
     ! Lower boundary condition (Neumann Null)
     Di(1) = 1.d0 ; Du(1) = -1.d0  
     R(1)  = Tp_g(2) - Tp_g(1)
@@ -54,7 +56,7 @@ CONTAINS
     DO k = 1, OneD%nx-1
 
        IF (k .LT. OneD%bnd) THEN
-          Med = 1 ; beta = 0.71d0
+          Med = 1 ; beta = 0.71d0 * (1.d0-2d-4*meta(0)%Prs*1.33322d-3)
           OneD%ne(k) = elec%Ni * bessj0(real(2.4048 * real(k-1)*Dxx / sys%Ra))
           OneD%nu(k) = OneD%ng(k)* OneD%nuMoy
        ELSE
@@ -64,19 +66,19 @@ CONTAINS
        ! Temporary variables
        ri = Dx * k
        IF (k .LT. OneD%bnd) THEN
-          Coef = 0.666667d0*Clock%Dt / (OneD%ng(k)*kb*Dx*Dx)/ri
+          Coef = 0.666667d0*subDt / (OneD%ng(k)*kb*Dx*Dx)/ri
        ELSE
-          Coef = Clock%Dt * OneD%Tg(k) / (Cp*Dx*Dx)/ri
+          Coef = subDt * OneD%Tg(k) / (Cp*Dx*Dx)/ri
        END IF
 
        IF (k == 1) THEN
-          A = Off1(Coef,k,OneD%Tg,Dx, Med)
+          A = Off1(Coef,k,OneD%Tg,Dx, meta(0)%Prs, Med, beta)
           B = Off2(k,OneD%Tg,beta)
        ELSE
 
           Dl(k) = - A*( 1.d0 - B )
           C = A ; D = B
-          A = Off1(Coef,k,OneD%Tg,Dx, Med)
+          A = Off1(Coef,k,OneD%Tg,Dx, meta(0)%Prs, Med, beta)
           B = Off2(k,OneD%Tg,beta)
           Du(k) = - A*( 1.d0 + B )
           
@@ -84,7 +86,7 @@ CONTAINS
           R (k)  = A*(Tp_g(k+1)-Tp_g(k)) - C*(Tp_g(k)-Tp_g(k-1))
        
           IF (k .LT. OneD%bnd) THEN
-             Coef2 = 2.d0* MassR * Clock%Dt * OneD%nu(k) *OneD%ne(k) / OneD%ng(k)
+             Coef2 = 2.d0* MassR * subDt * OneD%nu(k) *OneD%ne(k) / OneD%ng(k)
              Di (k) = Di (k) + Coef2 
              R (k)  = R (k)  + Coef2 * (elec%Tp*qok - Tp_g(k))
           END IF
@@ -116,17 +118,18 @@ CONTAINS
     END IF
 
   CONTAINS
-    FUNCTION Off1(Coef, k, Tg, Dx, M)
+    FUNCTION Off1(Coef, k, Tg, Dx, Prs, M, beta)
       INTEGER     , INTENT(IN) :: k, M
-      REAL(DOUBLE), INTENT(IN) :: Coef, Dx
+      REAL(DOUBLE), INTENT(IN) :: Coef, Dx, Prs, beta
       REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: Tg
       REAL(DOUBLE) :: Off1
       ! LOCAL
-      REAL(DOUBLE) :: r, Kap
+      REAL(DOUBLE) :: r, P, Kap
+      P = Prs * 1.33322d-3 ! Conversion Torr --> bar
       !**** Thermic conductivity coefficient for Helium
-      IF (M == 1) kap = 0.5d0 * 1.560d-1 * ((Tg(k+1)+Tg(k))/300.d0)**0.710
+      IF (M == 1) kap = 0.5d0 * 2.682d-3 * (1.d0 + 1.123d-3*P)*(Tg(k+1)+Tg(k))**beta
       !**** Thermic conductivity coefficient for Air
-      IF (M == 2) kap = 0.5d0 * 2.623d-2 * ((Tg(k+1)+Tg(k))/300.d0)**0.788
+      IF (M == 2) kap = 0.5d0 * 2.623d-2 * ((Tg(k+1)+Tg(k))/300.d0)**beta
       r = (real(k)+0.5d0)*Dx
       Off1 = Coef * Kap * r
     END FUNCTION Off1
