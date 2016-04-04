@@ -18,7 +18,7 @@ MODULE MOD_EVOL
   USE MOD_TPGAZ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -41,7 +41,7 @@ CONTAINS
        OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="APPEND",ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 1.d-08 ! Maximum Time-Step allowed
+    MaxDt  = 1.d-9 ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
     GenPwr = 0.1d-6 ! Time constant to start the generator.
 
@@ -69,6 +69,7 @@ CONTAINS
           sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
           k = k+1
        END IF
+
        !**** Heat + Elas + Fk-Pl
        CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
@@ -77,7 +78,7 @@ CONTAINS
        SELECT CASE (XcDx)
        CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-       CASE DEFAULT ; CALL Exc_Begin (sys, meta, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        END SELECT
        !**** De-excit Dimer molecule (He2*)
        IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
@@ -136,7 +137,7 @@ CONTAINS
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
-               " μs", meta(1)%Ni*1d-06, ion(1)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
+               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
                (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",& !
                OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs                      !
        END IF                                                                     !
@@ -283,6 +284,7 @@ CONTAINS
     TYPE(Species), DIMENSION(NumIon)   , INTENT(IN) :: ion
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(IN) :: meta
     !LOCAL
+    INTEGER :: i
     REAL(DOUBLE) :: ne, Dt
     ne = elec%Ni ; Dt = Clock%Dt
 
@@ -384,6 +386,10 @@ CONTAINS
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%Tx+Diag(9)%Tx) / ne
+    write(99,"(A)") " "
+    DO i = 1, NumMeta                                                       !
+       write(99,"(I3,A,F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, meta(i)%Ni*1d-06
+    END DO                                                                  !
     write(99,"(A)") " "
     write(99,"(A)")"![Zozor](http://uploads.siteduzero.com/files/420001_421000/420263.png)"
     Close(99)

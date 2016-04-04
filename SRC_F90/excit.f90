@@ -600,7 +600,6 @@ CONTAINS
     CLOSE(51)
     !**************************************
 
-
     !**********************************************
     !**** De-excitation cross-Section using *******
     !**** Klein-Rosseland Relation ****************

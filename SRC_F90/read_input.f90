@@ -389,7 +389,7 @@ CONTAINS
     !**************************************
     !**** Associative process
     !**** He(n,l,s)+He --> He2+ + e
-    CALL Init_Asso(Sn, 2)
+    CALL Init_Asso(Sn, 1)
     !**************************************
     !**** l-change atomic process
     !**** He(n,l,s)+He <--> He(n,l',s)+He
@@ -442,9 +442,6 @@ CONTAINS
     CALL AllocArray(sys%nx)
     !**** Read Init
     CALL Read_Input(sys, ion, elec, meta)
-    !**** Init SystM Variables
-    sys%Eef = sys%E / meta(0)%Ni
-    sys%Omg = sys%freq / meta(0)%Ni
     !**** Init EEDF
     IF (Clock%Rstart == 1) OPEN (UNIT=90,FILE='./datFile/Rstart/EEDF.dat',STATUS='OLD')
     DO i = 1, sys%nx
