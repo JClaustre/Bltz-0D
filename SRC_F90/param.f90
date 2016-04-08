@@ -71,7 +71,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), PARAMETER :: eps = 8.8542d-12 ! Permittivity of free space (F.m-1)
   REAL(DOUBLE), PARAMETER :: Pi  = 4*ATAN(1.d0)
   REAL(DOUBLE), PARAMETER :: gama= dsqrt(2.d0*qome)
-  REAL(DOUBLE), PARAMETER :: MassR = 1.3710d-04 ! Mass Ratio (me/mhe)
+  REAL(DOUBLE), PARAMETER :: MassR = me/mhe ! Mass Ratio (me/mhe)
   REAL(DOUBLE), PARAMETER :: Ry  = 13.605692  ! Rydberg energy (eV)
   REAL(DOUBLE), PARAMETER :: Nlosh = 2.6868d+25 ! Loschmidt Number (m-3) => (P=1atm, T=0C)
   !REAL(DOUBLE), PARAMETER :: LnC = 10.d0      ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
@@ -253,23 +253,23 @@ CONTAINS
        write(*,"(F4.1,A,I6,A)") tot, " sec ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 60 .and. tot .LE. 5*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-               "You Have time to check your email ... calculation time is estimated to "
+               "You Have time to ... check your email! estimated calculation: "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 5*60.0 .and. tot .LE. 15*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "You can take your coffee ... calculation time is estimated to "
+            "You have time for coffee! estimated calculation: "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 15*60.0 .and. tot .LE. 45*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "Think about something else! ... calculation time is estimated to "
+            "estimated calculation : "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 45*60.0 .and. tot .LE. 3600.) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "Maybe you should think about Optimizations ... calculation time is estimated to "
+            "You have time for ... Optimizations! estimated calculation: "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
     ELSEIF (tot .GT. 3600. ) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "One suggestion, look at Parallelization! ... calculation time is estimated to "
+            "You have all the time! estimated calculation: "
        write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")"
     END IF
   END SUBROUTINE LoopTime

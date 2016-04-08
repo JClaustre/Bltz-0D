@@ -27,7 +27,7 @@ CONTAINS
     REAL(DOUBLE) :: Eij, chi, rchi, coef1, coef2
     REAL(DOUBLE) :: ratx
     !*********************************
-    beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(-1.86d0)
+    beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(0.5d0)
     asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0
     Dx = sys%Dx ; Diag(5)%Tx = 0.d0 ; Diag(6)%Tx = 0.d0
 

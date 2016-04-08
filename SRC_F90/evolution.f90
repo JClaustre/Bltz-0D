@@ -18,7 +18,7 @@ MODULE MOD_EVOL
   USE MOD_TPGAZ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -63,7 +63,7 @@ CONTAINS
        !*************************************
        
        !**** Neutral temperature calculation
-       CALL TP_Neutral (sys, elec, meta, OneD)
+       CALL TP_Neutral_2 (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
           sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
@@ -146,9 +146,9 @@ CONTAINS
        IF (modulo(l,100)==0) Then                                                 !
           SELECT CASE (NumIon)                                                    !
           CASE (3)                                                                !
-             write(99,"(49ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp, elec%Ni*1d-06,&
-                  ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, ion(NumIon)%Ni*1d-06, &       !
-                  (meta(i)%Ni*1d-06,i=1,NumMeta)                                  !
+             write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,OneD%Tg(OneD%bnd),&
+                  elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, &               !
+                  ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)            !
           CASE DEFAULT                                                            !
              write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp, elec%Ni*1d-06,&
                   ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)!

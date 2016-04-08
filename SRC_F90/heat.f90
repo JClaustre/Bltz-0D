@@ -132,7 +132,7 @@ CONTAINS
     !**** Power calculation
     power = 0.d0
     do i = 1, nx
-       meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+       !meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        nucp  = meta(0)%Nuel(i)
        Uc = qome * nucp / (nucp**2 + sys%Freq**2)
        IF (i .LT. nx) Df = F(i+1) - F(i)
