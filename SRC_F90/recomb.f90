@@ -121,11 +121,7 @@ CONTAINS
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
     diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
-    !**** He2* : Excimer SuperElastic He2* + e- --> 2He + e-
-!    IF (NumIon == 3) Then
-!       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(3)%Ni
-!       ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
-!    END IF
+
   END SUBROUTINE Recomb_Alves
   !***********************************************************************
 
@@ -153,7 +149,7 @@ CONTAINS
     !*************************************
     !**** cf. Belmonte 2007 : η (cm3 s-1)
     !**** He2+ + He(1S) --> He+ + 2He(1S)
-    eta = 1.40d-06 * 1.d-6 * exp(-28100.d0 / Tp) / Tp**0.67
+    eta = 1.40d-06 * 1.d-6 * exp(-(ion(1)%En-ion(2)%En)*qok / Tp) / Tp**0.67
     Src = eta * ion(2)%Ni * meta(0)%Ni
     IF (ion(2)%Ni .GT. 0.d0) THEN
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
@@ -178,8 +174,9 @@ CONTAINS
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  - Clock%Dt * excim
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        !**** He(2S3) + 2He --> He2* + He
-       excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
-            * meta(3)%Ni * meta(0)%Ni**2
+       !excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
+       !     * meta(1)%Ni * meta(0)%Ni**2
+       excim = 1.5d-34 *1d-12 *  meta(1)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
     END SELECT

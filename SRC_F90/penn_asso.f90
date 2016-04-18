@@ -30,7 +30,7 @@ CONTAINS
     beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(0.5d0)
     asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0
     Dx = sys%Dx ; Diag(5)%Tx = 0.d0 ; Diag(6)%Tx = 0.d0
-
+    
     !**** Associative process
     DO i = 5, 34
        Eij = meta(i)%En - ion(2)%En ! associative threshold
@@ -49,6 +49,7 @@ CONTAINS
           END DO
           !**** Particle balance (explicit --> meta)
           meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
+          meta(0)%Updens = meta(0)%Updens - Clock%Dt * asso
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
           !**** Diagnostic
           Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
@@ -191,8 +192,8 @@ CONTAINS
        Sn(16) = 1.10d-10 * 1.d-6
        Sn(17) = 2.00d-10 * 1.d-6
        Sn(18) = 4.20d-11 * 1.d-6
-       Sn(19) = 3.00d-10 * 1.d-6
-       Sn(20) = 4.10d-11 * 1.d-6
+       Sn(19) = 4.10d-11 * 1.d-6
+       Sn(20) = 3.70d-11 * 1.d-6
        Sn(21) = 8.60d-11 * 1.d-6
        Sn(22) = 1.63d-10 * 1.d-6
        Sn(23) = 2.75d-10 * 1.d-6
@@ -222,7 +223,7 @@ CONTAINS
        Sn(16) = 5.00d-12 * 1.d-6
        Sn(17) = 2.00d-11 * 1.d-6
        Sn(18) = 1.00d-10 * 1.d-6
-       Sn(19) = 3.00d-10 * 1.d-6
+       Sn(19) = 4.10d-11 * 1.d-6
        Sn(20) = 4.10d-11 * 1.d-6
        Sn(21) = 8.60d-11 * 1.d-6
        Sn(22) = 1.63d-10 * 1.d-6

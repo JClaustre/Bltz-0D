@@ -636,7 +636,7 @@ CONTAINS
     !**** He2* + e- --> 2He+ + e-
     SELECT CASE (NumIon)
     CASE (3) 
-       ion(NumIon)%SecExc(1,:) = 6.74d-19
+       ion(NumIon)%SecExc(1,:) = 6.74d-21
        ion(NumIon)%SecExc(1,sys%nx) = 0.d0
     END SELECT
 

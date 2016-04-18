@@ -18,7 +18,7 @@ MODULE MOD_EVOL
   USE MOD_TPGAZ
   IMPLICIT NONE
 
-  INTEGER :: XcDx = 1 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
 
 CONTAINS
@@ -43,7 +43,7 @@ CONTAINS
     !*************************************************************************!
     MaxDt  = 1.d-9 ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    GenPwr = 0.1d-6 ! Time constant to start the generator.
+    GenPwr = .2d-6 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -63,11 +63,16 @@ CONTAINS
        !*************************************
        
        !**** Neutral temperature calculation
-       CALL TP_Neutral (sys, elec, meta, OneD)
+       !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
+          !IF (Clock%SumDt .GT. 1d-6) THEN
+          !**** Increase Power
           sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
+             !**** Decrease Power
+             !sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
           k = k+1
+          !END IF
        END IF
 
        !**** Heat + Elas + Fk-Pl
@@ -104,6 +109,14 @@ CONTAINS
        CALL l_change     (meta, K_ij)
        !*************************************
 
+       !**** UpDate Density (electron) + Tpe
+       elec%Ni = 0.d0 ; elec%Tp = 0.d0; elec%J = 0.d0
+       DO i = 1, sys%nx 
+          elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
+          elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
+          elec%J  = elec%J  + ( F(i) * U(i) * gama*qe * sys%Dx )
+       END DO
+       elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
        !**** Update densities (Ion + Excited)
        Nnull = 0
        do i = 1, NumMeta
@@ -113,15 +126,13 @@ CONTAINS
              Nnull = Nnull + 1
              meta(i)%Ni = 0.d0
           END IF
+          IF (i .LE. NumIon .and. ion(i)%Ni < 0.d0) THEN
+             Nnull = Nnull + 1
+             ion(i)%Ni = 0.d0
+             IF (i == 1) ion(2)%Ni = elec%Ni
+             IF (i == 2) ion(1)%Ni = elec%Ni
+          END IF
        END do
-       !**** UpDate Density (electron) + Tpe
-       elec%Ni = 0.d0 ; elec%Tp = 0.d0; elec%J = 0.d0
-       DO i = 1, sys%nx 
-          elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
-          elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
-          elec%J  = elec%J  + ( F(i) * U(i) * gama*qe * sys%Dx )
-       END DO
-       elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
 
        !**** Evaluate Calculation Time
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -158,10 +169,12 @@ CONTAINS
           !**** WRITE IN FILES (density in cm^-3) ****                            !
           OPEN(UNIT=98,File="./datFile/density.dat",ACTION="WRITE",STATUS="UNKNOWN")
           DO i = 1, NumMeta                                                       !
-             write(98,"(I3,A,F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, meta(i)%Ni*1d-06
+             write(98,"(I3,A,2F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, &
+                  meta(i)%deg, meta(i)%Ni*1d-06
           END DO                                                                  !
           DO i = 1, NumIon                                                        !
-             write(98,"(I3,A,F10.4,ES15.4)") i, ion(i)%Name, ion(i)%En, ion(i)%Ni*1d-06 
+             write(98,"(I3,A,2F10.4,ES15.4)") i, ion(i)%Name, ion(i)%En, &
+                  ion(i)%deg, ion(i)%Ni*1d-06 
           END DO                                                                  !
           CLOSE(98)                                                               !
                                                                                   !
