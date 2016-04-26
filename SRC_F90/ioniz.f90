@@ -191,7 +191,7 @@ CONTAINS
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
     REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
-    Dx = sys%Dx ; br = 0.5d0
+    Dx = sys%Dx ; br = 0.3d0
     SELECT CASE (3)
     CASE (3) 
        Nion = 3

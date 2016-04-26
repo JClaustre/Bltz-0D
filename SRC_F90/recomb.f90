@@ -27,7 +27,8 @@ CONTAINS
     REAL(DOUBLE) :: coef, recmb, Dx
     REAL(DOUBLE) :: energI, energF, U3
     REAL(DOUBLE), DIMENSION(4) :: tx
-    tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/)
+    !tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
+    tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
     Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0
     energI = 0.d0 ; energF = 0.d0
 
@@ -174,9 +175,9 @@ CONTAINS
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  - Clock%Dt * excim
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        !**** He(2S3) + 2He --> He2* + He
-       !excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
-       !     * meta(1)%Ni * meta(0)%Ni**2
-       excim = 1.5d-34 *1d-12 *  meta(1)%Ni * meta(0)%Ni**2
+       excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
+            * meta(1)%Ni * meta(0)%Ni**2
+       !excim = 1.5d-34 *1d-12 *  meta(1)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
     END SELECT

@@ -456,9 +456,8 @@ CONTAINS
     !*****************
     !**** UpDate Density
     ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
-    
-    if (Sd .GT. MaxR) MaxR = Sd
 
+    if (Sd .GT. MaxR) MaxR = Sd
   END SUBROUTINE Dexc_Dimer
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
