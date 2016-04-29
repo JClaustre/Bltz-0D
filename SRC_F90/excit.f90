@@ -469,9 +469,10 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN) :: Fosc !OSCILLATOR STRENGTH
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN) :: Q, A !Coeff
     !LOCAL
-    INTEGER :: i, j, k, ichi
-    REAL(DOUBLE) :: rchi, Eij, Dx, Du, coef
+    INTEGER :: i, j, k, l, ichi, Npts
+    REAL(DOUBLE) :: rchi, Eij, Dx, Du, coef, U
     REAL(DOUBLE) :: Rp, G, alpha, pi_alpha2
+    REAL(DOUBLE), DIMENSION(200) :: SecRead, EnRead
 
     Dx = sys%Dx ; pi_alpha2 = 0.879735d0 * 1d-20
     !**********************************************
@@ -537,23 +538,68 @@ CONTAINS
              IF (i == 3) Alpha = 3
              DO k=1, sys%nx
                 Du=IdU(k,Dx)/Eij
-                G = (1.d0-exp(-RP*(Du-1.d0)))*log(Du+0.2d0)/Du
-                meta(i)%SecExc(j,k)= pi_alpha2 * 4.d0*Alpha * (Ry/Eij)**2 * Fosc(i,j)*G
+                G = (1.d0-exp(-RP*(Du-1.d0)))
+                meta(i)%SecExc(j,k) = log(Du+0.2d0)/Du
+                if (RP*(Du-1.d0) .LT. 40d0) meta(i)%SecExc(j,k) = meta(i)%SecExc(j,k) * G
+                meta(i)%SecExc(j,k)= pi_alpha2 * 4.d0*Alpha * (Ry/Eij)**2 * Fosc(i,j) * meta(i)%SecExc(j,k)
                 IF(Du.LE.1.d0) meta(i)%SecExc(j,k) = 0.d0
              END DO
           END IF
           !**** Tout le reste (n,l,s)-->(n',l±1,s)
-          IF ( (meta(i)%Nn .GE. 3 .and. meta(j)%Nl .LE. meta(i)%Nl+1 .and. meta(j)%Ns == meta(i)%Ns) ) THEN 
-             !print*, meta(i)%Name, meta(j)%Name
-             DO k=1, sys%nx
-                Du=IdU(k,Dx)/Eij
-                G = (1.d0-exp(-RP*(Du-1.d0)))*log(Du+0.2d0)/Du
-                meta(i)%SecExc(j,k)= pi_alpha2 * 4.d0 * (Ry/Eij)**2 * Fosc(i,j)*G
-                IF(Du.LE.1.d0) meta(i)%SecExc(j,k) = 0.d0
-             END DO
+          IF ( (meta(i)%Nn .GE. 3 .and. meta(j)%Ns == meta(i)%Ns) ) THEN 
+             IF ( meta(j)%Nl .EQ. meta(i)%Nl+1 .OR. meta(j)%Nl .EQ. meta(i)%Nl-1)THEN
+                !print*, meta(i)%Name, meta(j)%Name
+                DO k=1, sys%nx
+                   Du=IdU(k,Dx)/Eij
+                   G = (1.d0-exp(-RP*(Du-1.d0)))
+                   meta(i)%SecExc(j,k) = log(Du+0.2d0)/Du
+                   if (RP*(Du-1.d0) .LT. 40d0) meta(i)%SecExc(j,k) = meta(i)%SecExc(j,k) * G
+                   meta(i)%SecExc(j,k)= pi_alpha2 * 4.d0 * (Ry/Eij)**2 * Fosc(i,j)* meta(i)%SecExc(j,k)
+                   IF(Du.LE.1.d0) meta(i)%SecExc(j,k) = 0.d0
+                END DO
+             END IF
           END IF
+
        END DO
     END DO
+
+    !**** Read and Interpolate cross-Section from tables for 1S-2S3-2S1 
+    !**** (ref: Santos J.Phys.D:Appl.Phys 47 2014)
+    OPEN(UNIT=51,FILE='./datFile/excit_he.cs',ACTION="READ",STATUS="OLD")
+    !**** To skip comments
+    do i = 1, 8
+       READ(51,*)
+    END do
+
+    DO l = 0, 2
+       Do i = l+1, 18
+          SecRead = 0.d0 ; EnRead = 0.d0
+          READ(51,*) Npts
+          READ(51,*)(EnRead(k), k=1,Npts)
+          READ(51,*) ; READ(51,*)
+          READ(51,*)(SecRead(k), k=1,Npts)
+          !**** Interpolat Cross-Sect Excit from excited state (He(l) --> He(i))
+          DO k=1, sys%nx
+             Du=0.d0
+             U = IdU(k,Dx)
+             DO j = 1, Npts-1
+                IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
+                IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
+                   Du = EnRead(j+1) - EnRead(j)
+                   meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
+                        + ((U - EnRead(j))*SecRead(j+1) )/Du )
+                END IF
+             END DO
+          END DO
+          meta(l)%SecExc(i,sys%nx) = 0.d0
+          !**************************************
+          READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
+       END Do
+    END DO
+
+    CLOSE(51)
+    !**************************************
+
     !**********************************************
     !**** De-excitation cross-Section using *******
     !**** Klein-Rosseland Relation ****************
@@ -567,10 +613,10 @@ CONTAINS
              ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
              DO k=1,sys%Nx
                 Du=IdU(k,Dx)/Eij
-                if(k .LE. sys%nx-ichi) meta(j)%SecExc(i,k) = coef*((Du)/(Du+1.d0))&
+                if(k .LE. sys%nx-ichi) meta(j)%SecExc(i,k) = coef*((Du+1.d0)/Du)&
                      * ( (1.0d0-rchi) * meta(i)%SecExc(j,k+ichi) )
                 if(k .LE. sys%nx-ichi-1) meta(j)%SecExc(i,k) = meta(j)%SecExc(i,k) &
-                     + coef*((Du)/(Du+1.d0))* ( rchi * meta(i)%SecExc(j,k+ichi+1) )
+                     + coef*((Du+1.d0)/Du)* ( rchi * meta(i)%SecExc(j,k+ichi+1) )
              END DO
              meta(i)%SecExc(j,sys%nx) = 0.d0
              meta(j)%SecExc(i,sys%nx) = 0.d0

@@ -124,7 +124,6 @@ CONTAINS
        IF (i == 10) THEN
           Ratio = ( (meta(i)%En - meta(i-1)%En) / meta(0)%Tp)
           Kij(i,i-1)= coeff * (Ratio)**(-0.29d0)
-          IF (Ratio .GT. 1.d0) K_ij(i,i-1) = Kij(i,i-1) * exp(-1.28d0*Ratio)
           Kij(i-1,i) = Kij(i,i-1) * meta(i)%Deg * exp(-Ratio) / meta(i-1)%Deg
        END IF
        if (meta(i)%Nn .GT. 3) THEN

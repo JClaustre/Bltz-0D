@@ -22,7 +22,7 @@ MODULE MOD_PARAM
      INTEGER :: nx, P0 ! node number and max-node number
      REAL(DOUBLE) :: Emx, Dx ! grid step
      REAL(DOUBLE) :: Ra, L, volume
-     REAL(DOUBLE) :: E, Eef, Freq, Omg, Powr, IPowr
+     REAL(DOUBLE) :: E, Freq, Powr, IPowr
   END type SysVar
   !-----------------------------------------------------------
   TYPE, PUBLIC::Species
@@ -42,10 +42,10 @@ MODULE MOD_PARAM
   !-----------------------------------------------------------
   TYPE, PUBLIC::profil1D
      INTEGER :: nx, bnd
-     REAL(DOUBLE) :: SLab, Dx, nuMoy
+     REAL(DOUBLE) :: SLab, Dx, nuMoy, Tw
      REAL(DOUBLE), DIMENSION(500) :: Tg, Pg, ng, ne, nu
   END type profil1D
-   !-----------------------------------------------------------
+  !-----------------------------------------------------------
 
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44

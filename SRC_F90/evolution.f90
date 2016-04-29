@@ -41,7 +41,7 @@ CONTAINS
        OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="APPEND",ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 1.d-07 ! Maximum Time-Step allowed
+    MaxDt  = 1.d-9 ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
     GenPwr = 0.1d-6 ! Time constant to start the generator.
 
@@ -63,44 +63,45 @@ CONTAINS
        !*************************************
        
        !**** Neutral temperature calculation
-       CALL TP_Neutral_2 (sys, elec, meta, OneD)
+       !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
           sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
           k = k+1
        END IF
+
        !**** Heat + Elas + Fk-Pl
        CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
-!       CALL FP           (sys, elec, F, U)
-!       !**** Excit + De-excit
-!       SELECT CASE (XcDx)
-!       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
-!       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-!       CASE DEFAULT ; CALL Exc_Begin (sys, meta, U, F, diag)
-!       END SELECT
-!       !**** De-excit Dimer molecule (He2*)
-!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-!       !**** Ioniz He+
-!       SELECT CASE (IonX)
-!       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
-!       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
-!       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
-!       END SELECT
-!       !**** Ioniz dimer 
-!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
-!       !**** Disso Recombination
-!       CALL Recomb       (sys, meta, U, F, Diag)
-!       !**** 3 Body ionic conversion
-!       CALL Conv_3Body   (meta, ion)
-!       !**** Penning + Associative ioniz
-!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-!       !**** Radiative transfert
-!       CALL Radiat       (sys, meta, Fosc, Diag)
-!       !**** Diffusion
-!       CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
-!       !**** L-Exchange
-!       CALL l_change     (meta, K_ij)
+       CALL FP           (sys, elec, F, U)
+       !**** Excit + De-excit
+       SELECT CASE (XcDx)
+       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
+       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
+       END SELECT
+       !**** De-excit Dimer molecule (He2*)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+       !**** Ioniz He+
+       SELECT CASE (IonX)
+       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
+       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
+       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
+       END SELECT
+       !**** Ioniz dimer 
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
+       !**** Disso Recombination
+       CALL Recomb       (sys, meta, U, F, Diag)
+       !**** 3 Body ionic conversion
+       CALL Conv_3Body   (meta, ion)
+       !**** Penning + Associative ioniz
+       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+       !**** Radiative transfert
+       CALL Radiat       (sys, meta, Fosc, Diag)
+       !**** Diffusion
+       CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
+       !**** L-Exchange
+       CALL l_change     (meta, K_ij)
        !*************************************
 
        !**** Update densities (Ion + Excited)
@@ -136,7 +137,7 @@ CONTAINS
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
-               " μs", meta(1)%Ni*1d-06, ion(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
+               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
                (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",& !
                OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs                      !
        END IF                                                                     !
@@ -146,11 +147,11 @@ CONTAINS
        IF (modulo(l,100)==0) Then                                                 !
           SELECT CASE (NumIon)                                                    !
           CASE (3)                                                                !
-             write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,OneD%Tg(OneD%bnd),&
-                  elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, &               !
+             write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,&  !
+                  OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
                   ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)            !
           CASE DEFAULT                                                            !
-             write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp, elec%Ni*1d-06,&
+             write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, elec%Ni*1d-06,&
                   ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)!
           END SELECT                                                              !
           !****                                                                   !
@@ -283,6 +284,7 @@ CONTAINS
     TYPE(Species), DIMENSION(NumIon)   , INTENT(IN) :: ion
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(IN) :: meta
     !LOCAL
+    INTEGER :: i
     REAL(DOUBLE) :: ne, Dt
     ne = elec%Ni ; Dt = Clock%Dt
 
@@ -384,6 +386,10 @@ CONTAINS
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%Tx+Diag(9)%Tx) / ne
+    write(99,"(A)") " "
+    DO i = 1, NumMeta                                                       !
+       write(99,"(I3,A,F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, meta(i)%Ni*1d-06
+    END DO                                                                  !
     write(99,"(A)") " "
     write(99,"(A)")"![Zozor](http://uploads.siteduzero.com/files/420001_421000/420263.png)"
     Close(99)

@@ -26,16 +26,17 @@ CONTAINS
 
     DO i = 1, NumMeta
        DO j = 0, 3
-          IF ((meta(i)%Nl == 1 .and. meta(i)%Ns==1 .and. j==0) .or. &
-               (i==8 .and.j==3) .or. ((i==7 .or. i==3) .and. j==1) .or. (i==4 .and. j==2)) THEN
+!          IF ((meta(i)%Nl == 1 .and. meta(i)%Ns==1 .and. j==0) .or. &
+!               (i==8 .and.j==3) .or. ((i==7 .or. i==3) .and. j==1) .or. (i==4 .and. j==2)) THEN
+          IF (meta(i)%Aij(j).NE.0.d0) THEN
              Eij = meta(i)%En-meta(j)%En
              IF (Eij .GT. 0.d0) THEN
-                Kor = 2.876d-10 * 1d2 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
-                     (dsqrt(meta(0)%Tp)*Eij) 
+                Kor = 2.876d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
+                     (dsqrt(meta(0)%Tp*qok)*Eij) 
                 damp = 0.d0
                 IF (Kor .GT. 1.d0) THEN
-                   damp = 1.d0 + 3.221d-14* meta(j)%Ni * meta(i)%Deg / (meta(j)%Deg * Eij**3)
-                   damp = damp * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp)) )
+                   damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
+                        * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp*qok)) )
                    Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
                    Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
                    Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
@@ -59,6 +60,7 @@ CONTAINS
           END IF
        END DO
     END DO
+
   END SUBROUTINE Radiat
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Diffuz(sys,meta,ion,elec,F,U,diag)
