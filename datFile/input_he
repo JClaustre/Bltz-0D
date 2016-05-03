@@ -4,13 +4,13 @@
 6.900E+16   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 2.450E+09   	  f (Hz)	Heating Frequency
 40.00E+00	  prs (Torr)	Pressure
-1000.0000  600	  Tp (K)	Temperature + Tp at tube boundary
-2.000E+00	  Tpe (eV)	Electronic Temperature
-0.400E+00	  Ra (cm)	Cylinder Radius
+1050.0000  600	  Tp (K)	Temperature + Tp at tube boundary
+3.000E+00	  Tpe (eV)	Electronic Temperature
+0.200E+00	  Ra (cm)	Cylinder Radius
 6.000E+00	  L  (cm)       Tube Length
-1.500E+13	  ne (cm-3)	Initial electron density
-6.6314+01   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
+3.000E+13	  ne (cm-3)	Initial electron density
+2.6525+02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
 50.000000   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
-1.000E+02	  Emax (Energy grid max (eV) ) 
+2.000E+02	  Emax (Energy grid max (eV) ) 
 10.0000		  save data's every XXX micro-sec

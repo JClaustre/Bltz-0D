@@ -27,8 +27,8 @@ CONTAINS
     REAL(DOUBLE) :: coef, recmb, Dx
     REAL(DOUBLE) :: energI, energF, U3
     REAL(DOUBLE), DIMENSION(4) :: tx
-    !tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
-    tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
+    tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
+    !tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
     Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0
     energI = 0.d0 ; energF = 0.d0
 
