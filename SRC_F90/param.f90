@@ -50,7 +50,7 @@ MODULE MOD_PARAM
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
-  INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
+  INTEGER, PARAMETER :: NumMeta = 42 ! 1S1 --> 7P1
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
@@ -80,11 +80,12 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: F
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: U
   REAL(DOUBLE), DIMENSION(2)                :: consv
-  REAL(DOUBLE), DIMENSION(NumMeta)          :: Sn   ! Associative rate coeff
+  REAL(DOUBLE), DIMENSION(34)               :: Sn   ! Associative rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
   REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
+  REAL(DOUBLE) :: Vg
 CONTAINS
 
   ! **********************************************************

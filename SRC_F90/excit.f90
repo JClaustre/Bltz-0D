@@ -578,19 +578,21 @@ CONTAINS
           READ(51,*) ; READ(51,*)
           READ(51,*)(SecRead(k), k=1,Npts)
           !**** Interpolat Cross-Sect Excit from excited state (He(l) --> He(i))
-          DO k=1, sys%nx
-             Du=0.d0
-             U = IdU(k,Dx)
-             DO j = 1, Npts-1
-                IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
-                IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
-                   Du = EnRead(j+1) - EnRead(j)
-                   meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
-                        + ((U - EnRead(j))*SecRead(j+1) )/Du )
-                END IF
+          IF (i.LE.NumMeta) THEN
+             DO k=1, sys%nx
+                Du=0.d0
+                U = IdU(k,Dx)
+                DO j = 1, Npts-1
+                   IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
+                   IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
+                      Du = EnRead(j+1) - EnRead(j)
+                      meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
+                           + ((U - EnRead(j))*SecRead(j+1) )/Du )
+                   END IF
+                END DO
              END DO
-          END DO
-          meta(l)%SecExc(i,sys%nx) = 0.d0
+             meta(l)%SecExc(i,sys%nx) = 0.d0
+          END IF
           !**************************************
           READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
        END Do
