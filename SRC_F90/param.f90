@@ -50,7 +50,7 @@ MODULE MOD_PARAM
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
-  INTEGER, PARAMETER :: NumMeta = 42 ! 1S1 --> 7P1
+  INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
@@ -251,27 +251,27 @@ CONTAINS
     IF (tot .LE. 60.d0) THEN
        write(*,"(2A)", advance="no") tabul, &
             "Hang on to your seat ... calculation time is estimated to "
-       write(*,"(F4.1,A,I6,A)") tot, " sec ! (Num Loop = ", Nloop, ")"
+       write(*,"(F4.1,A,I6,A)") tot, " sec ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 60 .and. tot .LE. 5*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
                "You Have time to ... check your email! estimated calculation: "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 5*60.0 .and. tot .LE. 15*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have time for coffee! estimated calculation: "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 15*60.0 .and. tot .LE. 45*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
             "estimated calculation : "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 45*60.0 .and. tot .LE. 3600.) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have time for ... Optimizations! estimated calculation: "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 3600. ) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have all the time! estimated calculation: "
-       write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")"
+       write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")  "
     END IF
   END SUBROUTINE LoopTime
   !***********************************************************    

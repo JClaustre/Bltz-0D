@@ -79,14 +79,6 @@ CONTAINS
        CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
-       !**** Excit + De-excit
-       SELECT CASE (XcDx)
-       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
-       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
-       END SELECT
-       !**** De-excit Dimer molecule (He2*)
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** Ioniz He+
        SELECT CASE (IonX)
        CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
@@ -107,9 +99,17 @@ CONTAINS
        CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
        !CALL Diffuz_C     (sys, meta, ion,elec,F,U, diag)
        !CALL Diffuz_Norm     (sys, meta, ion,elec,F,U, diag)
+       !**** Excit + De-excit
+       SELECT CASE (XcDx)
+       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
+       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
+       END SELECT
+       !**** De-excit Dimer molecule (He2*)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** L-Exchange
-       !CALL l_change     (meta, K_ij)
-       CALL l_change_old     (meta, K_ij)
+       CALL l_change     (meta, K_ij)
+       !CALL l_change_old     (meta, K_ij)
 
        !*************************************
 
@@ -193,7 +193,7 @@ CONTAINS
              write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
           END DO                                                                  !
           CLOSE(90)                                                               !
-          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                     !
+          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                    !
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
