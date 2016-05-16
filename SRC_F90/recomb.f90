@@ -27,7 +27,8 @@ CONTAINS
     REAL(DOUBLE) :: coef, recmb, Dx
     REAL(DOUBLE) :: energI, energF, U3
     REAL(DOUBLE), DIMENSION(4) :: tx
-    tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/)
+    !tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
+    tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
     Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0
     energI = 0.d0 ; energF = 0.d0
 
@@ -121,11 +122,7 @@ CONTAINS
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
     diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
-    !**** He2* : Excimer SuperElastic He2* + e- --> 2He + e-
-!    IF (NumIon == 3) Then
-!       rcmb_ex = 4.d-09 * 1.d-06 * elec%Ni * ion(3)%Ni
-!       ion(3)%UpDens = ion(3)%UpDens - Clock%Dt * rcmb_ex 
-!    END IF
+
   END SUBROUTINE Recomb_Alves
   !***********************************************************************
 
@@ -153,7 +150,7 @@ CONTAINS
     !*************************************
     !**** cf. Belmonte 2007 : η (cm3 s-1)
     !**** He2+ + He(1S) --> He+ + 2He(1S)
-    eta = 1.40d-06 * 1.d-6 * exp(-28100.d0 / Tp) / Tp**0.67
+    eta = 1.40d-06 * 1.d-6 * exp(-(ion(1)%En-ion(2)%En)*qok / Tp) / Tp**0.67
     Src = eta * ion(2)%Ni * meta(0)%Ni
     IF (ion(2)%Ni .GT. 0.d0) THEN
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src

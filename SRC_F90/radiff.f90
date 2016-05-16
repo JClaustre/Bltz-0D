@@ -24,15 +24,14 @@ CONTAINS
     REAL(DOUBLE) :: Eij, damp, EscapF, emitF
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd
 
-    DO i = 1, NumMeta
-       DO j = 0, 3
-!          IF ((meta(i)%Nl == 1 .and. meta(i)%Ns==1 .and. j==0) .or. &
-!               (i==8 .and.j==3) .or. ((i==7 .or. i==3) .and. j==1) .or. (i==4 .and. j==2)) THEN
+    DO i = 1, 18!NumMeta
+       DO j = 0, 10!i-1
           IF (meta(i)%Aij(j).NE.0.d0) THEN
+             !write(*,"(2A,ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j)
              Eij = meta(i)%En-meta(j)%En
              IF (Eij .GT. 0.d0) THEN
                 Kor = 2.876d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
-                     (dsqrt(meta(0)%Tp*qok)*Eij) 
+                     (dsqrt(meta(0)%Tp*qok)*Eij)
                 damp = 0.d0
                 IF (Kor .GT. 1.d0) THEN
                    damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
@@ -41,7 +40,7 @@ CONTAINS
                    Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
                    Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
                    EscapF = 0.d0
-                   IF (Gcd/Gcol .GT. 10.d0) THEN
+                   IF (Gcd/Gcol .GT. 8.d0) THEN
                       EscapF = Gcol * erf(Gcd/Gcol)
                       !print*, '>10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
                    ELSE
@@ -58,6 +57,7 @@ CONTAINS
                 END IF
              END IF
           END IF
+
        END DO
     END DO
 

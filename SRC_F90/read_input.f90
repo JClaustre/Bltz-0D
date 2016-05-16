@@ -320,7 +320,7 @@ CONTAINS
     END IF
     SELECT CASE (NumIon)                                                    !
     CASE (3)                                                                !
-       ion(NumIon)%Name = " HE2-DIMER" ; ion(NumIon)%En = 17.94 
+       ion(NumIon)%Name = " HE2-DIMER" ; ion(NumIon)%En = 17.94d0
        write(*,"(4A,F6.2)") tabul, "Init Excimer : ",ion(NumIon)%Name, " | Enrgy (eV) = ", ion(NumIon)%En
     END SELECT
 
@@ -380,7 +380,7 @@ CONTAINS
        DO j = 0, i-1
           Eij = meta(i)%En-meta(j)%En
           IF (Eij .GT. 0.d0) THEN
-             meta(i)%Aij(j) = 4.333d7 * Eij**2 * Fosc(j,i) * &
+             meta(i)%Aij(j) = 4.339d7 * Eij**2 * Fosc(j,i) * &
                   meta(j)%Deg / meta(i)%Deg
           END IF
        END DO
@@ -520,8 +520,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.9d0                                          !
-       ion(1)%Ni = elec%Ni * 0.1d0                                          !
+       ion(2)%Ni = elec%Ni * 0.8d0                                          !
+       ion(1)%Ni = elec%Ni * 0.2d0                                          !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 1.0d+10                                  !
        END SELECT                                                           !
