@@ -73,8 +73,8 @@ CONTAINS
              IF (Eij .GT. 0.d0) THEN
                 Coef1 = Kij(i,j) * meta(0)%Ni * meta(i)%Ni
                 Coef2 = Kij(j,i) * meta(0)%Ni * meta(j)%Ni
-                meta(i)%Ni = meta(i)%Ni + Clock%Dt * (Coef2 - Coef1)
-                meta(j)%Ni = meta(j)%Ni + Clock%Dt * (Coef1 - Coef2)
+                meta(i)%Updens = meta(i)%Updens + Clock%Dt * (Coef2 - Coef1)
+                meta(j)%Updens = meta(j)%Updens + Clock%Dt * (Coef1 - Coef2)
              END IF
           END IF
 

@@ -578,19 +578,21 @@ CONTAINS
           READ(51,*) ; READ(51,*)
           READ(51,*)(SecRead(k), k=1,Npts)
           !**** Interpolat Cross-Sect Excit from excited state (He(l) --> He(i))
-          DO k=1, sys%nx
-             Du=0.d0
-             U = IdU(k,Dx)
-             DO j = 1, Npts-1
-                IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
-                IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
-                   Du = EnRead(j+1) - EnRead(j)
-                   meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
-                        + ((U - EnRead(j))*SecRead(j+1) )/Du )
-                END IF
+          IF (i.LE.NumMeta) THEN
+             DO k=1, sys%nx
+                Du=0.d0
+                U = IdU(k,Dx)
+                DO j = 1, Npts-1
+                   IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
+                   IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
+                      Du = EnRead(j+1) - EnRead(j)
+                      meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
+                           + ((U - EnRead(j))*SecRead(j+1) )/Du )
+                   END IF
+                END DO
              END DO
-          END DO
-          meta(l)%SecExc(i,sys%nx) = 0.d0
+             meta(l)%SecExc(i,sys%nx) = 0.d0
+          END IF
           !**************************************
           READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
        END Do
@@ -612,10 +614,10 @@ CONTAINS
              ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
              DO k=1,sys%Nx
                 Du=IdU(k,Dx)/Eij
-                if(k .LE. sys%nx-ichi) meta(j)%SecExc(i,k) = coef*((Du+1.d0)/Du)&
+                if(k .LE. sys%nx-ichi) meta(j)%SecExc(i,k) = coef*(Du/(Du+1.d0))&
                      * ( (1.0d0-rchi) * meta(i)%SecExc(j,k+ichi) )
                 if(k .LE. sys%nx-ichi-1) meta(j)%SecExc(i,k) = meta(j)%SecExc(i,k) &
-                     + coef*((Du+1.d0)/Du)* ( rchi * meta(i)%SecExc(j,k+ichi+1) )
+                     + coef*(Du/(Du+1.d0))* ( rchi * meta(i)%SecExc(j,k+ichi+1) )
              END DO
              meta(i)%SecExc(j,sys%nx) = 0.d0
              meta(j)%SecExc(i,sys%nx) = 0.d0

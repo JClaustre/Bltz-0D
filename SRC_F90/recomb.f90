@@ -27,8 +27,8 @@ CONTAINS
     REAL(DOUBLE) :: coef, recmb, Dx
     REAL(DOUBLE) :: energI, energF, U3
     REAL(DOUBLE), DIMENSION(4) :: tx
-    !tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
-    tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
+    tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
+    !tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
     Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0
     energI = 0.d0 ; energF = 0.d0
 
@@ -51,7 +51,7 @@ CONTAINS
     END Do
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
-    diag(8)%Tx =  recmb * Dx
+    diag(8)%Tx =  diag(8)%Tx + Clock%Dt * recmb * Dx
     !****************
   END SUBROUTINE Recomb
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -87,7 +87,7 @@ CONTAINS
 
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
-    diag(8)%Tx =  recmb * Dx
+    diag(8)%Tx = diag(8)%Tx + Clock%Dt * recmb * Dx
     !****************
   END SUBROUTINE Recomb_Norm
 
@@ -101,7 +101,7 @@ CONTAINS
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     !LOCAL
     INTEGER :: i
-    REAL(DOUBLE) :: coef, recmb, part, En1, En2, rcmb_ex
+    REAL(DOUBLE) :: coef, recmb, part, En1, En2
     En1  = 0.d0 ; En2 = 0.d0 ; part = 0.d0
     recmb = 5.0d-09 * 1.d-6 * (meta(0)%Tp / (elec%Tp)) ! m3 s-1
     coef = recmb * Clock%Dt * elec%Ni * ion(2)%Ni
@@ -121,7 +121,7 @@ CONTAINS
 
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
-    diag(8)%Tx =  recmb * ion(2)%Ni * elec%Ni
+    diag(8)%Tx = diag(8)%Tx + coef
 
   END SUBROUTINE Recomb_Alves
   !***********************************************************************

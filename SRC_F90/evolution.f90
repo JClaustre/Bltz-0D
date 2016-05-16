@@ -79,14 +79,6 @@ CONTAINS
        CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
-       !**** Excit + De-excit
-       SELECT CASE (XcDx)
-       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
-       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
-       END SELECT
-       !**** De-excit Dimer molecule (He2*)
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** Ioniz He+
        SELECT CASE (IonX)
        CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
@@ -105,8 +97,20 @@ CONTAINS
        CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion
        CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz_C     (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz_Norm     (sys, meta, ion,elec,F,U, diag)
+       !**** Excit + De-excit
+       SELECT CASE (XcDx)
+       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
+       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
+       END SELECT
+       !**** De-excit Dimer molecule (He2*)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** L-Exchange
        CALL l_change     (meta, K_ij)
+       !CALL l_change_old     (meta, K_ij)
+
        !*************************************
 
        !**** UpDate Density (electron) + Tpe
@@ -126,11 +130,13 @@ CONTAINS
              Nnull = Nnull + 1
              meta(i)%Ni = 0.d0
           END IF
-          IF (i .LE. NumIon .and. ion(i)%Ni < 0.d0) THEN
-             Nnull = Nnull + 1
-             ion(i)%Ni = 0.d0
-             IF (i == 1) ion(2)%Ni = elec%Ni
-             IF (i == 2) ion(1)%Ni = elec%Ni
+          IF (i .LE. NumIon) THEN
+             IF (ion(i)%Ni < 0.d0) THEN
+                Nnull = Nnull + 1
+                ion(i)%Ni = 0.d0
+                IF (i == 1) ion(2)%Ni = elec%Ni
+                IF (i == 2) ion(1)%Ni = elec%Ni
+             END IF
           END IF
        END do
 
@@ -187,7 +193,7 @@ CONTAINS
              write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
           END DO                                                                  !
           CLOSE(90)                                                               !
-          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                     !
+          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                    !
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
@@ -204,6 +210,7 @@ CONTAINS
     !****End of MAIN LOOP ********************************************************!
 
     CLOSE(99)
+    Clock%NumIter = l
 
     CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
@@ -298,8 +305,14 @@ CONTAINS
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(IN) :: meta
     !LOCAL
     INTEGER :: i
-    REAL(DOUBLE) :: ne, Dt
+    REAL(DOUBLE) :: ne, Dt, gainE, gainP, SumMeta
     ne = elec%Ni ; Dt = Clock%Dt
+    gainE = (Diag(10)%EnProd+Diag(5)%EnProd+Diag(6)%EnProd + &
+         Diag(1)%EnProd+Diag(12)%EnProd+Diag(14)%EnProd)
+    gainP = Diag(2)%Tx + Diag(5)%Tx + Diag(6)%Tx + Diag(13)%Tx + Diag(14)%Tx 
+    Do i = 1, NumMeta
+       SumMeta = SumMeta + meta(i)%Ni
+    END Do
 
     OPEN(UNIT=99,File="./datFile/Output.md",ACTION="WRITE",STATUS="UNKNOWN")
     write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
@@ -367,41 +380,64 @@ CONTAINS
     write(99,"(A)") ""
     write(99,"(A)") "ELECTRON | IONS BALANCE"
     write(99,"(A)") "--------------------"
-    write(99,"(A)") "### Power balance :"
-    write(99,"(A,ES15.6)") "* Gain Heat :  ", Diag(10)%EnProd * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Gain Penn :  ", Diag(5)%EnProd  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Gain Asso :  ", Diag(6)%EnProd  * qe/(ne*Dt*clock%NumIter)
-    write(99,"(A,ES15.6)") "* Gain Exct :  ", Diag(1)%EnProd  * qe/(ne*Dt*clock%NumIter)
+    write(99,"(A)") "### Power balance : Electron Energy Saving"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Heat :  ", Diag(10)%EnProd * qe/(ne*Dt*clock%NumIter), &
+         Diag(10)%EnProd *100.d0 / gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penn :  ", Diag(5)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+         Diag(5)%EnProd *100.d0 / gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Asso :  ", Diag(6)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+         Diag(6)%EnProd *100.d0 / gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxct :  ", Diag(1)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+         Diag(1)%EnProd *100.d0 / gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxim :  ", Diag(12)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+         Diag(12)%EnProd *100.d0 / gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pxcim:  ", Diag(14)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+         Diag(14)%EnProd *100.d0 / gainE, " %"
 
-    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A)") "### Power balance : Electron Energy Loss"
     write(99,"(A,ES15.6,F8.2,A)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*clock%NumIter)&
-         , Diag(11)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+         , Diag(11)%EnLoss*100.d0/gainE, " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Loss Recb :  ", Diag(8)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
-         , Diag(8)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+         , Diag(8)%EnLoss*100.d0/gainE, " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Loss Ionz :  ", Diag(2)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
-         , Diag(2)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+         , Diag(2)%EnLoss*100.d0/gainE, " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Loss Exct :  ", Diag(1)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
-         , Diag(1)%EnLoss*100.d0/Diag(10)%EnProd, " %"
-    write(99,"(A,ES15.6,F8.2,A,/)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
-         , Diag(9)%EnLoss*100.d0/Diag(10)%EnProd, " %"
+         , Diag(1)%EnLoss*100.d0/gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+         , Diag(9)%EnLoss*100.d0/gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Iexc :  ", Diag(13)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+         , Diag(13)%EnLoss*100.d0/gainE, " %"
 
-    write(99,"(A)") "### Particle balance :"
-    write(99,"(A,ES15.6)") "* Gain ioniz : ", Diag(2)%Tx/ne
-    write(99,"(A,ES15.6)") "* Gain Assoc : ", Diag(6)%Tx/ne
-    write(99,"(A,ES15.6)") "* Gain Penng : ", Diag(5)%Tx/(2.d0*ne)
     write(99,"(/,A)") "-------------------------------------------------------"
-    write(99,"(A,ES15.6)") "* Loss recmb : ", Diag(8)%Tx/ne
-    write(99,"(A,ES15.6)") "* Loss diffz : ", Diag(9)%Tx/ne
+    write(99,"(A)") "### Particle balance : Electron Saving"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain ioniz : ", Diag(2)%Tx/(ne*clock%NumIter),  &
+         Diag(2)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Assoc : ", Diag(6)%Tx/(ne*clock%NumIter),  &
+         Diag(6)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penng : ", Diag(5)%Tx/(ne*clock%NumIter),  &
+         Diag(5)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(14)%Tx/(ne*clock%NumIter),  &
+         Diag(14)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Ioexc : ", Diag(13)%Tx/(ne*clock%NumIter),  &
+         Diag(13)%Tx*100.d0 / abs(gainP), " %"
+
+    write(99,"(A)") "### Particle balance : Electron Loss"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss recmb : ", Diag(8)%Tx/(ne*clock%NumIter),  &
+         Diag(8)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss diffz : ", Diag(9)%Tx/(ne*clock%NumIter),  &
+         Diag(9)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss recex : ", Diag(15)%Tx/(ne*clock%NumIter),  &
+         Diag(15)%Tx*100.d0 / abs(gainP), " %"
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
-         (Diag(10)%EnProd+Diag(5)%EnProd+Diag(6)%EnProd+Diag(1)%EnProd), &
-         (Diag(2)%Tx+Diag(6)%Tx+Diag(5)%Tx/(2.d0))/ne
+         gainE, gainP
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
-         (Diag(8)%Tx+Diag(9)%Tx) / ne
+         (Diag(8)%Tx+Diag(9)%Tx+Diag(15)%Tx)
     write(99,"(A)") " "
     DO i = 1, NumMeta                                                       !
-       write(99,"(I3,A,F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, meta(i)%Ni*1d-06
+       write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &
+            meta(i)%Ni*1d-06, meta(i)%Ni *100.d0/SumMeta, " %"
     END DO                                                                  !
     write(99,"(A)") " "
     write(99,"(A)")"![Zozor](http://uploads.siteduzero.com/files/420001_421000/420263.png)"

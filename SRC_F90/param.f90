@@ -80,11 +80,12 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: F
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: U
   REAL(DOUBLE), DIMENSION(2)                :: consv
-  REAL(DOUBLE), DIMENSION(NumMeta)          :: Sn   ! Associative rate coeff
+  REAL(DOUBLE), DIMENSION(34)               :: Sn   ! Associative rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
   REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
+  REAL(DOUBLE) :: Vg
 CONTAINS
 
   ! **********************************************************
@@ -250,27 +251,27 @@ CONTAINS
     IF (tot .LE. 60.d0) THEN
        write(*,"(2A)", advance="no") tabul, &
             "Hang on to your seat ... calculation time is estimated to "
-       write(*,"(F4.1,A,I6,A)") tot, " sec ! (Num Loop = ", Nloop, ")"
+       write(*,"(F4.1,A,I6,A)") tot, " sec ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 60 .and. tot .LE. 5*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
                "You Have time to ... check your email! estimated calculation: "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 5*60.0 .and. tot .LE. 15*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have time for coffee! estimated calculation: "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 15*60.0 .and. tot .LE. 45*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
             "estimated calculation : "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 45*60.0 .and. tot .LE. 3600.) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have time for ... Optimizations! estimated calculation: "
-       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")"
+       write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 3600. ) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have all the time! estimated calculation: "
-       write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")"
+       write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")  "
     END IF
   END SUBROUTINE LoopTime
   !***********************************************************    

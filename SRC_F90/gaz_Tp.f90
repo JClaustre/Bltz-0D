@@ -20,7 +20,6 @@ CONTAINS
     TYPE(profil1D), INTENT(INOUT) :: OneD
     !LOCAL
     INTEGER :: l, k, Nmoy, Med
-    INTEGER :: info = 0 !used for the DGTSV routine
     REAL(DOUBLE) :: Dx, Dxx, Coef, Coef2, beta
     REAL(DOUBLE) :: A, B, C, D
     REAL(DOUBLE) :: ri, Cp, Tw, Kpa_H, Kpa_A
@@ -155,7 +154,6 @@ CONTAINS
     TYPE(profil1D), INTENT(INOUT) :: OneD
     !LOCAL
     INTEGER :: k, Nmoy, Med
-    INTEGER :: info = 0 !used for the DGTSV routine
     REAL(DOUBLE) :: Dx, Coef, Coef2, beta
     REAL(DOUBLE) :: A, B, C, D, ri
     REAL(DOUBLE), DIMENSION(OneD%nx) :: DL, DI, DU, R, Tp_g
