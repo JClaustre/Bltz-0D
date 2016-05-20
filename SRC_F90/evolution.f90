@@ -58,10 +58,10 @@ CONTAINS
        END IF
        !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
        IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
-           print*,""; print*," NaN ! Pobleme in time step?", elec%Ni, MaxR ; Stop 
+          print*,""; print*," NaN ! Pobleme in time step?", elec%Ni, MaxR ; Stop 
        END IF
        !*************************************
-       
+
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
@@ -69,47 +69,45 @@ CONTAINS
           !IF (Clock%SumDt .GT. 1d-6) THEN
           !**** Increase Power
           sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
-             !**** Decrease Power
-             !sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
+          !**** Decrease Power
+          !sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
           k = k+1
           !END IF
        END IF
 
        !**** Heat + Elas + Fk-Pl
-!       CALL Heating (sys,meta, U, F)
-!       CALL Elastic      (sys,meta, U, F)
-!       CALL FP           (sys, elec, F, U)
-!       !**** Ioniz He+
-!       SELECT CASE (IonX)
-!       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
-!       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
-!       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
-!       END SELECT
-!       !**** Ioniz dimer 
-!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
-!       !**** Disso Recombination
-!       CALL Recomb       (sys, meta, U, F, Diag)
-!       !**** 3 Body ionic conversion
-!       CALL Conv_3Body   (meta, ion)
-!       !**** Penning + Associative ioniz
-!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-!       !**** Radiative transfert
-!       CALL Radiat       (sys, meta, Fosc, Diag)
+       CALL Heating (sys,meta, U, F)
+       CALL Elastic      (sys,meta, U, F)
+       CALL FP           (sys, elec, F, U)
+       !**** Ioniz He+
+       SELECT CASE (IonX)
+       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
+       CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
+       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
+       END SELECT
+       !**** Ioniz dimer 
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
+       !**** Disso Recombination
+       CALL Recomb       (sys, meta, U, F, Diag)
+       !**** 3 Body ionic conversion
+       CALL Conv_3Body   (meta, ion)
+       !**** Penning + Associative ioniz
+       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+       !**** Radiative transfert
+       CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion
        CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
        !CALL Diffuz_Norm     (sys, meta, ion,elec,F,U, diag)
-!       !**** Excit + De-excit
-!       SELECT CASE (XcDx)
-!       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
-!       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-!       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
-!       END SELECT
-!       !**** De-excit Dimer molecule (He2*)
-!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-!       !**** L-Exchange
-!       CALL l_change     (meta, K_ij)
-!       !CALL l_change_old     (meta, K_ij)
-
+       !**** Excit + De-excit
+       SELECT CASE (XcDx)
+       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
+       CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
+       END SELECT
+       !**** De-excit Dimer molecule (He2*)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+       !**** L-Exchange
+       CALL l_change     (meta, K_ij)
        !*************************************
 
        !**** UpDate Density (electron) + Tpe
@@ -207,7 +205,6 @@ CONTAINS
        IF (l .GE. Clock%MaxIter) EXIT                                             !
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
-
     CLOSE(99)
     Clock%NumIter = l
 
@@ -217,6 +214,7 @@ CONTAINS
 
   END SUBROUTINE EVOLUTION
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+
   SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys

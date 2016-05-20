@@ -189,7 +189,7 @@ CONTAINS
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
     REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
-    Dx = sys%Dx ; br = 0.3d0
+    Dx = sys%Dx ; br = 0.5d0
     SELECT CASE (3)
     CASE (3) 
        Nion = 3
@@ -334,7 +334,7 @@ CONTAINS
     !**** He2* + e- <--> He2+ + 2e-
     SELECT CASE (NumIon)
     CASE (3) 
-       Eij=ion(2)%En-ion(NumIon)%En
+       Eij= 3.4d0!ion(2)%En-ion(NumIon)%En
        A = 9.93844d-15 ; B = 9.8416d-1 ; C = 1.292d-02
        DO k = 1, sys%nx
           U=IdU(k,Dx)

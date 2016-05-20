@@ -71,7 +71,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), PARAMETER :: eps = 8.8542d-12 ! Permittivity of free space (F.m-1)
   REAL(DOUBLE), PARAMETER :: Pi  = 4*ATAN(1.d0)
   REAL(DOUBLE), PARAMETER :: gama= dsqrt(2.d0*qome)
-  REAL(DOUBLE), PARAMETER :: MassR = 1.3710d-04 ! Mass Ratio (me/mhe)
+  REAL(DOUBLE), PARAMETER :: MassR = me/mhe ! Mass Ratio (me/mhe)
   REAL(DOUBLE), PARAMETER :: Ry  = 13.605692  ! Rydberg energy (eV)
   REAL(DOUBLE), PARAMETER :: Nlosh = 2.6868d+25 ! Loschmidt Number (m-3) => (P=1atm, T=0C)
   !REAL(DOUBLE), PARAMETER :: LnC = 10.d0      ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
@@ -85,7 +85,6 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
   REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
-  REAL(DOUBLE) :: Vg
 CONTAINS
 
   ! **********************************************************

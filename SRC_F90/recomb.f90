@@ -156,7 +156,7 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
        !**** Diagnostic
-       diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
+       diag(7)%EnProd = diag(7)%EnProd + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************
     END IF
     !*************************************
@@ -170,16 +170,16 @@ CONTAINS
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
        !**** He2* + He --> He(2P3) + 2He
        !**** rate from Belmonte et al (J.Phys.D:Appl.Phys 40 7343 2007)
-       excim = 3.6d-14 *1d-06 * ion(NumIon)%Ni * meta(0)%Ni
+       excim = 3.6d-14 *1d-06 * ion(3)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
-       ion(NumIon)%UpDens  = ion(NumIon)%UpDens  - Clock%Dt * excim
+       ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        !**** He(2S3) + 2He --> He2* + He
        excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
             * meta(1)%Ni * meta(0)%Ni**2
-       !excim = 1.5d-34 *1d-12 *  meta(1)%Ni * meta(0)%Ni**2
+       !excim = 1.5d-34 * 1d-12 *meta(1)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
-       ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
+       ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
     END SELECT
   END SUBROUTINE Conv_3Body
 

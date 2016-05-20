@@ -11,7 +11,6 @@ MODULE MOD_TPGAZ
   IMPLICIT NONE
 
 CONTAINS
-  
   !***********************************************************************
   SUBROUTINE TP_Neutral (sys, elec, meta, OneD)
     !INTENT
@@ -49,7 +48,7 @@ CONTAINS
        END DO
     END IF
     ! Lower boundary condition (Neumann Null)
-    Di(1) = 1.d0 ; Du(1) = -1.d0  
+    Di(1) = 1.d0 ; Du(1) = -1.d0
     R(1)  = Tp_g(2) - Tp_g(1)
     !****************************************
     DO k = 1, OneD%nx-1

@@ -320,7 +320,7 @@ CONTAINS
     END IF
     SELECT CASE (NumIon)                                                    !
     CASE (3)                                                                !
-       ion(NumIon)%Name = " HE2-DIMER" ; ion(NumIon)%En = 17.94d0 
+       ion(NumIon)%Name = " HE2-DIMER" ; ion(NumIon)%En = 17.94d0
        write(*,"(4A,F6.2)") tabul, "Init Excimer : ",ion(NumIon)%Name, " | Enrgy (eV) = ", ion(NumIon)%En
     END SELECT
 
@@ -448,15 +448,16 @@ CONTAINS
        U(i)  = IdU(i,sys%Dx)
        meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        OneD%nuMoy = OneD%nuMoy + meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+
        !**** Maxwllian distribution function
        IF (i.LT.sys%nx) F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
        IF (Clock%Rstart == 1) READ(90,*) j, F(i)
 
        consv(1) = consv(1) + F(i)*U(i)**(0.5d0)*sys%Dx
        consv(2) = consv(2) + F(i)*U(i)**(1.5d0)*sys%Dx
-       elec%Nuei(i) = gama*dsqrt(U(i))*elec%SecEI(i)*elec%Ni
+       !elec%Nuei(i) = gama*dsqrt(U(i))*elec%SecEI(i)*elec%Ni
     END DO
-
+    
     IF (Clock%Rstart == 1) THEN
        CLOSE (90)
        OPEN (UNIT=99,FILE='./datFile/Rstart/Tg.dat',STATUS='OLD')
@@ -484,7 +485,7 @@ CONTAINS
     END IF                                                                  !
     !***********************************************************************!
     !**** 1D profil for gas temperature calculation
-    OneD%SLab = 0.0!sys%Ra ! (m)
+    OneD%SLab = 0.0d0 ! (m)
     OneD%nx = size(OneD%Tg)
     OneD%Dx = (sys%Ra + OneD%SLab) / real(OneD%nx-1)
     IF (OneD%SLab .NE. 0.d0) THEN
