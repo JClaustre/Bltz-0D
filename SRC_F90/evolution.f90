@@ -96,9 +96,8 @@ CONTAINS
 !       !**** Radiative transfert
 !       CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion
-       !CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
-       !CALL Diffuz_C     (sys, meta, ion,elec,F,U, diag)
-       CALL Diffuz_Norm     (sys, meta, ion,elec,F,U, diag,l)
+       CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz_Norm     (sys, meta, ion,elec,F,U, diag)
 !       !**** Excit + De-excit
 !       SELECT CASE (XcDx)
 !       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
@@ -125,14 +124,14 @@ CONTAINS
        Nnull = 0
        do i = 1, NumMeta
           meta(i)%Ni = meta(i)%Ni + meta(i)%Updens
-          if (i .LE. NumIon) ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
           IF (meta(i)%Ni < 0.d0) THEN
              Nnull = Nnull + 1
              meta(i)%Ni = 0.d0
           END IF
           IF (i .LE. NumIon) THEN
+             ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
              IF (ion(i)%Ni < 0.d0) THEN
-                Nnull = Nnull + 1
+                Nnull = Nnull + 100
                 ion(i)%Ni = 0.d0
                 IF (i == 1) ion(2)%Ni = elec%Ni
                 IF (i == 2) ion(1)%Ni = elec%Ni

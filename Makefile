@@ -18,7 +18,7 @@ MOD_DIR		?=$(F90_OBJDIR)
 # ******************************************************************** #
 
 # **** Options de compilation
-USEDEBUGG       := 0
+USEDEBUGG       := 1
 USEOPENMP	:= 1
 # ******************************************************************** #
 
@@ -47,7 +47,7 @@ $(F90_OBJDIR)/%.o	: $(F90_SRCDIR)/%.f90
 	@echo "--> Compiled: " $^
 
 SRCF90	= f90_kind.f90 param.f90 excit.f90 l-xchange.f90 penn_asso.f90\
-	recomb.f90 ioniz.f90 radiff_C.f90 heat.f90 read_input.f90 \
+	recomb.f90 ioniz.f90 radiff.f90 heat.f90 read_input.f90 \
 	gaz_Tp.f90 evolution.f90 main.f90
 
 F90_SRC := $(addprefix $(F90_SRCDIR)/, $(SRCF90))
