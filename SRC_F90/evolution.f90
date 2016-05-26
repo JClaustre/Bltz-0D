@@ -109,7 +109,7 @@ CONTAINS
        !**** L-Exchange
        CALL l_change     (meta, K_ij)
        !*************************************
-
+       
        !**** UpDate Density (electron) + Tpe
        elec%Ni = 0.d0 ; elec%Tp = 0.d0; elec%J = 0.d0
        DO i = 1, sys%nx 
@@ -136,19 +136,19 @@ CONTAINS
              END IF
           END IF
        END do
-
+       
        !**** Evaluate Calculation Time
        if (l == 300) CALL System_clock (t2, clock_rate)
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
        !**** UpDate Simulation Time
        Clock%SumDt = Clock%SumDt + Clock%Dt
-
+       
        !**** WRITE IN SHELL ******************************************************!
        write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,A)",advance="no") tabul,&!
-       "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
+            "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
             Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
-                                                                                  !
+       !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
                " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
@@ -156,7 +156,7 @@ CONTAINS
                OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs                      !
        END IF                                                                     !
        !**************************************************************************!
-
+       
        !**** WRITE IN FILES (Function of TIME) (density in cm^-3) ****************!
        IF (modulo(l,100)==0) Then                                                 !
           SELECT CASE (NumIon)                                                    !
@@ -180,7 +180,7 @@ CONTAINS
                   ion(i)%deg, ion(i)%Ni*1d-06 
           END DO                                                                  !
           CLOSE(98)                                                               !
-                                                                                  !
+          !
        END IF                                                                     !
        !**** WRITE IN FILES (Time Dependent) (EEDF in cm^-3) *********************!
        IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     ! 
@@ -194,7 +194,7 @@ CONTAINS
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
-
+       
        !**** WRITE IN FILES (Time Dependent) (Restart files) *********************!
        IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     !
           CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)                  !
@@ -207,14 +207,14 @@ CONTAINS
     !****End of MAIN LOOP ********************************************************!
     CLOSE(99)
     Clock%NumIter = l
-
+    
     CALL Consv_Test(sys, U, F, Diag, consv)
     CALL Write_Out1D( F,  "F_final.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-
+  
   SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -242,15 +242,15 @@ CONTAINS
     write(*,"(2A,ES15.4)") tabul, "Particle Gain due to Penning  : ", diag(5)%Tx/(2.d0*elec%Ni)
     write(*,"(2A,ES15.4)") tabul, "Particle Gain due to ionizatio: ", diag(2)%Tx/elec%Ni!
     !***********************************************************************************!
-
+    
     !**** Energy Conservation : Σf(i).U(i)^3/2.ΔU + N*.Eij *****************************!
     Coef = 0.d0                                                                         !
     DO i = 1, sys%nx                                                                    !
        Coef = Coef + Fi(i)* U(i)**(1.5d0) * sys%Dx                                      !
     END DO                                                                              !
     elec%Tp = Coef*0.66667d0/elec%Ni                                                    !
-                                                                                        !
-                                                                                        !
+    !
+    !
     !**** (1)  **** Add energy due to excit/de-excit processes                          !
     Coef = Coef + (Diag(1)%EnLoss-Diag(1)%EnProd)                                       !
     !**** (2)  **** Energy Loss due to ionization processes                             !
@@ -278,7 +278,7 @@ CONTAINS
     !**** (3)=radiative trans | (4)=l-xchnge reaction                                   !
     !**** (7)=3 body convert  |                                                         !
     !***********************************************************************************!
-
+    
     elec%En = Coef
     write(*,"(2A,2ES15.4)") tabul, "Gain Power in Heat : ", Diag(10)%EnProd * qe/(clock%Dt*clock%NumIter),&
          Diag(10)%EnProd * qe * sys%volume/(clock%Dt*clock%NumIter)
@@ -310,7 +310,7 @@ CONTAINS
     Do i = 1, NumMeta
        SumMeta = SumMeta + meta(i)%Ni
     END Do
-
+    
     OPEN(UNIT=99,File="./datFile/Output.md",ACTION="WRITE",STATUS="UNKNOWN")
     write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
     write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
@@ -327,7 +327,7 @@ CONTAINS
     write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
     write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
     write(99,"(A)")""
-
+    
     write(99,"(A)") ""
     write(99,"(A)") "SYSTEM PARAMETERS"
     write(99,"(A)") "--------------------"
@@ -404,7 +404,7 @@ CONTAINS
          , Diag(9)%EnLoss*100.d0/gainE, " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Loss Iexc :  ", Diag(13)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
          , Diag(13)%EnLoss*100.d0/gainE, " %"
-
+    
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Particle balance : Electron Saving"
     write(99,"(A,ES15.6,F8.2,A)") "* Gain ioniz : ", Diag(2)%Tx/(ne*clock%NumIter),  &
