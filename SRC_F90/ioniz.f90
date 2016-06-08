@@ -83,7 +83,7 @@ CONTAINS
           END DO
           ratx = ionz * Dx * gama
           if (ratx .GT. maxR) maxR = ratx
-          diag(2)%Tx = diag(2)%Tx + SubDt * ionz * coef1 * Dx
+          diag(2)%SumTx = diag(2)%SumTx + SubDt * ionz * coef1 * Dx
           diag(2)%EnLoss = diag(2)%EnLoss + SubDt * ionz * coef1 * Dx*Eij
           meta(i)%UpDens = meta(i)%UpDens - SubDt * ionz * coef1 * Dx
           ion(1)%Updens  = ion(1)%Updens  + SubDt * ionz * coef1 * Dx
@@ -104,13 +104,14 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
     INTEGER :: i, k, kp, ichi, cas, nx
-    REAL(DOUBLE) :: prod, loss, ratx
+    REAL(DOUBLE) :: prod, loss, ratx, Rate
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src
     !SubCYCLING VARIABLES
     REAL(DOUBLE) :: SubDt
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; nx = sys%nx
+    Rate = 0.d0
 
     cas = 1 ! if 0 then "Vidal case" | else "Matte case"
     cnst = dsqrt(2.d0/Dx**3.d0)
@@ -169,7 +170,9 @@ CONTAINS
 
           ratx = Src * Dx * gama
           if (ratx .GT. maxR) maxR = ratx
-          diag(2)%Tx = diag(2)%Tx + SubDt * Src * coef1 * Dx
+          diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
+          IF ((ratx*meta(i)%Ni).GT.Rate) Rate = ratx*meta(i)%Ni
+          diag(2)%Tx = Rate
        END DO
     END DO
   END SUBROUTINE Ioniz_100
@@ -248,8 +251,8 @@ CONTAINS
        diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx * Eij
        diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx * Eij
     END IF
-    diag(13)%Tx = diag(13)%Tx + Clock%Dt * Si * Dx
-    diag(15)%Tx = diag(15)%Tx + Clock%Dt * Sr * Dx
+    diag(13)%SumTx = diag(13)%SumTx + Clock%Dt * Si * Dx
+    diag(15)%SumTx = diag(15)%SumTx + Clock%Dt * Sr * Dx
     !**** br == branching ratio
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx

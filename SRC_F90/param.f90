@@ -12,10 +12,10 @@ MODULE MOD_PARAM
 
   !-----------------------------------------------------------
   TYPE, PUBLIC :: Time
-     REAL(DOUBLE) :: Dt=0, SimuTime, Year, DoY, DoY_LT
-     REAL(DOUBLE) :: Hours, Minutes, Seconds
+     REAL(DOUBLE) :: Dt=0, SimuTime
      REAL(DOUBLE) :: SumDt, TRstart
-     INTEGER :: MaxIter, IterDt, NumIter, Rstart
+     REAL(DOUBLE) :: Hours, Minutes, Seconds
+     INTEGER      :: MaxIter, IterDt, NumIter, Rstart
   END type Time
   !-----------------------------------------------------------
   TYPE, PUBLIC::SysVar
@@ -36,7 +36,7 @@ MODULE MOD_PARAM
   END type Species
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
-     REAL(DOUBLE)      :: Tx, EnProd, EnLoss
+     REAL(DOUBLE)      :: SumTx, Tx, EnProd, EnLoss
      CHARACTER(len=10) :: Name
   END type Diagnos
   !-----------------------------------------------------------

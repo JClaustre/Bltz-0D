@@ -287,7 +287,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd
+    REAL(DOUBLE) :: Sx, Sd, Rate, Rate2
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
@@ -295,6 +295,7 @@ CONTAINS
     !Implicit Density VARIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
     !********************
+    Rate = 0.d0 ; Rate2 = 0.d0
     SubDt = Clock%Dt
     nx = sys%nx ; Dx = sys%Dx
     !********************
@@ -397,6 +398,10 @@ CONTAINS
              !**** Diagnostic
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
+             IF ((Sx*Ndens(i)).GT.Rate) Rate = Sx*Ndens(i)
+             diag(1)%Tx = Rate
+             IF ((Sd*Ndens(j)).GT.Rate2) Rate2 = Sd*Ndens(j)
+             diag(10)%Tx = Rate2
              !*****************
           END IF
        END DO

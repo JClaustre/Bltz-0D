@@ -25,15 +25,15 @@ CONTAINS
     INTEGER :: i, j, k, l, ichi, Nion, Nmeta
     REAL(DOUBLE) :: asso, Penn, beta, Dx, Ndens
     REAL(DOUBLE) :: Eij, chi, rchi, coef1, coef2
-    REAL(DOUBLE) :: ratx
+    REAL(DOUBLE) :: ratx, Rate
     !*********************************
     beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(-1.86d0)
-    asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0
+    asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0 ; Rate = 0.d0
     Dx = sys%Dx
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
     !**** Associative process
-    DO i = 5, 34!Nmeta
+    DO i = 5, Nmeta
        Eij = meta(i)%En - ion(2)%En ! associative threshold
        IF (Eij > 0.d0) THEN
           chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
@@ -54,14 +54,17 @@ CONTAINS
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
           !**** Diagnostic
           Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
-          Diag(6)%Tx = Diag(6)%Tx + Clock%Dt * asso
+          Diag(6)%SumTx = Diag(6)%SumTx + Clock%Dt * asso
 
           ratx = Sn(i)*meta(0)%Ni
           IF (ratx .GT. MaxR) MaxR = ratx
+          IF (asso.GT.Rate) Rate = asso
+          Diag(6)%Tx = Rate
        END IF
     END DO
 
     !**** Penning process
+    Rate = 0.d0
     DO i = 1, 3
        DO j = 1, 3
           
@@ -83,7 +86,9 @@ CONTAINS
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** Diagnostic
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
-             diag(5)%Tx = diag(5)%Tx + Clock%Dt * Penn
+             diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
+             IF (Penn.GT.Rate) Rate = asso
+             Diag(5)%Tx = Rate
           END DO
           !**** Update population
           Penn = meta(i)%Ni*meta(j)%Ni * beta
@@ -124,7 +129,7 @@ CONTAINS
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** Diagnostic
              diag(14)%EnProd = diag(14)%EnProd + Eij*Clock%Dt * Penn
-             diag(14)%Tx = diag(14)%Tx + Clock%Dt * Penn
+             diag(14)%SumTx = diag(14)%SumTx + Clock%Dt * Penn
           END DO
           !**** Update population
           Penn = Ndens * ion(Nion)%Ni * beta

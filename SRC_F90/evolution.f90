@@ -66,13 +66,14 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
-          !IF (Clock%SumDt .GT. 1d-6) THEN
-          !**** Increase Power
-          sys%Powr = sys%IPowr * (1.d0 - exp( -real(k*Clock%Dt) / GenPwr) )
-          !**** Decrease Power
-          !sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
-          k = k+1
-          !END IF
+          IF (Clock%SumDt .LT. 1d-5) THEN
+             !**** Increase Power
+             sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+          ELSE
+             !**** Decrease Power
+             sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
+             k = k+1
+          END IF
        END IF
 
        !**** Heat + Elas + Fk-Pl
@@ -194,7 +195,18 @@ CONTAINS
           j = j+1                                                                 !
        END IF                                                                     !
        !**************************************************************************!
-       
+
+       IF ( modulo(l,100) == 0 ) THEN
+          IF (l == 100) THEN
+             OPEN(UNIT=92,File="./datFile/rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             write(92,"(15ES15.6)") Clock%SumDt, (diag(i)%Tx, i=1,14)
+          ELSE
+             OPEN(UNIT=92,File="./datFile/rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             write(92,"(15ES15.6)") Clock%SumDt, (diag(i)%Tx, i=1,14)
+          END IF
+          CLOSE(92)
+       END IF
+   
        !**** WRITE IN FILES (Time Dependent) (Restart files) *********************!
        IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     !
           CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)                  !
@@ -236,11 +248,11 @@ CONTAINS
     write(*,"(3A,ES15.4)") tabul,"Density (cm-3): ", ion(2)%Name, ion(2)%Ni*1.d-6       !
     Coef = ABS(1.0d0 - (elec%Ni/(ion(1)%Ni+ion(2)%Ni)))                                 !
     write(*,"(2A,ES15.4)") tabul, "Partcl Error : ", Coef                               !
-    write(*,"(2A,ES15.4)") tabul, "Particle Loss due to diffusion: ", diag(9)%Tx/elec%Ni!
-    write(*,"(2A,ES15.4)") tabul, "Particle Loss due to recombina: ", diag(8)%Tx/elec%Ni!
-    write(*,"(2A,ES15.4)") tabul, "Particle Gain due to AssoIoniz: ", diag(6)%Tx/elec%Ni!
-    write(*,"(2A,ES15.4)") tabul, "Particle Gain due to Penning  : ", diag(5)%Tx/(2.d0*elec%Ni)
-    write(*,"(2A,ES15.4)") tabul, "Particle Gain due to ionizatio: ", diag(2)%Tx/elec%Ni!
+    write(*,"(2A,ES15.4)") tabul, "Particle Loss due to diffusion: ", diag(9)%SumTx/elec%Ni!
+    write(*,"(2A,ES15.4)") tabul, "Particle Loss due to recombina: ", diag(8)%SumTx/elec%Ni!
+    write(*,"(2A,ES15.4)") tabul, "Particle Gain due to AssoIoniz: ", diag(6)%SumTx/elec%Ni!
+    write(*,"(2A,ES15.4)") tabul, "Particle Gain due to Penning  : ", diag(5)%SumTx/(2.d0*elec%Ni)
+    write(*,"(2A,ES15.4)") tabul, "Particle Gain due to ionizatio: ", diag(2)%SumTx/elec%Ni!
     !***********************************************************************************!
     
     !**** Energy Conservation : Σf(i).U(i)^3/2.ΔU + N*.Eij *****************************!
@@ -306,7 +318,7 @@ CONTAINS
     ne = elec%Ni ; Dt = Clock%Dt
     gainE = (Diag(10)%EnProd+Diag(5)%EnProd+Diag(6)%EnProd + &
          Diag(1)%EnProd+Diag(12)%EnProd+Diag(14)%EnProd)
-    gainP = Diag(2)%Tx + Diag(5)%Tx + Diag(6)%Tx + Diag(13)%Tx + Diag(14)%Tx 
+    gainP = Diag(2)%SumTx + Diag(5)%SumTx + Diag(6)%SumTx + Diag(13)%SumTx + Diag(14)%SumTx 
     Do i = 1, NumMeta
        SumMeta = SumMeta + meta(i)%Ni
     END Do
@@ -407,30 +419,30 @@ CONTAINS
     
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Particle balance : Electron Saving"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain ioniz : ", Diag(2)%Tx/(ne*clock%NumIter),  &
-         Diag(2)%Tx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Assoc : ", Diag(6)%Tx/(ne*clock%NumIter),  &
-         Diag(6)%Tx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penng : ", Diag(5)%Tx/(ne*clock%NumIter),  &
-         Diag(5)%Tx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(14)%Tx/(ne*clock%NumIter),  &
-         Diag(14)%Tx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Ioexc : ", Diag(13)%Tx/(ne*clock%NumIter),  &
-         Diag(13)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain ioniz : ", Diag(2)%SumTx/(ne*clock%NumIter),  &
+         Diag(2)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Assoc : ", Diag(6)%SumTx/(ne*clock%NumIter),  &
+         Diag(6)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penng : ", Diag(5)%SumTx/(ne*clock%NumIter),  &
+         Diag(5)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(14)%SumTx/(ne*clock%NumIter),  &
+         Diag(14)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Ioexc : ", Diag(13)%SumTx/(ne*clock%NumIter),  &
+         Diag(13)%SumTx*100.d0 / abs(gainP), " %"
 
     write(99,"(A)") "### Particle balance : Electron Loss"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss recmb : ", Diag(8)%Tx/(ne*clock%NumIter),  &
-         Diag(8)%Tx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss diffz : ", Diag(9)%Tx/(ne*clock%NumIter),  &
-         Diag(9)%Tx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss recex : ", Diag(15)%Tx/(ne*clock%NumIter),  &
-         Diag(15)%Tx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss recmb : ", Diag(8)%SumTx/(ne*clock%NumIter),  &
+         Diag(8)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss diffz : ", Diag(9)%SumTx/(ne*clock%NumIter),  &
+         Diag(9)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss recex : ", Diag(15)%SumTx/(ne*clock%NumIter),  &
+         Diag(15)%SumTx*100.d0 / abs(gainP), " %"
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
          gainE, gainP
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
-         (Diag(8)%Tx+Diag(9)%Tx+Diag(15)%Tx)
+         (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
     write(99,"(A)") " "
     DO i = 1, NumMeta                                                       !
        write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &

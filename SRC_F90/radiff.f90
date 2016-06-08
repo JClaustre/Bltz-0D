@@ -22,7 +22,8 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j
     REAL(DOUBLE) :: Eij, damp, EscapF, emitF
-    REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd
+    REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
+    Rate = 0.d0
 
     DO i = 1, NumMeta!18
        DO j = 0, i-1 !10
@@ -53,6 +54,8 @@ CONTAINS
                    meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                    !**** Diagnostic
                    diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
+                   IF ((emitF*meta(i)%Ni).GT.Rate) Rate = emitF * meta(i)%Ni
+                   diag(3)%Tx = Rate
                    !****************
                 END IF
              END IF
@@ -152,7 +155,8 @@ CONTAINS
     END DO
     !**** Diagnostic
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
-    diag(9)%Tx = diag(9)%Tx + Clock%Dt * Se  
+    diag(9)%SumTx = diag(9)%SumTx + Clock%Dt * Se  
+    diag(9)%Tx = Se !/ elec%Ni
   END SUBROUTINE Diffuz
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -222,7 +226,7 @@ CONTAINS
     END DO
     !**** Diagnostic
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
-    diag(9)%Tx = diag(9)%Tx + Clock%Dt * Se
+    diag(9)%SumTx = diag(9)%SumTx + Clock%Dt * Se
   END SUBROUTINE Diffuz_Norm
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
