@@ -66,7 +66,7 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
-          IF (Clock%SumDt .LT. 1d-5) THEN
+          IF (Clock%SumDt .LT. 4.5d-5) THEN
              !**** Increase Power
              sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
           ELSE
