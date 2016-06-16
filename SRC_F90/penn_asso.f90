@@ -58,8 +58,10 @@ CONTAINS
 
           ratx = Sn(i)*meta(0)%Ni
           IF (ratx .GT. MaxR) MaxR = ratx
-          IF (asso.GT.Rate) Rate = asso
-          Diag(6)%Tx = Rate
+          IF (asso.GT.Rate) THEN
+             Rate = asso
+             Diag(6)%Tx(1) = Rate ; Diag(6)%Tx(2) = real(i)
+          END IF
        END IF
     END DO
 
@@ -87,8 +89,10 @@ CONTAINS
              !**** Diagnostic
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
              diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
-             IF (Penn.GT.Rate) Rate = asso
-             Diag(5)%Tx = Rate
+             IF (Penn.GT.Rate) THEN
+                Rate = asso
+                Diag(5)%Tx(1) = Rate ; Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
+             END IF
           END DO
           !**** Update population
           Penn = meta(i)%Ni*meta(j)%Ni * beta

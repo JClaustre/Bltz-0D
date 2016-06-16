@@ -36,7 +36,8 @@ MODULE MOD_PARAM
   END type Species
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
-     REAL(DOUBLE)      :: SumTx, Tx, EnProd, EnLoss
+     REAL(DOUBLE)      :: SumTx, EnProd, EnLoss
+     REAL(DOUBLE), DIMENSION(3) :: Tx
      CHARACTER(len=10) :: Name
   END type Diagnos
   !-----------------------------------------------------------
@@ -85,6 +86,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
   REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
+  REAL(DOUBLE) :: Vg                          ! Calculate sheath potential for diffusion routine
 CONTAINS
 
   ! **********************************************************

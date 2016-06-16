@@ -54,8 +54,10 @@ CONTAINS
                    meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                    !**** Diagnostic
                    diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
-                   IF ((emitF*meta(i)%Ni).GT.Rate) Rate = emitF * meta(i)%Ni
-                   diag(3)%Tx = Rate
+                   IF ((emitF*meta(i)%Ni).GT.Rate) THEN
+                      Rate = emitF * meta(i)%Ni
+                      diag(3)%Tx(1) = Rate ; diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
+                   END IF
                    !****************
                 END IF
              END IF
@@ -156,7 +158,7 @@ CONTAINS
     !**** Diagnostic
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
     diag(9)%SumTx = diag(9)%SumTx + Clock%Dt * Se  
-    diag(9)%Tx = Se !/ elec%Ni
+    diag(9)%Tx(1) = Se
   END SUBROUTINE Diffuz
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -228,6 +230,108 @@ CONTAINS
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
     diag(9)%SumTx = diag(9)%SumTx + Clock%Dt * Se
   END SUBROUTINE Diffuz_Norm
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+
+  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  SUBROUTINE Diffuz_Gaine (sys,meta,ion,elec,F,U,diag)
+    !INTENT
+    TYPE(SysVar) , INTENT(IN)    :: sys
+    TYPE(Species), INTENT(INOUT) :: elec
+    Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
+    TYPE(Species), DIMENSION(:) , INTENT(INOUT) :: ion
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: F
+    TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: U
+    !LOCAL
+    INTEGER :: i, iVg
+    REAL(DOUBLE) :: mua, mum, Da, Dm, Damb, De, En, En2
+    REAL(DOUBLE) :: Ng_atm, Coef, Coef2, Coef3
+    REAL(DOUBLE) :: Sa, Sm, Se, Smeta1, Smeta2, smeta3
+    En = 0.d0 ; En2 = 0.d0
+
+    elec%Ni = 0.d0 ; elec%Tp = 0.d0
+    DO i = 1, sys%nx
+       elec%Ni = elec%Ni + F(i) * sqrt(U(i)) * sys%Dx
+       elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
+       En = En + F(i) * U(i)**(1.5d0) * sys%Dx
+    END DO
+    elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
+    F(:) = F(:) / elec%Ni
+
+    !**** Ion diffusion coefficients
+    mua = 2.68d19*1d2  / (2.96d-3 * dsqrt(meta(0)%Tp*qok) + 3.11d-2) / meta(0)%Ni ! cf. Santos
+    mum = 2.68d19*1d2 / meta(0)%Ni
+!    mua = 10.3d0*1d-4 ; mum = 21.d0*1d-4 ! mobility (m2/V/s) (p=1 atm.)
+!    Ng_atm = 2.45d+19 * 1d+6 ! Gaz density at 1 atm. & 300K
+!    mua = mua * Ng_atm / meta(0)%Ni
+!    mum = mum * Ng_atm / meta(0)%Ni
+    !**** Ion diffusion coefficients
+    Da  = mua * (elec%Tp + meta(0)%Tp)
+    Dm  = mum * (elec%Tp + meta(0)%Tp)
+    !**** Ambipolar Diffusion Coefficient for 2S3 excited state
+    meta(1)%Damb = 8.992d-2 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
+    meta(2)%Damb = meta(1)%Damb
+    !**** Ambipolar diffusion
+    Damb = ( Da*ion(1)%Ni + Dm*ion(2)%Ni ) / (ion(1)%Ni + ion(2)%Ni)
+
+    !**** Sj = Dj.nj / Λ²  (m-3 s-¹)
+    Coef = (sys%Ra/2.405d0)**2
+    Sa = Damb * ion(1)%Ni / Coef
+    Sm = Damb * ion(2)%Ni / Coef
+    Smeta1 = meta(1)%Damb * meta(1)%Ni / Coef
+    Smeta2 = meta(2)%Damb * meta(2)%Ni / Coef
+    !**** particle balance
+    ion(1)%Updens  = ion(1)%Updens  - Clock%Dt * Sa
+    ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
+    meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
+    meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
+    SELECT CASE (NumIon) 
+    CASE (3)   
+       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
+       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef
+       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
+    END SELECT
+    !**** Electron diffusion
+    Se = (Sa + Sm)
+    !**** Calcul de la diffusion libre moyenne electronique
+    Coef = gama * sys%Dx / (3.d0*meta(0)%Ni)
+    DO i = 1, sys%nx-1
+       coef2 = 0.d0
+       if (meta(0)%SecMtm(i) .ne. 0.d0) Coef2 = Coef * U(i) / meta(0)%SecMtm(i)
+       De = De + Coef2*F(i)
+    END DO
+    elec%Dfree = De ; ion(1)%Dfree = Da ; ion(2)%Dfree = Dm 
+    ion(1)%mobl = mua ; ion(2)%mobl = mum 
+
+    !**** Calcul du potentiel de gaine dans le cas de la diffusion
+    !**** ambipolaire
+    Coef2 = 0.d0 ; Coef = (sys%Ra/2.405d0)**2
+    DO i = sys%nx, 1, -1
+       Coef3 = Coef2
+       Coef2 = Coef2 + De * F(i) * elec%Ni * U(i)**0.5d0 * sys%Dx / Coef
+       IF (Coef2.GT.Se) THEN
+          iVg = i
+          Vg = (Se - Coef2) * sys%Dx / (Coef3-Coef2) + sys%Dx*i
+          exit
+       END IF
+    END DO
+
+    DO i = 1, sys%Nx
+       F(i) = F(i) * elec%Ni
+       IF (i.EQ.iVg) F(i) = F(i) - Clock%Dt * F(i) * De * ((i+1)*sys%Dx-Vg) / sys%Dx / Coef
+       IF (i.GT.iVg) F(i) = F(i) - Clock%Dt * F(i) * De / Coef
+       En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
+    END DO
+
+    !**** electron density
+    elec%Ni = 0.d0
+    DO i = 1, sys%Nx
+       elec%Ni = elec%Ni + F(i) * sqrt(U(i)) * sys%Dx
+    END DO
+    !**** Diagnostic
+    diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
+    diag(9)%Tx(1) = Se  
+  END SUBROUTINE Diffuz_Gaine
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
 END MODULE MOD_RADIFF

@@ -398,10 +398,14 @@ CONTAINS
              !**** Diagnostic
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
-             IF ((Sx*Ndens(i)).GT.Rate) Rate = Sx*Ndens(i)
-             diag(1)%Tx = Rate
-             IF ((Sd*Ndens(j)).GT.Rate2) Rate2 = Sd*Ndens(j)
-             diag(10)%Tx = Rate2
+             IF ((Sx*Ndens(i)).GT.Rate) THEN
+                Rate = Sx*Ndens(i)
+                diag(1)%Tx(1) = Rate ; diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+             END IF
+             IF ((Sd*Ndens(j)).GT.Rate2) THEN
+                Rate2 = Sd*Ndens(j)
+                diag(10)%Tx(1) = Rate2 ; diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+             END IF
              !*****************
           END IF
        END DO

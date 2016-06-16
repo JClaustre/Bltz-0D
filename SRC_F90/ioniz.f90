@@ -171,8 +171,10 @@ CONTAINS
           ratx = Src * Dx * gama
           if (ratx .GT. maxR) maxR = ratx
           diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
-          IF ((ratx*meta(i)%Ni).GT.Rate) Rate = ratx*meta(i)%Ni
-          diag(2)%Tx = Rate
+          IF ((ratx*meta(i)%Ni).GT.Rate) THEN
+             Rate = ratx*meta(i)%Ni
+             diag(2)%Tx(1) = Rate ; diag(2)%Tx(2)= real(i)
+          END IF
        END DO
     END DO
   END SUBROUTINE Ioniz_100

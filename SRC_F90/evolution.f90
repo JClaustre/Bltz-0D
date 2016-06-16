@@ -25,7 +25,7 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, Nnull=0                                            !
+    INTEGER :: i, j, k, l, m, Nnull=0                                         !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
     REAL(DOUBLE) :: GenPwr                                                    !
@@ -66,7 +66,7 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
-          IF (Clock%SumDt .LT. 4.5d-5) THEN
+          IF (Clock%SumDt .LT. 5d-5) THEN
              !**** Increase Power
              sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
           ELSE
@@ -97,8 +97,9 @@ CONTAINS
        !**** Radiative transfert
        CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion
-       CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
-       !CALL Diffuz_Norm     (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz_Norm (sys, meta, ion,elec,F,U, diag)
+       CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit
        SELECT CASE (XcDx)
        CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
@@ -145,11 +146,11 @@ CONTAINS
        Clock%SumDt = Clock%SumDt + Clock%Dt
        
        !**** WRITE IN SHELL ******************************************************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,A)",advance="no") tabul,&!
-            "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&            !
+       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,F5.1,A)",advance="no") tabul,&!
+            "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&       !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, " \r"   !
-       !
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, Vg," \r"!
+                                                                                  !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
                " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
@@ -173,15 +174,15 @@ CONTAINS
           !**** WRITE IN FILES (density in cm^-3) ****                            !
           OPEN(UNIT=98,File="./datFile/density.dat",ACTION="WRITE",STATUS="UNKNOWN")
           DO i = 1, NumMeta                                                       !
-             write(98,"(I3,A,2F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, &
-                  meta(i)%deg, meta(i)%Ni*1d-06
+             write(98,"(I3,A,2F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, &      !
+                  meta(i)%deg, meta(i)%Ni*1d-06                                   !
           END DO                                                                  !
           DO i = 1, NumIon                                                        !
-             write(98,"(I3,A,2F10.4,ES15.4)") i, ion(i)%Name, ion(i)%En, &
-                  ion(i)%deg, ion(i)%Ni*1d-06 
+             write(98,"(I3,A,2F10.4,ES15.4)") i, ion(i)%Name, ion(i)%En, &        !
+                  ion(i)%deg, ion(i)%Ni*1d-06                                     !
           END DO                                                                  !
           CLOSE(98)                                                               !
-          !
+                                                                                  !
        END IF                                                                     !
        !**** WRITE IN FILES (Time Dependent) (EEDF in cm^-3) *********************!
        IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     ! 
@@ -199,12 +200,17 @@ CONTAINS
        IF ( modulo(l,100) == 0 ) THEN
           IF (l == 100) THEN
              OPEN(UNIT=92,File="./datFile/rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(92,"(15ES15.6)") Clock%SumDt, (diag(i)%Tx, i=1,14)
+             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             OPEN(UNIT=93,File="./datFile/rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
           ELSE
              OPEN(UNIT=92,File="./datFile/rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(92,"(15ES15.6)") Clock%SumDt, (diag(i)%Tx, i=1,14)
+             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             OPEN(UNIT=93,File="./datFile/rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,14)
           END IF
           CLOSE(92)
+          CLOSE(93)
        END IF
    
        !**** WRITE IN FILES (Time Dependent) (Restart files) *********************!
@@ -261,8 +267,7 @@ CONTAINS
        Coef = Coef + Fi(i)* U(i)**(1.5d0) * sys%Dx                                      !
     END DO                                                                              !
     elec%Tp = Coef*0.66667d0/elec%Ni                                                    !
-    !
-    !
+                                                                                        !
     !**** (1)  **** Add energy due to excit/de-excit processes                          !
     Coef = Coef + (Diag(1)%EnLoss-Diag(1)%EnProd)                                       !
     !**** (2)  **** Energy Loss due to ionization processes                             !
@@ -351,6 +356,7 @@ CONTAINS
     write(99,"(A,F8.2)")    "* E Field (V/cm) : ", sys%E*1d-2
     write(99,"(A,ES11.3)")  "* heating frequency (Hz) : ", sys%Freq / (2*pi)
     write(99,"(A,2ES11.3)") "* Power (W/cm3) | (W): ", sys%Powr*1d-6, sys%Powr * sys%volume
+    write(99,"(A,F8.2)")    "* Sheath potential (eV) : ", Vg
 
     write(99,"(A)") ""
     write(99,"(A)") "TIME PARAMETERS"
