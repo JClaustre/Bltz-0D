@@ -72,13 +72,14 @@ CONTAINS
              sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
           ELSE
              !**** Decrease Power
+             IF (k == 0) sys%IPowr = sys%Powr
              sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
              k = k+1
           END IF
        END IF
 
        !**** Heat + Elas + Fk-Pl
-       CALL Heating (sys,meta, U, F)
+       IF (sys%Powr.NE.0.d0) CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Ioniz He+
