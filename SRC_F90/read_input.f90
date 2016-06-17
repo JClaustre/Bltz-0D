@@ -54,6 +54,7 @@ CONTAINS
     INTEGER :: DEL01,XETHETA, IY2,IMOD,MOD_F,MOD, N1,N2,N3
     REAL(DOUBLE) :: PR,BS0,QS0, N4
     CHARACTER(len=10) :: A0
+    LOGICAL :: file_exists
     SecMom=0.d0
 
     !**********************************************************************
@@ -406,6 +407,18 @@ CONTAINS
     !**** Ionization cross sec
     !**** He(n,l,s) + e --> He+ + 2e
     CALL Init_ioniz (sys, meta)
+    !**************************************
+
+    !**** Check if directories are OK.
+    write(*,"(2A)",advance="no") tabul, "Check directories ... "
+    inquire( file=DirFile, exist=file_exists)
+    if ( file_exists ) then
+       write(*,"(2A)") tabul, "directory exists!"
+    else
+       !**** workaround: it calls an extern program...
+       call execute_command_line ('mkdir -p ' // adjustl(trim( dirFile ) ) )
+       write(*,"(2A)"), "dir doesn't exist! I create it for youuuuuu! --> ", DirFile
+    end if
     !**************************************
 
     write(*,"(2A)") tabul, "Initilization Done"

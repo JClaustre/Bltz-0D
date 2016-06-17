@@ -53,6 +53,8 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
   TYPE(Species) :: elec
@@ -164,7 +166,7 @@ CONTAINS
     !LOCAL
     INTEGER :: i
 
-    OPEN(UNIT=0999,File="./datFile/"//TRIM(ADJUSTL(FileName)),&
+    OPEN(UNIT=0999,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(FileName)),&
          ACTION="WRITE",STATUS="UNKNOWN")
     DO i = lbound(array,1), ubound(array,1)
        write(0999,*) i, array(i)
@@ -181,7 +183,7 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j
 
-    OPEN(UNIT=99,File="./datFile/"//TRIM(ADJUSTL(FileName)),&
+    OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(FileName)),&
          ACTION="WRITE",STATUS="UNKNOWN")
     DO i = lbound(array,1), ubound(array,1)
        DO j = lbound(array,2), ubound(array,2)
@@ -202,7 +204,7 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j, k
 
-    OPEN(UNIT=99,File="./datFile/"//TRIM(ADJUSTL(FileName)),&
+    OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(FileName)),&
          ACTION="WRITE",STATUS="UNKNOWN")
     DO i = lbound(array,1), ubound(array,1)
        DO j = lbound(array,2), ubound(array,2)

@@ -36,9 +36,10 @@ CONTAINS
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     IF (Clock%Rstart == 0) THEN                                               !
-       OPEN(UNIT=99,File="./datFile/evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
+       OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
     ELSE IF (Clock%Rstart == 1) THEN                                          !
-       OPEN(UNIT=99,File="./datFile/evol.dat",ACCESS="APPEND",ACTION="WRITE",STATUS="UNKNOWN")
+       OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACCESS="APPEND",&
+            ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
     MaxDt  = 2.d-9 ! Maximum Time-Step allowed
@@ -172,7 +173,7 @@ CONTAINS
           END SELECT                                                              !
           !****                                                                   !
           !**** WRITE IN FILES (density in cm^-3) ****                            !
-          OPEN(UNIT=98,File="./datFile/density.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"density.dat",ACTION="WRITE",STATUS="UNKNOWN")
           DO i = 1, NumMeta                                                       !
              write(98,"(I3,A,2F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, &      !
                   meta(i)%deg, meta(i)%Ni*1d-06                                   !
@@ -186,8 +187,8 @@ CONTAINS
        END IF                                                                     !
        !**** WRITE IN FILES (Time Dependent) (EEDF in cm^-3) *********************!
        IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     ! 
-          write(fileName,"('./datFile/F_evol_',I3.3,'.dat')") j                   !
-          OPEN(UNIT=90,File=TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
+          write(fileName,"('F_evol_',I3.3,'.dat')") j                   !
+          OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
           DO i = 1, sys%nx                                                        !
              write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
           END DO                                                                  !
@@ -199,14 +200,14 @@ CONTAINS
 
        IF ( modulo(l,100) == 0 ) THEN
           IF (l == 100) THEN
-             OPEN(UNIT=92,File="./datFile/rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
-             OPEN(UNIT=93,File="./datFile/rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
           ELSE
-             OPEN(UNIT=92,File="./datFile/rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
-             OPEN(UNIT=93,File="./datFile/rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,14)
           END IF
           CLOSE(92)
@@ -328,7 +329,7 @@ CONTAINS
        SumMeta = SumMeta + meta(i)%Ni
     END Do
     
-    OPEN(UNIT=99,File="./datFile/Output.md",ACTION="WRITE",STATUS="UNKNOWN")
+    OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"Output.md",ACTION="WRITE",STATUS="UNKNOWN")
     write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
     write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
     write(99,"(A)")"               _         "
@@ -352,8 +353,8 @@ CONTAINS
     write(99,"(A,F8.2)")    "* Energy Max (ev)      : ", sys%Emx
     write(99,"(A,ES10.2)")  "* Energy step (Δu)    : ", sys%Dx
     write(99,"(A,F8.2)")    "* Cylinder radius (cm) : ", sys%Ra*1d2
-    write(99,"(A,F8.2)")    "* E/N (Td) : ", (sys%E/meta(0)%Ni) * 1d21
-    write(99,"(A,F8.2)")    "* E Field (V/cm) : ", sys%E*1d-2
+    write(99,"(A,F8.3)")    "* E/N (Td) : ", (sys%E/meta(0)%Ni) * 1d21
+    write(99,"(A,F8.3)")    "* E Field (V/cm) : ", sys%E*1d-2
     write(99,"(A,ES11.3)")  "* heating frequency (Hz) : ", sys%Freq / (2*pi)
     write(99,"(A,2ES11.3)") "* Power (W/cm3) | (W): ", sys%Powr*1d-6, sys%Powr * sys%volume
     write(99,"(A,F8.2)")    "* Sheath potential (eV) : ", Vg
