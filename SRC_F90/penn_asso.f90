@@ -25,10 +25,11 @@ CONTAINS
     INTEGER :: i, j, k, l, ichi, Nion, Nmeta
     REAL(DOUBLE) :: asso, Penn, beta, Dx, Ndens
     REAL(DOUBLE) :: Eij, chi, rchi, coef1, coef2
-    REAL(DOUBLE) :: ratx, Rate
+    REAL(DOUBLE) :: ratx, Rate, RateTmp
     !*********************************
     beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(-1.86d0)
     asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0 ; Rate = 0.d0
+    Diag(6)%Tx(1) = 0.d0
     Dx = sys%Dx
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
@@ -60,13 +61,15 @@ CONTAINS
           IF (ratx .GT. MaxR) MaxR = ratx
           IF (asso.GT.Rate) THEN
              Rate = asso
-             Diag(6)%Tx(1) = Rate ; Diag(6)%Tx(2) = real(i)
+             Diag(6)%Tx(2) = real(i)
           END IF
+          Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
        END IF
     END DO
 
     !**** Penning process
-    Rate = 0.d0
+    Rate=0.d0 ; RateTmp=0.d0 ; Diag(5)%Tx(:)=0.d0 ; Diag(5)%TxTmp(:)=0.d0
+    !********************
     DO i = 1, 3
        DO j = 1, 3
           
@@ -90,9 +93,18 @@ CONTAINS
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
              diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
              IF (Penn.GT.Rate) THEN
-                Rate = asso
-                Diag(5)%Tx(1) = Rate ; Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
+                Rate = Penn
+                Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
              END IF
+             Diag(5)%Tx(1) = Diag(5)%Tx(1) + Penn
+             IF (i==1.or.j==1) THEN
+                IF (Penn.GT.RateTmp) then
+                   RateTmp = Penn
+                   diag(5)%TxTmp(2) = real(i) ; diag(5)%TxTmp(3) = real(j)
+                END IF
+                diag(5)%Txtmp(1) = diag(5)%Txtmp(1) + Penn
+             END IF
+             !****************
           END DO
           !**** Update population
           Penn = meta(i)%Ni*meta(j)%Ni * beta
@@ -103,14 +115,15 @@ CONTAINS
 
     ! Involving Dimer Penning processes 
     SELECT CASE (NumIon)
-    CASE (3)
+    CASE (4)
+       RateTmp=0.d0 ; Diag(4)%TxTmp(:)=0.d0
        Nion = 3
        ! #1 He* + He2* --> He+ + He + e
        !               --> He2+ + He + e
        ! #2 He2* + He2* --> He+ + He + e  (case with i==0)
        !                --> He2+ + He + e
        DO i = 0, 3
-          beta = 2.5d-09* 1d-6
+          beta = 2.5d-09 * 1d-6
           IF (i == 0) beta = 1.5d-09* 1d-6
           If (i == 0) Ndens = ion(Nion)%Ni
           IF (i .GT. 0) Ndens = meta(i)%Ni
@@ -132,8 +145,17 @@ CONTAINS
              END DO
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** Diagnostic
-             diag(14)%EnProd = diag(14)%EnProd + Eij*Clock%Dt * Penn
-             diag(14)%SumTx = diag(14)%SumTx + Clock%Dt * Penn
+             diag(4)%EnProd = diag(4)%EnProd + Eij*Clock%Dt * Penn
+             diag(4)%SumTx = diag(4)%SumTx + Clock%Dt * Penn
+             Diag(4)%Tx(1) = Diag(4)%Tx(1) + Penn
+             IF (i==1) THEN
+                IF (Penn.GT.RateTmp) then
+                   RateTmp = Penn
+                   diag(4)%TxTmp(2) = real(i)
+                END IF
+                diag(4)%Txtmp(1) = diag(4)%Txtmp(1) + Penn
+             END IF
+                !****************
           END DO
           !**** Update population
           Penn = Ndens * ion(Nion)%Ni * beta

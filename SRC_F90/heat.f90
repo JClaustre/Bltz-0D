@@ -44,7 +44,7 @@ CONTAINS
        power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
     END do
     F(nx) = 0.d0
-    sys%E = dsqrt ( sys%Powr / (power * qe) )
+    !sys%E = dsqrt ( sys%Powr / (power * qe) )
     !***************************************************
 
     !****** PARAMETRES COLLISIONS ELASTIQUES*************
@@ -60,7 +60,7 @@ CONTAINS
        F(i) = F(i) / part
        f0(i)= F(i)
     end do
-
+    
     !**** SYSTEME TRIDIAGONALE A RESOUDRE CAS GENEGRAL***************
     do i=1,nx
        XX = (U(i)-0.5d0*Dx)                               
@@ -83,13 +83,15 @@ CONTAINS
        BC1(i)= 1.d0 + ZZ*alpha0*sys%E**2*( (YY**1.5d0 *nucp / (nucp**2 + sys%Freq**2)) +&
             (XX**1.5d0*nucm / (nucm**2 + sys%Freq**2)) )
     end do
+
     !*****SOLUTION DU SYSTEME TRIDIAGONALE f1 AU TEMPS k+1-************************
     CALL TRIDAG (AC1,BC1,CC1,f0,F,nx)
-
+    F(nx) = 0.d0
     do i=1,nx
        F(i)= F(i) * part
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
+
     !**** Diagnostic 
     diag(10)%EnProd = diag(10)%EnProd + abs(En2 - En1)
     !***************
@@ -208,7 +210,7 @@ CONTAINS
     II(0) = 0.d0 ; JJ(0) = 0.d0
     l = 0
 
-123 small = 1.d-12
+123 small = 5.d-12
     l = l + 1 
     y00 = 0.d0 ; xx  = 0.d0
     yy1 = 0.d0 ; yy2 = 0.d0

@@ -28,9 +28,9 @@ CONTAINS
     INTEGER :: i, j, k, l, m, Nnull=0                                         !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MaxDt                                     !
-    REAL(DOUBLE) :: GenPwr                                                    !
+    REAL(DOUBLE) :: GenPwr, Res                                               !
     CHARACTER(LEN=250)::fileName                                              !
-    count1 = 0.d0 ; count2 = 0.d0                                             !
+    count1=0.d0 ; count2=0.d0 ; Res=0.d0                                      !
     !*****************************                                            !
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
@@ -42,9 +42,10 @@ CONTAINS
             ACTION="WRITE",STATUS="UNKNOWN")
     END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 2.d-9 ! Maximum Time-Step allowed
-    sys%IPowr = sys%Powr ! Keep Power init in memory
-    GenPwr = .2d-6 ! Time constant to start the generator.
+    MaxDt  = 1.d-09 ! Maximum Time-Step allowed
+    !sys%IPowr = sys%Powr ! Keep Power init in memory
+    sys%IPowr = sys%E ! Keep Power init in memory
+    GenPwr = 1.d-06 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -67,19 +68,20 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
-          IF (Clock%SumDt .LT. 5d-5) THEN
+          IF (Clock%SumDt .LT. 7d-5) THEN
              !**** Increase Power
-             sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+             sys%E = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
           ELSE
              !**** Decrease Power
-             IF (k == 0) sys%IPowr = sys%Powr
-             sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / GenPwr)
+             IF (k == 0) sys%IPowr = sys%E
+             sys%E = sys%IPowr * exp( -real(k*Clock%Dt) / (GenPwr*1.d0))
+             IF (sys%E.LT.1d-06) sys%E = 0.d0
              k = k+1
           END IF
        END IF
 
        !**** Heat + Elas + Fk-Pl
-       IF (sys%Powr.NE.0.d0) CALL Heating (sys,meta, U, F)
+       IF (sys%E.NE.0.d0) CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Ioniz He+
@@ -151,11 +153,11 @@ CONTAINS
        write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,F5.1,A)",advance="no") tabul,&!
             "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&       !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, Vg," \r"!
+            Clock%Dt, " Pwr(%): ", (sys%E*100./sys%IPowr), "]", Nnull, Vg," \r"!
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
           write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
-               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, meta(0)%Ni," | E/N(Td)",&!
+               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, elec%Ni," | E/N(Td)",&!
                (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",& !
                OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs                      !
        END IF                                                                     !
@@ -187,11 +189,14 @@ CONTAINS
                                                                                   !
        END IF                                                                     !
        !**** WRITE IN FILES (Time Dependent) (EEDF in cm^-3) *********************!
-       IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     ! 
-          write(fileName,"('F_evol_',I3.3,'.dat')") j                   !
+       IF ( Clock%SumDt.GE.Res ) THEN                                             !
+          IF (Clock%SumDt.GE.7d-5.and.&
+               (sys%E.NE.0.d0.or.(sys%E*100./sys%IPowr).NE.100.0) ) Clock%TRstart = 2.d-6
+          Res = Res + Clock%TRstart                                               !
+          write(fileName,"('F_evol_',I3.3,'.dat')") j                             ! 
           OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
           DO i = 1, sys%nx                                                        !
-             write(90,"(2ES15.6)") real(i)*sys%Dx, F(i)                           !
+             write(90,"(3ES15.6E3)") real(i)*sys%Dx, F(i), Clock%SumDt*1d06       !
           END DO                                                                  !
           CLOSE(90)                                                               !
           CALL Write_Out1D( OneD%Tg, "Tg.dat")                                    !
@@ -200,6 +205,7 @@ CONTAINS
        !**************************************************************************!
 
        IF ( modulo(l,100) == 0 ) THEN
+          !**** ALL rates
           IF (l == 100) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
@@ -213,8 +219,23 @@ CONTAINS
           END IF
           CLOSE(92)
           CLOSE(93)
+          !**** 23S Metastable rates ONLY
+          IF (l == 100) THEN
+             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
+          ELSE
+             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
+             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%TxTmp(2), diag(i)%TxTmp(3) , i=1,14)
+          END IF
+          CLOSE(92)
+          CLOSE(93)
        END IF
-   
+       !**************************************************************************!
+
        !**** WRITE IN FILES (Time Dependent) (Restart files) *********************!
        IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     !
           CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)                  !
@@ -293,7 +314,7 @@ CONTAINS
     !**** (13) Energy gain and loss due to ionization/3-body recombination from Dimer   !
     Coef = Coef + (Diag(13)%EnLoss-Diag(13)%EnProd)                                     !
     !**** (14) Energy gain due to Penning reaction btween Dimer and metastable          !
-    Coef = Coef - Diag(14)%EnProd                                                       !
+    Coef = Coef - Diag(4)%EnProd                                                        !
     !**** (3)=radiative trans | (4)=l-xchnge reaction                                   !
     !**** (7)=3 body convert  |                                                         !
     !***********************************************************************************!
@@ -324,8 +345,8 @@ CONTAINS
     REAL(DOUBLE) :: ne, Dt, gainE, gainP, SumMeta
     ne = elec%Ni ; Dt = Clock%Dt
     gainE = (Diag(10)%EnProd+Diag(5)%EnProd+Diag(6)%EnProd + &
-         Diag(1)%EnProd+Diag(12)%EnProd+Diag(14)%EnProd)
-    gainP = Diag(2)%SumTx + Diag(5)%SumTx + Diag(6)%SumTx + Diag(13)%SumTx + Diag(14)%SumTx 
+         Diag(1)%EnProd+Diag(12)%EnProd+Diag(4)%EnProd)
+    gainP = Diag(2)%SumTx + Diag(5)%SumTx + Diag(6)%SumTx + Diag(13)%SumTx + Diag(4)%SumTx 
     Do i = 1, NumMeta
        SumMeta = SumMeta + meta(i)%Ni
     END Do
@@ -408,8 +429,8 @@ CONTAINS
          Diag(1)%EnProd *100.d0 / gainE, " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxim :  ", Diag(12)%EnProd  * qe/(ne*Dt*clock%NumIter), &
          Diag(12)%EnProd *100.d0 / gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pxcim:  ", Diag(14)%EnProd  * qe/(ne*Dt*clock%NumIter), &
-         Diag(14)%EnProd *100.d0 / gainE, " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pxcim:  ", Diag(4)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+         Diag(4)%EnProd *100.d0 / gainE, " %"
 
     write(99,"(A)") "### Power balance : Electron Energy Loss"
     write(99,"(A,ES15.6,F8.2,A)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*clock%NumIter)&
@@ -433,8 +454,8 @@ CONTAINS
          Diag(6)%SumTx*100.d0 / abs(gainP), " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Gain Penng : ", Diag(5)%SumTx/(ne*clock%NumIter),  &
          Diag(5)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(14)%SumTx/(ne*clock%NumIter),  &
-         Diag(14)%SumTx*100.d0 / abs(gainP), " %"
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(4)%SumTx/(ne*clock%NumIter),  &
+         Diag(4)%SumTx*100.d0 / abs(gainP), " %"
     write(99,"(A,ES15.6,F8.2,A)") "* Gain Ioexc : ", Diag(13)%SumTx/(ne*clock%NumIter),  &
          Diag(13)%SumTx*100.d0 / abs(gainP), " %"
 

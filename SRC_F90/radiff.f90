@@ -22,8 +22,8 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j
     REAL(DOUBLE) :: Eij, damp, EscapF, emitF
-    REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
-    Rate = 0.d0
+    REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate, RateTmp
+    Rate=0.d0 ; RateTmp=0.d0 ; diag(3)%Tx(:)=0.d0; diag(3)%TxTmp(:)=0.d0
 
     DO i = 1, NumMeta!18
        DO j = 0, i-1 !10
@@ -56,7 +56,16 @@ CONTAINS
                    diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
                    IF ((emitF*meta(i)%Ni).GT.Rate) THEN
                       Rate = emitF * meta(i)%Ni
-                      diag(3)%Tx(1) = Rate ; diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
+                      diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
+                   END IF
+                   !****************
+                   diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
+                   IF (j.EQ.1) THEN
+                      IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
+                         RateTmp = emitF * meta(i)%Ni    
+                         diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
+                      END IF
+                      diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
                    END IF
                    !****************
                 END IF
@@ -261,10 +270,6 @@ CONTAINS
     !**** Ion diffusion coefficients
     mua = 2.68d19*1d2  / (2.96d-3 * dsqrt(meta(0)%Tp*qok) + 3.11d-2) / meta(0)%Ni ! cf. Santos
     mum = 2.68d19*1d2 / meta(0)%Ni
-!    mua = 10.3d0*1d-4 ; mum = 21.d0*1d-4 ! mobility (m2/V/s) (p=1 atm.)
-!    Ng_atm = 2.45d+19 * 1d+6 ! Gaz density at 1 atm. & 300K
-!    mua = mua * Ng_atm / meta(0)%Ni
-!    mum = mum * Ng_atm / meta(0)%Ni
     !**** Ion diffusion coefficients
     Da  = mua * (elec%Tp + meta(0)%Tp)
     Dm  = mum * (elec%Tp + meta(0)%Tp)
@@ -331,6 +336,8 @@ CONTAINS
     !**** Diagnostic
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
     diag(9)%Tx(1) = Se  
+    diag(9)%TxTmp(1) = Smeta1
+    !***************
   END SUBROUTINE Diffuz_Gaine
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 

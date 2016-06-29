@@ -153,11 +153,16 @@ CONTAINS
     REAL(DOUBLE) :: SubDt, SubRt
     !Equili VaRIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
+    REAL(DOUBLE) :: Rate, Rate2, RateTmp, RateTmp2
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
     SubRt = 2.d-10 ! give a maximum value of collision rate
     nx = sys%nx ; Dx = sys%Dx
+    !********************
+    Rate=0.d0; Rate2=0.d0; RateTmp=0.d0; RateTmp2=0.d0
+    diag(1)%Tx(:)=0.d0 ; diag(10)%Tx(:)=0.d0 
+    diag(1)%TxTmp(:)=0.d0 ;diag(10)%TxTmp(:)=0.d0
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
 
@@ -267,6 +272,29 @@ CONTAINS
              END DO
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
+             IF ((Sx*Ndens(i)).GT.Rate) THEN
+                Rate = Sx*Ndens(i)
+                diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+             END IF
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*Ndens(i)
+             IF ((Sd*Ndens(j)).GT.Rate2) THEN
+                Rate2 = Sd*Ndens(j)
+                diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+             END IF
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Ndens(j)
+             !***************
+             IF (i==1.or.j==1) THEN
+                IF ((Sx*Ndens(i)).GT.RateTmp) then
+                   RateTmp = Sx*Ndens(i)
+                   diag(1)%TxTmp(2) = real(i) ; diag(1)%TxTmp(3) = real(j)
+                END IF
+                diag(1)%Txtmp(1) = diag(1)%Txtmp(1) + Sx*Ndens(i)
+                IF ((Sd*Ndens(j)).GT.RateTmp2) then
+                   RateTmp2 = Sd*Ndens(j)
+                   diag(10)%TxTmp(2) = real(i) ; diag(10)%TxTmp(3) = real(j)
+                END IF
+                diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Ndens(j)
+             END IF
              !*****************
           END IF
        END DO
@@ -287,7 +315,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd, Rate, Rate2
+    REAL(DOUBLE) :: Sx, Sd, Rate, Rate2, RateTmp, RateTmp2
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
@@ -295,12 +323,13 @@ CONTAINS
     !Implicit Density VARIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
     !********************
-    Rate = 0.d0 ; Rate2 = 0.d0
+    Rate=0.d0 ; Rate2=0.d0 ; RateTmp=0.d0 ; RateTmp2=0.d0
     SubDt = Clock%Dt
     nx = sys%nx ; Dx = sys%Dx
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
-
+    diag(1)%Tx(:)=0.d0    ; diag(10)%Tx(:)=0.d0 
+    diag(1)%TxTmp(:)=0.d0 ; diag(10)%TxTmp(:)=0.d0
     !********************************************************
     DO i = 0, NumMeta-1
        coef1 = Ndens(i) * gama
@@ -400,11 +429,26 @@ CONTAINS
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
              IF ((Sx*Ndens(i)).GT.Rate) THEN
                 Rate = Sx*Ndens(i)
-                diag(1)%Tx(1) = Rate ; diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+                diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
              END IF
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*Ndens(i)
              IF ((Sd*Ndens(j)).GT.Rate2) THEN
                 Rate2 = Sd*Ndens(j)
-                diag(10)%Tx(1) = Rate2 ; diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+                diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+             END IF
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Ndens(j)
+             !***************
+             IF (i==1.or.j==1) THEN
+                IF ((Sx*Ndens(i)).GT.RateTmp) then
+                   RateTmp = Sx*Ndens(i)
+                   diag(1)%TxTmp(2) = real(i) ; diag(1)%TxTmp(3) = real(j)
+                END IF
+                diag(1)%Txtmp(1) = diag(1)%Txtmp(1) + Sx*Ndens(i)
+                IF ((Sd*Ndens(j)).GT.RateTmp2) then
+                   RateTmp2 = Sd*Ndens(j)
+                   diag(10)%TxTmp(2) = real(i) ; diag(10)%TxTmp(3) = real(j)
+                END IF
+                diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Ndens(j)
              END IF
              !*****************
           END IF

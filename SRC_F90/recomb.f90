@@ -53,6 +53,7 @@ CONTAINS
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
     diag(8)%SumTx =  diag(8)%SumTx + Clock%Dt * recmb * Dx
     diag(8)%Tx(1) =  recmb * Dx
+    diag(8)%TxTmp(1) = recmb*tx(1) * Dx
     !****************
   END SUBROUTINE Recomb
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -89,6 +90,7 @@ CONTAINS
     !**** Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
     diag(8)%SumTx = diag(8)%SumTx + Clock%Dt * recmb * Dx
+    diag(8)%Tx(1) =  recmb * Dx
     !****************
   END SUBROUTINE Recomb_Norm
 
@@ -186,6 +188,7 @@ CONTAINS
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
        diag(14)%Tx(1) = excim
+       diag(14)%TxTmp(1) = excim
     END SELECT
   END SUBROUTINE Conv_3Body
 
