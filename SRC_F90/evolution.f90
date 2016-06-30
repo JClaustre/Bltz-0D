@@ -43,8 +43,7 @@ CONTAINS
     END IF                                                                    !
     !*************************************************************************!
     MaxDt  = 1.d-09 ! Maximum Time-Step allowed
-    !sys%IPowr = sys%Powr ! Keep Power init in memory
-    sys%IPowr = sys%E ! Keep Power init in memory
+    sys%IPowr = sys%Powr ! Keep Power init in memory
     GenPwr = 1.d-06 ! Time constant to start the generator.
 
     !**** MAIN LOOP ***************************
@@ -68,20 +67,20 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
        !**** Increase Power exponantially function of time
        IF (Clock%Rstart == 0) THEN 
-          IF (Clock%SumDt .LT. 7d-5) THEN
+          IF (Clock%SumDt .LT. 5d-5) THEN
              !**** Increase Power
-             sys%E = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+             sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
           ELSE
              !**** Decrease Power
              IF (k == 0) sys%IPowr = sys%E
-             sys%E = sys%IPowr * exp( -real(k*Clock%Dt) / (GenPwr*1.d0))
-             IF (sys%E.LT.1d-06) sys%E = 0.d0
+             sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / (GenPwr*1.d0))
+             IF (sys%Powr.LT.1d-06) sys%Powr = 0.d0
              k = k+1
           END IF
        END IF
 
        !**** Heat + Elas + Fk-Pl
-       IF (sys%E.NE.0.d0) CALL Heating (sys,meta, U, F)
+       IF (sys%Powr.NE.0.d0) CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Ioniz He+
@@ -91,7 +90,7 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz dimer 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F)
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
        !**** Disso Recombination
        CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion
@@ -101,8 +100,6 @@ CONTAINS
        !**** Radiative transfert
        CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion
-       !CALL Diffuz       (sys, meta, ion,elec,F,U, diag)
-       !CALL Diffuz_Norm (sys, meta, ion,elec,F,U, diag)
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit
        SELECT CASE (XcDx)
@@ -121,7 +118,6 @@ CONTAINS
        DO i = 1, sys%nx 
           elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
           elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
-          elec%J  = elec%J  + ( F(i) * U(i) * gama*qe * sys%Dx )
        END DO
        elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
        !**** Update densities (Ion + Excited)
@@ -148,18 +144,29 @@ CONTAINS
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
        !**** UpDate Simulation Time
        Clock%SumDt = Clock%SumDt + Clock%Dt
-       
+       !**** Evaluation of Metastable and 2^3P rates
+       !**** Total rate is made in diag(10) and superelas and inelas in diag(15)
+       diag(10)%InM1=0.d0 ; diag(10)%InM2=0.d0 ; diag(10)%OutM1=0.d0 ; diag(10)%OutM2=0.d0
+       DO i = 1, 14
+          IF (i.NE.10) THEN 
+             diag(10)%InM1  = diag(10)%InM1  + diag(i)%InM1
+             diag(10)%InM2  = diag(10)%InM2  + diag(i)%InM2
+             diag(10)%OutM1 = diag(10)%OutM1 + diag(i)%OutM1
+             diag(10)%OutM2 = diag(10)%OutM2 + diag(i)%OutM2
+          END IF
+      END DO
        !**** WRITE IN SHELL ******************************************************!
        write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,F5.1,A)",advance="no") tabul,&!
             "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&       !
             Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%E*100./sys%IPowr), "]", Nnull, Vg," \r"!
+            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, Vg," \r"!
                                                                                   !
        IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1))") tabul, (Clock%SumDt*1e6),&
-               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, elec%Ni," | E/N(Td)",&!
+          write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1),2(A,2ES9.2))") tabul, (Clock%SumDt*1e6),&
+               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, elec%Ni," | E/N(Td)",&  !
                (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",& !
-               OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs                      !
+               OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs, " | M1 In/Out",&    !
+               diag(10)%InM1,diag(10)%OutM1, " | M2 In/Out", diag(10)%InM2,diag(10)%OutM2
        END IF                                                                     !
        !**************************************************************************!
        
@@ -204,23 +211,28 @@ CONTAINS
        END IF                                                                     !
        !**************************************************************************!
 
-       IF ( modulo(l,100) == 0 ) THEN
+       IF ( modulo(l,300) == 0 ) THEN
           !**** ALL rates
           IF (l == 100) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
+             OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
+             write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
           ELSE
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,14)
+             OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
+             write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
           END IF
           CLOSE(92)
           CLOSE(93)
-          !**** 23S Metastable rates ONLY
-          IF (l == 100) THEN
+          CLOSE(94)
+          !**** 23S Metastable and 2^3P rates ONLY
+          IF (l == 300) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")

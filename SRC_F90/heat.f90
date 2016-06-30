@@ -44,7 +44,7 @@ CONTAINS
        power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
     END do
     F(nx) = 0.d0
-    !sys%E = dsqrt ( sys%Powr / (power * qe) )
+    sys%E = dsqrt ( sys%Powr / (power * qe) )
     !***************************************************
 
     !****** PARAMETRES COLLISIONS ELASTIQUES*************

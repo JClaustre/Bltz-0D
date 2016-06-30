@@ -380,10 +380,8 @@ CONTAINS
     DO i = 3, NumMeta
        DO j = 0, i-1
           Eij = meta(i)%En-meta(j)%En
-          IF (Eij .GT. 0.d0) THEN
-             meta(i)%Aij(j) = 4.339d7 * Eij**2 * Fosc(j,i) * &
-                  meta(j)%Deg / meta(i)%Deg
-          END IF
+          meta(i)%Aij(j) = 4.339d7 * Eij**2 * Fosc(j,i) * &
+               meta(j)%Deg / meta(i)%Deg
        END DO
     END DO
 

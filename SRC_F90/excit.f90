@@ -330,6 +330,8 @@ CONTAINS
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
     diag(1)%Tx(:)=0.d0    ; diag(10)%Tx(:)=0.d0 
     diag(1)%TxTmp(:)=0.d0 ; diag(10)%TxTmp(:)=0.d0
+    diag(1)%InM1=0.d0 ; diag(1)%OutM1=0.d0
+    diag(1)%InM2=0.d0 ; diag(1)%OutM2=0.d0
     !********************************************************
     DO i = 0, NumMeta-1
        coef1 = Ndens(i) * gama
@@ -424,9 +426,10 @@ CONTAINS
                 Fi(k) = Fi(k) + SubDt * ( C_Exc * Rmx + C_Dxc * Rmd )
                 !**************************** 
              END DO
-             !**** Diagnostic
+             !**** Energy conservation Diagnostic 
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
+             !***************** Diagnostic for relative importance of reactions
              IF ((Sx*Ndens(i)).GT.Rate) THEN
                 Rate = Sx*Ndens(i)
                 diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
@@ -437,7 +440,7 @@ CONTAINS
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Ndens(j)
-             !***************
+             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
              IF (i==1.or.j==1) THEN
                 IF ((Sx*Ndens(i)).GT.RateTmp) then
                    RateTmp = Sx*Ndens(i)
@@ -449,6 +452,21 @@ CONTAINS
                    diag(10)%TxTmp(2) = real(i) ; diag(10)%TxTmp(3) = real(j)
                 END IF
                 diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Ndens(j)
+             END IF
+             !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
+             IF (i==1) THEN
+                diag(1)%OutM1 = diag(1)%OutM1 + Sx
+             ELSE IF (i==3) THEN
+                diag(1)%OutM2 = diag(1)%OutM2 + Sx
+             END IF
+             IF (j==1) THEN
+                diag(1)%InM1 = diag(1)%InM1 + Sd
+             ELSE IF (j==3) THEN
+                diag(1)%InM2 = diag(1)%InM2 + Sd
+             END IF
+             IF (i==1.and.j==3) THEN
+                diag(15)%OutM1 = Sx
+                diag(15)%InM1  = Sd
              END IF
              !*****************
           END IF
@@ -504,7 +522,7 @@ CONTAINS
        Fi(k) = Fi(k) + Clock%Dt *  C_Dxc
        !**************************** 
     END DO
-    !**** Diagnostic
+    !**** Energy conservation Diagnostic
     diag(12)%EnProd = diag(12)%EnProd + Clock%Dt * Sd*ion(Nion)%Ni* E_ij
     !*****************
     !**** UpDate Density

@@ -157,19 +157,19 @@ CONTAINS
           END DO
           IF ( cas == 0 ) THEN
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx
-             !**** Diagnostic
+             !**** Energy conservation Diagnostic : case(0)
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
           ELSE
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
              Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
-             !**** Diagnostic
+             !**** Energy conservation Diagnostic : case(1)
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1 * Dx * Eij
           END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
           ion(1)%UpDens  = ion(1)%UpDens  + SubDt * Src * coef1 * Dx
 
           ratx = Src * Dx * gama
-          !**** Diagnostic
+          !**** Diagnostic for relative importance of reactions
           if (ratx .GT. maxR) maxR = ratx
           diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
           IF ((ratx*meta(i)%Ni).GT.Rate) THEN
@@ -177,12 +177,18 @@ CONTAINS
              diag(2)%Tx(2)= real(i)
           END IF
           diag(2)%Tx(1) = diag(2)%Tx(1) + (ratx*meta(i)%Ni/SubCycl)
+          !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
           IF (i==1) THEN
              IF ((ratx*meta(i)%Ni).GT.RateTmp) then
                 RateTmp = ratx*meta(i)%Ni
                 diag(2)%TxTmp(2) = real(i)
              END IF
              diag(2)%Txtmp(1) = diag(2)%Txtmp(1) + (ratx*meta(i)%Ni/SubCycl)
+             diag(2)%OutM1 = ratx
+          END IF!          ^
+          !*************** | Diagnostic for metastable and 2^3P rates (s-1)
+          IF (i==3)THEN
+             diag(2)%OutM2 = ratx
           END IF
           !***************
        END DO
@@ -192,12 +198,13 @@ CONTAINS
 
   !***********************************************************************
   ! Second electron with 0 energy from excimer He2*
-  SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi)
+  SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(:), INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
+    Type(Diagnos), DIMENSION(:), INTENT(INOUT) :: diag
     !LOCAL
     INTEGER :: k, kp, km, ichi, case, Nion
     REAL(DOUBLE) :: prod, loss, rcmb, ionz
@@ -210,7 +217,7 @@ CONTAINS
        Nion = 3
     END SELECT
 
-    case = 0 ! if 0 then "Francois case" | else "J-P case"
+    case = 1 ! if 0 then "Francois case" | else "J-P case"
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     Si = 0.d0 ; Sr = 0.d0
@@ -253,19 +260,22 @@ CONTAINS
 
     IF ( case == 0 ) THEN
        Fi(1) = Fi(1) + Clock%Dt * (Si - Sr) * cnst * Dx
-       !**** Diagnostic
+       !**** Energy conservation Diagnostic : case(0)
        diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx*(Eij-Dx*0.5d0)
        diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx*(Eij-Dx*0.5d0)
     ELSE
        Fi(1) = Fi(1) + Clock%Dt * (Si-Sr) * cnst * Dx * 3.d0 / 2.d0
        Fi(2) = Fi(2) - Clock%Dt * (Si-Sr) * cnst * Dx / (2.d0 * dsqrt(3.d0))
-       !**** Diagnostic
+       !**** Energy conservation Diagnostic : case(1)
        diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx * Eij
        diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx * Eij
     END IF
     diag(13)%SumTx = diag(13)%SumTx + Clock%Dt * Si * Dx
     diag(15)%SumTx = diag(15)%SumTx + Clock%Dt * Sr * Dx
+    !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
     diag(13)%Txtmp(1) = Sr * Dx * br
+    !*************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
+    diag(13)%InM1 = br*Sr * Dx / ion(2)%Ni
     !***************
     !**** br == branching ratio
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
@@ -351,7 +361,7 @@ CONTAINS
     !**** He2* + e- <--> He2+ + 2e-
     SELECT CASE (NumIon)
     CASE (3) 
-       Eij= 3.4d0!ion(2)%En-ion(NumIon)%En
+       Eij= ion(2)%En-ion(NumIon)%En
        A = 9.93844d-15 ; B = 9.8416d-1 ; C = 1.292d-02
        DO k = 1, sys%nx
           U=IdU(k,Dx)

@@ -49,11 +49,17 @@ CONTAINS
     Do i = 1, 4
        meta(i)%Updens = meta(i)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
     END Do
-    !**** Diagnostic
+    !**** Energy conservation Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
+    !****************
     diag(8)%SumTx =  diag(8)%SumTx + Clock%Dt * recmb * Dx
+    !***************** Diagnostic for relative importance of reactions
     diag(8)%Tx(1) =  recmb * Dx
+    !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
     diag(8)%TxTmp(1) = recmb*tx(1) * Dx
+    !*************** Diagnostic for metastable and 2^3P rates (s-1)
+    diag(8)%InM1 = (tx(1)*recmb) * Dx / ion(2)%Ni
+    diag(8)%InM2 = (tx(3)*recmb) * Dx / ion(2)%Ni
     !****************
   END SUBROUTINE Recomb
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -87,9 +93,10 @@ CONTAINS
     ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * recmb * Dx
     meta(1)%Updens = meta(1)%Updens + Clock%Dt * recmb * Dx
 
-    !**** Diagnostic
+    !**** Energy conservation Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
     diag(8)%SumTx = diag(8)%SumTx + Clock%Dt * recmb * Dx
+    !***************** Diagnostic for relative importance of reactions
     diag(8)%Tx(1) =  recmb * Dx
     !****************
   END SUBROUTINE Recomb_Norm
@@ -122,7 +129,7 @@ CONTAINS
        En2 = Fi(i) * U(i)**1.5d0 * sys%Dx
     END do
 
-    !**** Diagnostic
+    !**** Energy conservation Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + abs(En1 - En2)
     diag(8)%SumTx = diag(8)%SumTx + coef
 
@@ -146,8 +153,9 @@ CONTAINS
     IF (ion(1)%Ni .GT. 0.d0) THEN
        ion(1)%Updens = ion(1)%Updens - Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens + Clock%Dt * Src
-       !**** Diagnostic
+       !**** Energy conservation Diagnostic
        diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
+       !***************** Diagnostic for relative importance of reactions
        diag(7)%Tx(1) = Src
        !***************
     END IF
@@ -159,10 +167,11 @@ CONTAINS
     IF (ion(2)%Ni .GT. 0.d0) THEN
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
-       !**** Diagnostic
+       !**** Energy conservation Diagnostic
        diag(7)%EnProd = diag(7)%EnProd + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
+       !***************** Diagnostic for relative importance of reactions
        diag(11)%Tx(1) = Src
-       !***************
+       !***************** 
     END IF
     !*************************************
     !**** 3body collisions (Excimer creation) : He2*
@@ -173,13 +182,19 @@ CONTAINS
        excim = 1.6d-32 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
+       !***************** Diagnostic for relative importance of reactions
        diag(12)%Tx(1) = excim
+       !*************** Diagnostic for metastable and 2^3P rates (s-1)
+       diag(12)%OutM2 = excim / meta(3)%Ni
        !**** He2* + He --> He(2P3) + 2He
        !**** rate from Belmonte et al (J.Phys.D:Appl.Phys 40 7343 2007)
        excim = 3.6d-14 *1d-06 * ion(3)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
+       !***************** Diagnostic for relative importance of reactions
        diag(13)%Tx(1) = excim
+       !*************** Diagnostic for metastable and 2^3P rates (s-1)
+       diag(13)%InM2 = excim / ion(3)%Ni
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        !**** He(2S3) + 2He --> He2* + He
        excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
@@ -187,8 +202,12 @@ CONTAINS
        !excim = 1.5d-34 * 1d-12 *meta(1)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
+       !***************** Diagnostic for relative importance of reactions
        diag(14)%Tx(1) = excim
+       !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
        diag(14)%TxTmp(1) = excim
+       !*************** Diagnostic for metastable and 2^3P rates (s-1)
+       diag(14)%OutM1 = excim / meta(1)%Ni
     END SELECT
   END SUBROUTINE Conv_3Body
 

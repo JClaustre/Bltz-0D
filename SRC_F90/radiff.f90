@@ -24,51 +24,58 @@ CONTAINS
     REAL(DOUBLE) :: Eij, damp, EscapF, emitF
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate, RateTmp
     Rate=0.d0 ; RateTmp=0.d0 ; diag(3)%Tx(:)=0.d0; diag(3)%TxTmp(:)=0.d0
+    diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
 
-    DO i = 1, NumMeta!18
+    DO i = 3, NumMeta!18
        DO j = 0, i-1 !10
           IF (meta(i)%Aij(j).NE.0.d0) THEN
-             !write(*,"(2A,ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j)
              Eij = meta(i)%En-meta(j)%En
-             IF (Eij .GT. 0.d0) THEN
-                Kor = 2.876d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
-                     (dsqrt(meta(0)%Tp*qok)*Eij)
-                damp = 0.d0
-                IF (Kor .GT. 1.d0) THEN
-                   damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
-                        * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp*qok)) )
-                   Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
-                   Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
-                   Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
-                   EscapF = 0.d0
-                   IF (Gcd/Gcol .GT. 8.d0) THEN
-                      EscapF = Gcol * erf(Gcd/Gcol)
-                      !print*, '>10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
-                   ELSE
-                      EscapF = Gdop / exp(Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
-                      !print*, '<10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
-                   END IF
-                   emitF = meta(i)%Aij(j) * EscapF
-
-                   meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
-                   meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
-                   !**** Diagnostic
-                   diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
-                   IF ((emitF*meta(i)%Ni).GT.Rate) THEN
-                      Rate = emitF * meta(i)%Ni
-                      diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
-                   END IF
-                   !****************
-                   diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
-                   IF (j.EQ.1) THEN
-                      IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
-                         RateTmp = emitF * meta(i)%Ni    
-                         diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
-                      END IF
-                      diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
-                   END IF
-                   !****************
+             Kor = 2.8764d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
+                  (dsqrt(meta(0)%Tp*qok)*Eij)
+             !write(*,"(2A,3ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Kor
+             IF (Kor .GT. 1.d0) THEN
+                damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
+                     * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp*qok)) )
+                Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
+                Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
+                Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
+                EscapF = 0.d0
+                IF (Gcd/Gcol .GT. 8.d0) THEN
+                   EscapF = Gcol * erf(Gcd/Gcol)
+                   !print*, '>10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
+                ELSE
+                   EscapF = Gdop / exp(Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
+                   !print*, '<10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
                 END IF
+                emitF = meta(i)%Aij(j) * EscapF
+                
+                meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
+                meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
+                !**** Energy conservation Diagnostic
+                diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
+                !***************** Diagnostic for relative importance of reactions
+                IF ((emitF*meta(i)%Ni).GT.Rate) THEN
+                   Rate = emitF * meta(i)%Ni
+                   diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
+                END IF
+                !****************
+                diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
+                !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+                IF (j.EQ.1) THEN
+                   IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
+                      RateTmp = emitF * meta(i)%Ni    
+                      diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
+                   END IF
+                   diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
+                   !*************** Diagnostic for metastable and 2^3P rates (s-1)
+                   diag(3)%InM1 = diag(3)%InM1 + emitF
+                ELSE IF (j.EQ.3) THEN
+                   diag(3)%InM2 = diag(3)%InM2 + emitF
+                END IF
+                IF (i.EQ.3) THEN
+                   diag(3)%OutM2 = diag(3)%OutM2 + emitF
+                END IF
+                !****************
              END IF
           END IF
 
@@ -333,10 +340,14 @@ CONTAINS
     DO i = 1, sys%Nx
        elec%Ni = elec%Ni + F(i) * sqrt(U(i)) * sys%Dx
     END DO
-    !**** Diagnostic
+    !**** Energy conservation Diagnostic
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
+    !***************** Diagnostic for relative importance of reactions
     diag(9)%Tx(1) = Se  
+    !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
     diag(9)%TxTmp(1) = Smeta1
+    !*************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
+    diag(9)%OutM1 = meta(1)%Damb / Coef
     !***************
   END SUBROUTINE Diffuz_Gaine
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

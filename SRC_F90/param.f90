@@ -37,6 +37,7 @@ MODULE MOD_PARAM
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
      REAL(DOUBLE)      :: SumTx, EnProd, EnLoss
+     REAL(DOUBLE)      :: InM1, OutM1, InM2, OutM2
      REAL(DOUBLE), DIMENSION(3) :: Txtmp, Tx
      CHARACTER(len=10) :: Name
   END type Diagnos
@@ -54,7 +55,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/5_Torr/1_microS/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
   TYPE(Species) :: elec

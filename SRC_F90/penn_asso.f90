@@ -53,12 +53,14 @@ CONTAINS
           meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
           meta(0)%Updens = meta(0)%Updens - Clock%Dt * asso
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
-          !**** Diagnostic
+          !**** Energy conservation Diagnostic
           Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
+          !***************
           Diag(6)%SumTx = Diag(6)%SumTx + Clock%Dt * asso
 
           ratx = Sn(i)*meta(0)%Ni
           IF (ratx .GT. MaxR) MaxR = ratx
+          !***************** Diagnostic for relative importance of reactions
           IF (asso.GT.Rate) THEN
              Rate = asso
              Diag(6)%Tx(2) = real(i)
@@ -69,6 +71,7 @@ CONTAINS
 
     !**** Penning process
     Rate=0.d0 ; RateTmp=0.d0 ; Diag(5)%Tx(:)=0.d0 ; Diag(5)%TxTmp(:)=0.d0
+    diag(5)%OutM1 = 0.d0 ; diag(5)%OutM2 = 0.d0
     !********************
     DO i = 1, 3
        DO j = 1, 3
@@ -89,22 +92,30 @@ CONTAINS
                 Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
              END DO
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
-             !**** Diagnostic
+             !**** Energy conservation Diagnostic
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
+             !****************
              diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
+             !***************** Diagnostic for relative importance of reactions
              IF (Penn.GT.Rate) THEN
                 Rate = Penn
                 Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
              END IF
              Diag(5)%Tx(1) = Diag(5)%Tx(1) + Penn
+             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
              IF (i==1.or.j==1) THEN
                 IF (Penn.GT.RateTmp) then
                    RateTmp = Penn
                    diag(5)%TxTmp(2) = real(i) ; diag(5)%TxTmp(3) = real(j)
                 END IF
                 diag(5)%Txtmp(1) = diag(5)%Txtmp(1) + Penn
+                !*************** Diagnostic for metastable and 2^3P rates (s-1)
+                diag(5)%OutM1    = diag(5)%OutM1 + Penn/meta(j)%Ni
              END IF
              !****************
+             IF (i==3.or.j==3) THEN
+                diag(5)%OutM2    = diag(5)%OutM2 + Penn/meta(j)%Ni
+             END IF
           END DO
           !**** Update population
           Penn = meta(i)%Ni*meta(j)%Ni * beta
@@ -117,6 +128,7 @@ CONTAINS
     SELECT CASE (NumIon)
     CASE (4)
        RateTmp=0.d0 ; Diag(4)%TxTmp(:)=0.d0
+       diag(4)%OutM1=0.d0 ; diag(4)%OutM2=0.d0
        Nion = 3
        ! #1 He* + He2* --> He+ + He + e
        !               --> He2+ + He + e
@@ -144,18 +156,25 @@ CONTAINS
                 Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
              END DO
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
-             !**** Diagnostic
+             !**** Energy conservation Diagnostic
              diag(4)%EnProd = diag(4)%EnProd + Eij*Clock%Dt * Penn
              diag(4)%SumTx = diag(4)%SumTx + Clock%Dt * Penn
+             !***************** Diagnostic for relative importance of reactions
              Diag(4)%Tx(1) = Diag(4)%Tx(1) + Penn
+             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
              IF (i==1) THEN
                 IF (Penn.GT.RateTmp) then
                    RateTmp = Penn
                    diag(4)%TxTmp(2) = real(i)
                 END IF
                 diag(4)%Txtmp(1) = diag(4)%Txtmp(1) + Penn
+                !*************** Diagnostic for metastable and 2^3P rates (s-1)
+                diag(4)%OutM1    = diag(4)%OutM1 + Penn/ion(Nion)%Ni
              END IF
-                !****************
+             IF (i==3) THEN
+                diag(4)%OutM2    = diag(4)%OutM2 + Penn/ion(Nion)%Ni
+             END IF
+             !****************
           END DO
           !**** Update population
           Penn = Ndens * ion(Nion)%Ni * beta
