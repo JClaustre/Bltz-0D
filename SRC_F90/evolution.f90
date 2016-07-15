@@ -20,72 +20,46 @@ MODULE MOD_EVOL
 
   INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
-
+  
+  REAL(DOUBLE), PRIVATE :: Res
 CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, m, Nnull=0                                         !
+    INTEGER :: i, j, k, l, m                                                  !
     INTEGER :: t1, t2, clock_rate                                             !
-    REAL(DOUBLE) :: count1, count2, MaxDt                                     !
-    REAL(DOUBLE) :: GenPwr, Res                                               !
-    CHARACTER(LEN=250)::fileName                                              !
+    REAL(DOUBLE) :: count1, count2, MxDt                                      !
+    REAL(DOUBLE) :: Cgen, Res, Post_D, PwE                                    !
     count1=0.d0 ; count2=0.d0 ; Res=0.d0                                      !
     !*****************************                                            !
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
-    IF (Clock%Rstart == 0) THEN                                               !
-       OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACTION="WRITE",STATUS="UNKNOWN")!
-    ELSE IF (Clock%Rstart == 1) THEN                                          !
-       OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACCESS="APPEND",&
-            ACTION="WRITE",STATUS="UNKNOWN")
-    END IF                                                                    !
     !*************************************************************************!
-    MaxDt  = 1.d-09 ! Maximum Time-Step allowed
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    GenPwr = 1.d-06 ! Time constant to start the generator.
+    Cgen   = 10.0 ! Time factor for external source.
+    Post_D = 1d-6 ! Time to ignitiate post_discharge (micro-sec)
+    MxDt   = 5d-9 ! Maximum time-step
+    !**** MAIN LOOP ***************************
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
        meta(:)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
-       !**** Update Time-step
-       IF (1.d0/MaxR .GE. 1.0d-12 .and. l .GT.1) THEN
-          Clock%Dt = 1.0d0 / (MaxR*3.)
-          IF (Clock%Dt .GT. MaxDt) Clock%Dt = MaxDt ! Maximum Time-Step allowed
-          MaxR = 0.d0
-       END IF
-       !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
-       IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
-          print*,""; print*," NaN ! Pobleme in time step?", elec%Ni, MaxR ; Stop 
-       END IF
-       !*************************************
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
+
        !**** Increase Power exponantially function of time
-       IF (Clock%Rstart == 0) THEN 
-          IF (Clock%SumDt .LT. 5d-5) THEN
-             !**** Increase Power
-             sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
-          ELSE
-             !**** Decrease Power
-             IF (k == 0) sys%IPowr = sys%E
-             sys%Powr = sys%IPowr * exp( -real(k*Clock%Dt) / (GenPwr*1.d0))
-             IF (sys%Powr.LT.1d-06) sys%Powr = 0.d0
-             k = k+1
-          END IF
-       END IF
+       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
 
        !**** Heat + Elas + Fk-Pl
-       IF (sys%Powr.NE.0.d0) CALL Heating (sys,meta, U, F)
+       IF (sys%Pcent.NE.0.d0) CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Ioniz He+
        SELECT CASE (IonX)
-       CASE (0) ; CALL Ioniz_100    (sys, meta, U, F, diag)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
@@ -103,43 +77,20 @@ CONTAINS
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit
        SELECT CASE (XcDx)
-       CASE (0) ; CALL Exc_Impli     (sys, meta, U, F, diag)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
+       CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
        !**** De-excit Dimer molecule (He2*)
        IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** L-Exchange
        CALL l_change     (meta, K_ij)
        !*************************************
-       
-       !**** UpDate Density (electron) + Tpe
-       elec%Ni = 0.d0 ; elec%Tp = 0.d0; elec%J = 0.d0
-       DO i = 1, sys%nx 
-          elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
-          elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
-       END DO
-       elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
-       !**** Update densities (Ion + Excited)
-       Nnull = 0
-       do i = 1, NumMeta
-          meta(i)%Ni = meta(i)%Ni + meta(i)%Updens
-          IF (meta(i)%Ni < 0.d0) THEN
-             Nnull = Nnull + 1
-             meta(i)%Ni = 0.d0
-          END IF
-          IF (i .LE. NumIon) THEN
-             ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
-             IF (ion(i)%Ni < 0.d0) THEN
-                Nnull = Nnull + 100
-                ion(i)%Ni = 0.d0
-                IF (i == 1) ion(2)%Ni = elec%Ni
-                IF (i == 2) ion(1)%Ni = elec%Ni
-             END IF
-          END IF
-       END do
-       
-       !**** Evaluate Calculation Time
+
+       !**** UpDateS
+       CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, F, diag, l, MxDt)
+
+       !**** Evaluation of Calculation Time
        if (l == 300) CALL System_clock (t2, clock_rate)
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
        !**** UpDate Simulation Time
@@ -155,61 +106,7 @@ CONTAINS
              diag(10)%OutM2 = diag(10)%OutM2 + diag(i)%OutM2
           END IF
       END DO
-       !**** WRITE IN SHELL ******************************************************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,I4,F5.1,A)",advance="no") tabul,&!
-            "Time in simulation: ", (Clock%SumDt*1e6), " μs | achieved: ",&       !
-            Clock%SumDt/Clock%SimuTime*100.d0, "% [ it = ", l, " | Dt = ",&       !
-            Clock%Dt, " Pwr(%): ", (sys%Powr*100./sys%IPowr), "]", Nnull, Vg," \r"!
-                                                                                  !
-       IF (modulo(l,int(Clock%SimuTime/Clock%Dt)/10) == 0) then                   !
-          write(*,"(A,F7.2,A,3ES13.4,A,ES10.2,3(A,F7.1),2(A,2ES9.2))") tabul, (Clock%SumDt*1e6),&
-               " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, elec%Ni," | E/N(Td)",&  !
-               (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",& !
-               OneD%Tg(OneD%bnd), " | Pg(Torr)", meta(0)%Prs, " | M1 In/Out",&    !
-               diag(10)%InM1,diag(10)%OutM1, " | M2 In/Out", diag(10)%InM2,diag(10)%OutM2
-       END IF                                                                     !
-       !**************************************************************************!
-       
-       !**** WRITE IN FILES (Function of TIME) (density in cm^-3) ****************!
-       IF (modulo(l,100)==0) Then                                                 !
-          SELECT CASE (NumIon)                                                    !
-          CASE (3)                                                                !
-             write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,&  !
-                  OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
-                  ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)            !
-          CASE DEFAULT                                                            !
-             write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, elec%Ni*1d-06,&
-                  ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)!
-          END SELECT                                                              !
-          !****                                                                   !
-          !**** WRITE IN FILES (density in cm^-3) ****                            !
-          OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"density.dat",ACTION="WRITE",STATUS="UNKNOWN")
-          DO i = 1, NumMeta                                                       !
-             write(98,"(I3,A,2F10.4,ES15.4)") i, meta(i)%Name, meta(i)%En, &      !
-                  meta(i)%deg, meta(i)%Ni*1d-06                                   !
-          END DO                                                                  !
-          DO i = 1, NumIon                                                        !
-             write(98,"(I3,A,2F10.4,ES15.4)") i, ion(i)%Name, ion(i)%En, &        !
-                  ion(i)%deg, ion(i)%Ni*1d-06                                     !
-          END DO                                                                  !
-          CLOSE(98)                                                               !
-                                                                                  !
-       END IF                                                                     !
-       !**** WRITE IN FILES (Time Dependent) (EEDF in cm^-3) *********************!
-       IF ( Clock%SumDt.GE.Res ) THEN                                             !
-          IF (Clock%SumDt.GE.7d-5.and.&
-               (sys%E.NE.0.d0.or.(sys%E*100./sys%IPowr).NE.100.0) ) Clock%TRstart = 2.d-6
-          Res = Res + Clock%TRstart                                               !
-          write(fileName,"('F_evol_',I3.3,'.dat')") j                             ! 
-          OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
-          DO i = 1, sys%nx                                                        !
-             write(90,"(3ES15.6E3)") real(i)*sys%Dx, F(i), Clock%SumDt*1d06       !
-          END DO                                                                  !
-          CLOSE(90)                                                               !
-          CALL Write_Out1D( OneD%Tg, "Tg.dat")                                    !
-          j = j+1                                                                 !
-       END IF                                                                     !
-       !**************************************************************************!
+      
 
        IF ( modulo(l,300) == 0 ) THEN
           !**** ALL rates
@@ -234,9 +131,9 @@ CONTAINS
           !**** 23S Metastable and 2^3P rates ONLY
           IF (l == 300) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
+             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%TxTmp(2), diag(i)%TxTmp(3), i=1,14)
           ELSE
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
@@ -248,21 +145,17 @@ CONTAINS
        END IF
        !**************************************************************************!
 
-       !**** WRITE IN FILES (Time Dependent) (Restart files) *********************!
-       IF ( modulo(l,int(Clock%TRstart/Clock%Dt)) == 0 ) THEN                     !
-          CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)                  !
-       END IF                                                                     !
-       !**************************************************************************!
 
        !**** Max iteration number (Else exit loop)********************************!
        IF (l .GE. Clock%MaxIter) EXIT                                             !
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
-    CLOSE(99)
+
+    !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
     
     CALL Consv_Test(sys, U, F, Diag, consv)
-    CALL Write_Out1D( F,  "F_final.dat")
+    CALL Write_Out1D( F, "F_final.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
@@ -343,6 +236,7 @@ CONTAINS
          " | Final ", elec%Tp, " |"
 
   END SUBROUTINE Consv_Test
+
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE OutPutMD (sys, meta, ion, elec, diag, consv)
     !INTENT
@@ -494,4 +388,145 @@ CONTAINS
     Close(99)
   END SUBROUTINE OutPutMD
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+
+  SUBROUTINE CHECK_AND_WRITE(Clock, sys, meta, elec, ion, F, diag, iter, MxDt)
+    !**** INTENT
+    INTEGER      , INTENT(IN)    :: iter
+    REAL(DOUBLE) , INTENT(INOUT) :: MxDt
+    TYPE(SysVar) , INTENT(IN)    :: sys
+    TYPE(TIME)   , INTENT(INOUT) :: Clock
+    TYPE(Species), INTENT(INOUT) :: elec
+    TYPE(Species), DIMENSION(NumIon)   , INTENT(INOUT) :: ion
+    TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
+    TYPE(Diagnos), DIMENSION(:)        , INTENT(INOUT) :: diag
+    REAL(DOUBLE) , DIMENSION(:)        , INTENT(INOUT) :: F
+    !**** LOCAL
+    INTEGER :: i, nx, Mnul, Switch, mdlus
+    CHARACTER(LEN=250)::fileName
+    nx = sys%nx ; Switch = 0 ; mdlus = 501
+
+    !**** CHECK PART *********************************
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !**** CHECK PART *********************************
+
+    !**** Check EEDF Positivty
+    DO i = 1, nx
+       IF (F(i).LT. 0.d0) THEN
+          F(i) = 0.d0 ; Switch = 10
+       END IF
+    END DO
+
+    !**** UpDate Electron (Density + Temperature)
+    elec%Ni = 0.d0 ; elec%Tp = 0.d0
+    DO i = 1, sys%nx 
+       elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
+       elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
+    END DO
+    elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
+
+    !**** Update densities (Ion + Excited)
+    do i = 1, NumMeta
+       !**** Update excited densities
+       meta(i)%Ni = meta(i)%Ni + meta(i)%Updens
+       
+       IF (meta(i)%Ni < 0.d0) THEN
+          meta(i)%Ni = 0.d0 ; Mnul = Mnul + 1
+       END IF
+
+       IF (i .LE. NumIon) THEN
+          !**** Update ions (+ He2*) densities
+          ion(i)%Ni = ion(i)%Ni + ion(i)%Updens
+          IF (ion(i)%Ni < 0.d0) THEN
+             ion(i)%Ni = 0.d0 ; Mnul = Mnul + 100
+             IF (i == 1) ion(2)%Ni = elec%Ni
+             IF (i == 2) ion(1)%Ni = elec%Ni
+          END IF
+       END IF
+    END do
+
+    !**** Report 
+    IF (Switch==10) write(*,"(2A)") tabul, "Carefull, EEDF has negative(s) values ! "
+
+    !**** Update Time-step
+    IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN
+       Clock%Dt = 1.0d0 / (MaxR*2.d0)
+       IF (Switch==10) MxDt = MxDt / 2d0
+       IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
+    END IF
+    IF ( mod(iter,Clock%NumIter/20).EQ.0 ) MxDt = MxDt * 2d0
+    !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
+    IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
+       print*,""; print*," NaN ! Pobleme in time-step??", elec%Ni, MaxR ; Stop 
+    END IF
+    MaxR = 0.d0
+    !*************************************
+
+    !**** WRITE PART *********************************
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !**** WRITE PART *********************************
+
+    IF ( mod(iter,mdlus).EQ.0 ) THEN
+
+       !**** WRITE Frequently IN TERMINAL **************!
+       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A)",advance="no") &
+            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
+            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
+            "] Sheath: ", Vg," \r"!
+
+       !**** WRITE IN EVOL.DAT *************************!
+       IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
+          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACTION="WRITE",STATUS="UNKNOWN")
+       ELSE 
+          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACCESS="APPEND",&
+               ACTION="WRITE",STATUS="UNKNOWN")
+       END IF
+       SELECT CASE (NumIon) 
+       CASE (3)
+          write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,&
+               OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
+               ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
+       CASE DEFAULT
+          write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, elec%Ni*1d-06,&
+               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
+       END SELECT
+       CLOSE(99)
+    ELSE IF ( mod(iter,Clock%NumIter/10) == 0 ) then
+
+       !**** WRITE RARELY IN TERMINAL ******************!
+       write(*,"(A,F7.2,A,3ES10.2,A,ES10.2,3(A,F7.1),2(A,2ES9.2))") &
+            tabul//"**", (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, elec%Ni," | E/N(Td)",&
+            (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",OneD%Tg(OneD%bnd), &
+            "\n\t\t Pg(Torr)", meta(0)%Prs, " | M1 In/Out", diag(10)%InM1,diag(10)%OutM1, " | M2 In/Out", &
+            diag(10)%InM2,diag(10)%OutM2
+
+       !**** WRITE IN DENSITY.DAT (cm^{-3}) ************!
+       OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"density.dat",ACTION="WRITE",STATUS="UNKNOWN")
+       DO i = 1, NumMeta+3
+          IF (i.LE.NumMeta) write(98,"(I3,A,2F10.4,ES12.4)") i, meta(i)%Name, meta(i)%En, meta(i)%deg, meta(i)%Ni*1d-06
+          IF (i.GT.NumMeta) write(98,"(I3,A,2F10.4,ES12.4)") i-NumMeta, ion(i-NumMeta)%Name, ion(i-NumMeta)%En, &
+               ion(i-NumMeta)%deg, ion(i-NumMeta)%Ni*1d-06 
+       END DO
+       CLOSE(98)
+       !************************************************!
+    END IF
+
+    IF ( Clock%SumDt.GE.Res ) THEN
+
+       !**** WRITE RESTART FILES ***********************!
+       CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)
+
+       !**** WRITE EEDF ********************************!
+       write(fileName,"('F_evol_',I3.3,'.dat')") int(Res/Clock%TRstart)
+       OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
+       DO i = 1, nx
+          write(90,"(3ES15.6E3)") real(i)*sys%Dx, F(i), Clock%SumDt*1d06
+       END DO 
+       CLOSE(90)
+       CALL Write_Out1D( OneD%Tg, "Tg.dat")
+       Res = Res + Clock%TRstart 
+    END IF
+
+  END SUBROUTINE CHECK_AND_WRITE
+
+
 END MODULE MOD_EVOL

@@ -66,7 +66,7 @@ CONTAINS
        OPEN (UNIT=90,FILE='./datFile/input_he',STATUS='OLD')
     ELSE IF (Clock%Rstart == 1) THEN
        WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [Rs_input_he]'
-       OPEN (UNIT=90,FILE='./datFile/Rstart/Rs_input_he',STATUS='OLD')
+       OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Rs_input_he',STATUS='OLD')
     END IF
     READ (90,*) sys%nx
     READ (90,*) Clock%Rstart
@@ -415,6 +415,7 @@ CONTAINS
     else
        !**** workaround: it calls an extern program...
        call execute_command_line ('mkdir -p ' // adjustl(trim( dirFile ) ) )
+       call execute_command_line ('mkdir -p ' // adjustl(trim( dirFile ) )//"Rstart/" )
        write(*,"(2A)"), "dir doesn't exist! I create it for youuuuuu! --> ", DirFile
     end if
     !**************************************
@@ -445,7 +446,7 @@ CONTAINS
     IF (Clock%Rstart == 0) clock%SumDt = 0.d0
     !**** Init Grid Variables
     IF (Clock%Rstart == 1) THEN
-       OPEN  (UNIT=90,FILE='./datFile/Rstart/Rs_input_he',STATUS='OLD')
+       OPEN  (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Rs_input_he',STATUS='OLD')
        READ  (90,*) sys%Nx
        CLOSE (90)
     END IF
@@ -454,7 +455,7 @@ CONTAINS
     !**** Read Init
     CALL Read_Input(sys, ion, elec, meta)
     !**** Init EEDF
-    IF (Clock%Rstart == 1) OPEN (UNIT=90,FILE='./datFile/Rstart/EEDF.dat',STATUS='OLD')
+    IF (Clock%Rstart == 1) OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/EEDF.dat',STATUS='OLD')
     DO i = 1, sys%nx
        U(i)  = IdU(i,sys%Dx)
        meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
@@ -471,7 +472,7 @@ CONTAINS
     
     IF (Clock%Rstart == 1) THEN
        CLOSE (90)
-       OPEN (UNIT=99,FILE='./datFile/Rstart/Tg.dat',STATUS='OLD')
+       OPEN (UNIT=99,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Tg.dat',STATUS='OLD')
        DO  i = 1, size(OneD%Tg)
           READ(99,*) j, OneD%Tg(i)
        END DO
@@ -540,7 +541,7 @@ CONTAINS
           IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
        END DO                                                               !
     ELSE                                                                    !
-       OPEN (UNIT=90,FILE='./datFile/Rstart/Density.dat',STATUS='OLD')      !
+       OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')      !
        READ(90,*) (meta(i)%Ni, i=1,NumMeta)                                 !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; READ(90,*) ion(NumIon)%Ni                                 !
@@ -564,26 +565,26 @@ CONTAINS
     INTEGER :: i
 
     !**** Save Energy Electron Distribution Function
-    OPEN(UNIT=990,File="./datFile/Rstart/EEDF.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/EEDF.dat",ACTION="WRITE",STATUS="UNKNOWN")
     DO i = 1, sys%nx
        write(990,"(I6, ES15.6)") i, F(i)
     END DO
     CLOSE(990)
     !**** Save excited states density
-    OPEN(UNIT=990,File="./datFile/Rstart/Density.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/Density.dat",ACTION="WRITE",STATUS="UNKNOWN")
     write(990,"(42ES15.6)") (meta(i)%Ni, i=1,NumMeta)
     SELECT CASE (NumIon) 
     CASE (3) ; write(990,"(ES15.6)") ion(NumIon)%Ni
     END SELECT
     CLOSE(990)
     !**** Save neutral gas temperature profile
-    OPEN(UNIT=990,File="./datFile/Rstart/Tg.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/Tg.dat",ACTION="WRITE",STATUS="UNKNOWN")
     DO i = 1, OneD%nx
        write(990,"(I6, ES15.6)") i, OneD%Tg(i)
     END DO
     CLOSE(990)
     !**** Save Parameters
-    OPEN(UNIT=990,File="./datFile/Rstart/Rs_input_he",ACTION="WRITE",STATUS="UNKNOWN")
+    OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/Rs_input_he",ACTION="WRITE",STATUS="UNKNOWN")
     !*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
     WRITE (990,"(I6)") sys%nx
     !*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

@@ -153,7 +153,7 @@ CONTAINS
     REAL(DOUBLE) :: SubDt, SubRt
     !Equili VaRIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
-    REAL(DOUBLE) :: Rate, Rate2, RateTmp, RateTmp2
+    REAL(DOUBLE) :: ratx, Rate, Rate2, RateTmp, RateTmp2
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
@@ -272,6 +272,10 @@ CONTAINS
              END DO
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
+
+             if (Sd .GT. MaxR) MaxR = Sd
+             IF (Sx .GT. MaxR) MaxR = Sx
+
              IF ((Sx*Ndens(i)).GT.Rate) THEN
                 Rate = Sx*Ndens(i)
                 diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
@@ -315,7 +319,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd, Rate, Rate2, RateTmp, RateTmp2
+    REAL(DOUBLE) :: Sx, Sd, ratx, Rate, Rate2, RateTmp, RateTmp2
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
@@ -440,7 +444,7 @@ CONTAINS
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Ndens(j)
-             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+             !*************** Diagnostic for metastable and 2^3P rates (m-3 s-1)
              IF (i==1.or.j==1) THEN
                 IF ((Sx*Ndens(i)).GT.RateTmp) then
                    RateTmp = Sx*Ndens(i)

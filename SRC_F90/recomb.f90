@@ -24,13 +24,17 @@ CONTAINS
 
     !LOCAL
     INTEGER :: i
-    REAL(DOUBLE) :: coef, recmb, Dx
+    REAL(DOUBLE) :: coef, recmb, Dx, ratx!, Rtmp, part
     REAL(DOUBLE) :: energI, energF, U3
     REAL(DOUBLE), DIMENSION(4) :: tx
     tx = (/0.011d0, 0.341d0, 0.645d0, 0.003d0/) ! Santos et al.
     !tx = (/0.037d0, 0.360d0, 0.586d0, 0.017d0/) ! Pedersen et al
-    Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0
+    Dx = sys%Dx ; recmb=0.d0 ; Coef = 0.d0 !; Rtmp = 0.d0 ; part = 0.d0
     energI = 0.d0 ; energF = 0.d0
+
+    !DO i = 1, sys%nx
+    !   part = part + Fi(i) * Dx * U(i)**0.5d0
+    !END DO
 
     DO i = 1, sys%nx
        U3 = U(i)*U(i)*U(i)
@@ -38,6 +42,7 @@ CONTAINS
        energI = energI + Fi(i) * sqrt(U3) * sys%Dx
        !****************************************************
        coef = U(i) * meta(0)%SecRec(i) * Fi(i) * gama * ion(2)%Ni
+       !Rtmp = Rtmp + ( U(i) * meta(0)%SecRec(i) * Fi(i) * gama * Dx )
        recmb = recmb + coef
        Fi(i) = Fi(i) - Clock%Dt * coef / dsqrt( U(i) )
        !**** Final Energy density
@@ -51,16 +56,23 @@ CONTAINS
     END Do
     !**** Energy conservation Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
+    !**** Rate calcul for adaptative time-step
+    ratx = recmb * Dx / ion(2)%Ni
+    IF (ratx .GT. maxR) maxR = ratx
     !****************
     diag(8)%SumTx =  diag(8)%SumTx + Clock%Dt * recmb * Dx
     !***************** Diagnostic for relative importance of reactions
     diag(8)%Tx(1) =  recmb * Dx
-    !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+    !*************** Diagnostic for metastable rates (m-3 s-1)
     diag(8)%TxTmp(1) = recmb*tx(1) * Dx
     !*************** Diagnostic for metastable and 2^3P rates (s-1)
     diag(8)%InM1 = (tx(1)*recmb) * Dx / ion(2)%Ni
     diag(8)%InM2 = (tx(3)*recmb) * Dx / ion(2)%Ni
     !****************
+
+    !write (*,"(A,ES15.6)") "Recomb Rates: ", Rtmp/part
+    !write (*,"(A,F5.2,ES10.2)") "Te (eV): ", elec%Tp, part
+
   END SUBROUTINE Recomb
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Recomb_Norm (sys, meta, U, Fi, diag)
@@ -142,7 +154,7 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(InOut)    :: meta
     TYPE(Species), DIMENSION(:) , INTENT(InOUT) :: ion
     !LOCAL
-    REAL(DOUBLE) :: eta, Src, Tp, excim
+    REAL(DOUBLE) :: eta, Src, Tp, excim, ratx
     Tp = meta(0)%Tp * qok
     !*************************************
     !**** cf. Alves 1992 : η (cm6 s-1)
@@ -159,6 +171,9 @@ CONTAINS
        diag(7)%Tx(1) = Src
        !***************
     END IF
+    !**** Rate calcul for adaptative time-step
+    ratx = eta * meta(0)%Ni**2
+    IF (ratx .GT. maxR) maxR = ratx
     !*************************************
     !**** cf. Belmonte 2007 : η (cm3 s-1)
     !**** He2+ + He(1S) --> He+ + 2He(1S)
@@ -173,38 +188,50 @@ CONTAINS
        diag(11)%Tx(1) = Src
        !***************** 
     END IF
+    !**** Rate calcul for adaptative time-step
+    ratx = eta * meta(0)%Ni
+    IF (ratx .GT. maxR) maxR = ratx
     !*************************************
     !**** 3body collisions (Excimer creation) : He2*
     SELECT CASE (NumIon)
     CASE (3)
-       !**** He(2P3) + 2He --> He2* + He
+       !**** He(2P3) + 2He --> He2* + He (cm6 s-1)
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        excim = 1.6d-32 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
+       !**** Rate calcul for adaptative time-step
+       ratx = excim / meta(3)%Ni
+       IF (ratx .GT. maxR) maxR = ratx
        !***************** Diagnostic for relative importance of reactions
        diag(12)%Tx(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
        diag(12)%OutM2 = excim / meta(3)%Ni
-       !**** He2* + He --> He(2P3) + 2He
+       !**** He2* + He --> He(2P3) + 2He (cm3 s-1)
        !**** rate from Belmonte et al (J.Phys.D:Appl.Phys 40 7343 2007)
        excim = 3.6d-14 *1d-06 * ion(3)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
+       !**** Rate calcul for adaptative time-step
+       ratx = excim / meta(3)%Ni
+       IF (ratx .GT. maxR) maxR = ratx
        !***************** Diagnostic for relative importance of reactions
        diag(13)%Tx(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
        diag(13)%InM2 = excim / ion(3)%Ni
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
-       !**** He(2S3) + 2He --> He2* + He
+       !**** He(2S3) + 2He --> He2* + He (cm6 s-1)
        excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
             * meta(1)%Ni * meta(0)%Ni**2
        !excim = 1.5d-34 * 1d-12 *meta(1)%Ni * meta(0)%Ni**2
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
+       !**** Rate calcul for adaptative time-step
+       ratx = excim / meta(3)%Ni
+       IF (ratx .GT. maxR) maxR = ratx
        !***************** Diagnostic for relative importance of reactions
        diag(14)%Tx(1) = excim
-       !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+       !*************** Diagnostic for metastable and 2^3P rates (m-3 s-1)
        diag(14)%TxTmp(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
        diag(14)%OutM1 = excim / meta(1)%Ni
@@ -243,6 +270,9 @@ CONTAINS
     DO i=1, sys%nx
        Du=0.d0
        U = IdU(i,Dx)
+       meta(0)%SecRec(i) = SecRead(Npts) ! Because the recomb diss
+                                         ! stop at 39.64 eV. We take
+                                         ! sigma(u>39.64) = sigma(u=39.64)
        DO j = 1, Npts-1
           IF ( U == EnRead(j) ) meta(0)%SecRec(i) = SecRead(j)
           IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
@@ -254,6 +284,7 @@ CONTAINS
     END DO
     meta(0)%SecRec(:) = meta(0)%SecRec(:) * 1d-20
     meta(0)%SecRec(sys%nx) = 0.d0
+
   END SUBROUTINE Init_Recomb
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

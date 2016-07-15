@@ -169,8 +169,8 @@ CONTAINS
           ion(1)%UpDens  = ion(1)%UpDens  + SubDt * Src * coef1 * Dx
 
           ratx = Src * Dx * gama
+          IF (ratx .GT. maxR) maxR = ratx
           !**** Diagnostic for relative importance of reactions
-          if (ratx .GT. maxR) maxR = ratx
           diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
           IF ((ratx*meta(i)%Ni).GT.Rate) THEN
              Rate = ratx*meta(i)%Ni
@@ -207,7 +207,7 @@ CONTAINS
     Type(Diagnos), DIMENSION(:), INTENT(INOUT) :: diag
     !LOCAL
     INTEGER :: k, kp, km, ichi, case, Nion
-    REAL(DOUBLE) :: prod, loss, rcmb, ionz
+    REAL(DOUBLE) :: prod, loss, rcmb, ionz, ratx
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
     REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
@@ -270,6 +270,12 @@ CONTAINS
        diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx * Eij
        diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx * Eij
     END IF
+    !**** Rate calcul for adaptative time-step
+    ratx = Sr * Dx / ion(2)%Ni
+    IF (ratx .GT. maxR) maxR = ratx
+    ratx = Si * Dx / ion(Nion)%Ni
+    IF (ratx .GT. maxR) maxR = ratx
+
     diag(13)%SumTx = diag(13)%SumTx + Clock%Dt * Si * Dx
     diag(15)%SumTx = diag(15)%SumTx + Clock%Dt * Sr * Dx
     !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)

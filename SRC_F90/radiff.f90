@@ -21,7 +21,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
     !LOCAL
     INTEGER :: i, j
-    REAL(DOUBLE) :: Eij, damp, EscapF, emitF
+    REAL(DOUBLE) :: Eij, damp, EscapF, emitF, ratx
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate, RateTmp
     Rate=0.d0 ; RateTmp=0.d0 ; diag(3)%Tx(:)=0.d0; diag(3)%TxTmp(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
@@ -53,6 +53,9 @@ CONTAINS
                 meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                 !**** Energy conservation Diagnostic
                 diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
+                !**** Rate calcul for adaptative time-step
+                IF (emitF .GT. MaxR) MaxR = ratx
+
                 !***************** Diagnostic for relative importance of reactions
                 IF ((emitF*meta(i)%Ni).GT.Rate) THEN
                    Rate = emitF * meta(i)%Ni

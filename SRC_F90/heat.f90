@@ -10,13 +10,60 @@ MODULE MOD_CHAUF
   USE MOD_PARAM
   IMPLICIT NONE
 
+  INTEGER, PRIVATE :: Pwk = 0
+
 CONTAINS
 
-  !*********** SUBROUTINE FOKKER-PLANCK ***************!
+  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+    !INTENT
+    TYPE(Time)   , INTENT(IN)     :: Clock
+    TYPE(SysVar) , INTENT(INOUT)  :: sys
+    REAL(DOUBLE) , INTENT(IN)     :: Post_D, Cgen
+    TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
+    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)  :: U, F
+    !LOCAL
+    INTEGER      :: i, nx
+    REAL(DOUBLE) :: Dx, Fn, nuc
+    REAL(DOUBLE) :: power, Uc, Df, GenPwr
+    nx = sys%nx ; Dx = sys%Dx
+    GenPwr = 1.d-06 ! Time constant to start/end the generator.
+    
+    IF (Clock%SumDt .LT. Post_D) THEN
+       !**** Increase Power
+       sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+       sys%Pcent = sys%Powr
+       !**** Power calculation
+       power = 0.d0
+       do i = 1, nx-1
+          nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+          Uc = qome * nuc / (nuc**2 + sys%Freq**2)
+          IF (i .LT. nx-1) THEN
+             Df = F(i+1) - F(i)
+          ELSE IF (i.EQ.nx-1) THEN
+             !**** linear extrapolation for f(nx)
+             Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
+             Df = Fn - F(i)
+          END IF
+          power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
+       END do
+       !**** New External Electric Field Calculation 
+       sys%E = dsqrt ( sys%Powr / (power * qe) )
+       !***************************************************
+    ELSE
+       !**** Decrease External Electric source
+       IF (Pwk == 0) sys%IPowr = sys%E
+       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
+       IF (sys%E.LT.1d-06) sys%E = 0.d0
+       sys%Pcent = sys%E
+       Pwk = Pwk+1
+    END IF
+
+  END SUBROUTINE POWER_CONTROL
+
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Heating (sys,meta, U,F)
     !INTENT
-    TYPE(SysVar), INTENT(INOUT)  :: sys
+    TYPE(SysVar), INTENT(IN)  :: sys
     REAL(DOUBLE), DIMENSION(:), INTENT(INOUT) :: F
     REAL(DOUBLE), DIMENSION(:), INTENT(IN)    :: U
     TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
@@ -24,28 +71,9 @@ CONTAINS
     INTEGER      :: i, nx
     REAL(DOUBLE) :: Dx, part,alpha0, nucm,nucp
     REAL(DOUBLE) :: YY,ZZ,XX, En1, En2
-    REAL(DOUBLE) :: power, Uc, Df
     REAL(DOUBLE), DIMENSION(sys%nx) :: f0,AC1,BC1,CC1
     En1 = 0.d0 ; En2 = 0.d0
     nx = sys%nx ; Dx = sys%Dx
-
-    !**** Power calculation
-    power = 0.d0
-    do i = 1, nx-1
-       nucp  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-       Uc = qome * nucp / (nucp**2 + sys%Freq**2)
-       IF (i .LT. nx-1) THEN
-          Df = F(i+1) - F(i)
-       ELSE IF (i.EQ.nx-1) THEN
-          !**** linear extrapolation for f(nx)
-          F(i+1) = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
-          Df = F(i+1) - F(i)
-       END IF
-       power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
-    END do
-    F(nx) = 0.d0
-    sys%E = dsqrt ( sys%Powr / (power * qe) )
-    !***************************************************
 
     !****** PARAMETRES COLLISIONS ELASTIQUES*************
     alpha0 = gama*gama
@@ -164,6 +192,7 @@ CONTAINS
   END SUBROUTINE Elastic
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
+  !*********** SUBROUTINE FOKKER-PLANCK ***************!
   subroutine FP (sys,elec, f1, U)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys

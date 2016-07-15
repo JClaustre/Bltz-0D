@@ -121,6 +121,8 @@ CONTAINS
           Penn = meta(i)%Ni*meta(j)%Ni * beta
           meta(i)%Updens = meta(i)%Updens - Clock%Dt * Penn
           meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
+          ratx = Penn / meta(i)%Ni
+          IF (ratx .GT. MaxR) MaxR = ratx
        END DO
     END DO
 
@@ -181,6 +183,9 @@ CONTAINS
           IF (i .GT. 0) meta(i)%Updens   = meta(i)%Updens   - Clock%Dt * Penn
           If (i == 0) ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
           ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
+          ratx = Penn / Ndens
+          IF (ratx .GT. MaxR) MaxR = ratx
+
        END DO
 
     END SELECT
