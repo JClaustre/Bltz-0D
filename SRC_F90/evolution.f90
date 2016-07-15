@@ -449,11 +449,11 @@ CONTAINS
 
     !**** Update Time-step
     IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN
-       Clock%Dt = 1.0d0 / (MaxR*2.d0)
+       Clock%Dt = 1.0d0 / (MaxR*3.d0)
        IF (Switch==10) MxDt = MxDt / 2d0
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
-    IF ( mod(iter,Clock%NumIter/20).EQ.0 ) MxDt = MxDt * 2d0
+    IF ( mod(iter,Clock%NumIter/20).EQ.0 ) MxDt = MxDt * 1.1d0
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
     IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
        print*,""; print*," NaN ! Pobleme in time-step??", elec%Ni, MaxR ; Stop 
