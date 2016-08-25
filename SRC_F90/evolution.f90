@@ -37,9 +37,9 @@ CONTAINS
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 10.0 ! Time factor for external source.
-    Post_D = 1d-6 ! Time to ignitiate post_discharge (micro-sec)
-    MxDt   = 5d-9 ! Maximum time-step
+    Cgen   = 0.01d0  ! Time factor for external source.
+    Post_D = 90d-5 ! Time to ignitiate post_discharge (micro-sec)
+    MxDt   = 2d-10 ! Maximum time-step
     !**** MAIN LOOP ***************************
 
     !**** MAIN LOOP ***************************
@@ -52,7 +52,7 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen,l)
 
        !**** Heat + Elas + Fk-Pl
        IF (sys%Pcent.NE.0.d0) CALL Heating (sys,meta, U, F)
@@ -107,7 +107,6 @@ CONTAINS
           END IF
       END DO
       
-
        IF ( modulo(l,300) == 0 ) THEN
           !**** ALL rates
           IF (l == 100) THEN
@@ -234,6 +233,8 @@ CONTAINS
     write(*,"(2A,ES15.4)") tabul, "Energy Error : ", Coef
     write(*,"(A,2(A,F5.2),A)") tabul, "Tpe (eV): | Init ", consv(2)*0.66667d0/consv(1),&
          " | Final ", elec%Tp, " |"
+    write (*,"(2A,ES15.4,A,ES15.4)") tabul, "Absorbed Power [W/cm3]: ", &
+         sys%Pwmoy*1d-6, ' Emoy(V/cm):', sys%Emoy*1d-2/Clock%NumIter
 
   END SUBROUTINE Consv_Test
 
@@ -445,15 +446,14 @@ CONTAINS
     END do
 
     !**** Report 
-    IF (Switch==10) write(*,"(2A)") tabul, "Carefull, EEDF has negative(s) values ! "
+    !IF (Switch==10) write(*,"(2A,F8.3)") tabul, "Carefull, EEDF has negative(s) values ! time= ",&
+    !     (Clock%SumDt*1e6)
 
     !**** Update Time-step
     IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN
        Clock%Dt = 1.0d0 / (MaxR*3.d0)
-       IF (Switch==10) MxDt = MxDt / 2d0
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
-    IF ( mod(iter,Clock%NumIter/20).EQ.0 ) MxDt = MxDt * 1.1d0
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
     IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
        print*,""; print*," NaN ! Pobleme in time-step??", elec%Ni, MaxR ; Stop 
@@ -468,10 +468,10 @@ CONTAINS
     IF ( mod(iter,mdlus).EQ.0 ) THEN
 
        !**** WRITE Frequently IN TERMINAL **************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A)",advance="no") &
+       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES15.6,A)",advance="no") &
             tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            "] Sheath: ", Vg," \r"!
+            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

@@ -14,8 +14,9 @@ MODULE MOD_CHAUF
 
 CONTAINS
 
-  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen, iter)
     !INTENT
+    INTEGER, INTENT(IN) :: iter
     TYPE(Time)   , INTENT(IN)     :: Clock
     TYPE(SysVar) , INTENT(INOUT)  :: sys
     REAL(DOUBLE) , INTENT(IN)     :: Post_D, Cgen
@@ -57,6 +58,31 @@ CONTAINS
        sys%Pcent = sys%E
        Pwk = Pwk+1
     END IF
+
+    !**** RF - electric field*********************
+    sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
+
+    !**** Diagnostic to calculate the absorbed power by the plasma
+    sys%Emoy = sys%Emoy + abs(sys%E)
+    !**** Fix the power here function of Elec field ************************!
+    DO i = 1, sys%nx - 1                                                    !
+       nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+       Uc = qome * (sys%Emoy/iter)**2 / (nuc**2 + sys%Freq**2)              !
+       IF (i .LT. nx-1) THEN
+          Df = F(i+1) - F(i)
+       ELSE IF (i.EQ.nx-1) THEN
+          !**** linear extrapolation for f(nx)
+          Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
+          Df = Fn - F(i)
+       END IF
+       power = power - Uc * U(i)**(1.5d0) * Df * nuc * 0.6667d0             !
+    END DO                                                                  !
+    power = power * qe                                                      !
+    sys%Pwmoy = power
+    !***********************************************************************!
+    !open(unit= 2001, file=TRIM(ADJUSTL(DirFile))//"Efield.dat",ACCESS="APPEND",ACTION="WRITE",STATUS="UNKNOWN")
+    !write(2001,"(I6,ES15.6)") iter, sys%E
+    !close(2001)
 
   END SUBROUTINE POWER_CONTROL
 

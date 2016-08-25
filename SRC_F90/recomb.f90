@@ -197,7 +197,7 @@ CONTAINS
     CASE (3)
        !**** He(2P3) + 2He --> He2* + He (cm6 s-1)
        !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
-       excim = 1.6d-32 *1d-12 * meta(3)%Ni * meta(0)%Ni**2
+       excim = 1.6d-44 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
@@ -209,7 +209,7 @@ CONTAINS
        diag(12)%OutM2 = excim / meta(3)%Ni
        !**** He2* + He --> He(2P3) + 2He (cm3 s-1)
        !**** rate from Belmonte et al (J.Phys.D:Appl.Phys 40 7343 2007)
-       excim = 3.6d-14 *1d-06 * ion(3)%Ni * meta(0)%Ni
+       excim = 3.6d-20 * ion(3)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
@@ -219,11 +219,14 @@ CONTAINS
        diag(13)%Tx(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
        diag(13)%InM2 = excim / ion(3)%Ni
-       !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
        !**** He(2S3) + 2He --> He2* + He (cm6 s-1)
-       excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
-            * meta(1)%Ni * meta(0)%Ni**2
-       !excim = 1.5d-34 * 1d-12 *meta(1)%Ni * meta(0)%Ni**2
+       IF (meta(0)%Tp*qok.LE.750d0) THEN
+          !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)
+          excim = Tp*(8.7d0*exp(-750.d0/Tp)+0.41d0*exp(-200/Tp))*1d-36*1d-12 &
+               * meta(1)%Ni * meta(0)%Ni**2
+       ELSE
+          excim = 1.5d-46 *meta(1)%Ni * meta(0)%Ni**2
+       END IF
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
        !**** Rate calcul for adaptative time-step

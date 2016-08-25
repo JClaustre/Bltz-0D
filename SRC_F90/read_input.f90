@@ -496,6 +496,7 @@ CONTAINS
             sys%Powr*1d-6, " |", sys%Powr*sys%volume                        !
     END IF                                                                  !
     !***********************************************************************!
+
     !**** 1D profil for gas temperature calculation
     OneD%SLab = 0.0d0 ! (m)
     OneD%nx = size(OneD%Tg)
@@ -531,14 +532,14 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.5d0                                          !
-       ion(1)%Ni = elec%Ni * 0.5d0                                          !
+       ion(2)%Ni = elec%Ni * 0.9d0                                          !
+       ion(1)%Ni = elec%Ni * 0.1d0                                          !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 1.0d+16                                  !
+       CASE (3) ; ion(NumIon)%Ni = 1.0d+14                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.LE.4) meta(i)%Ni = 1.0d+17                                  !
-          IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
+          IF (i.LE.4) meta(i)%Ni = 1.0d+14                                  !
+          IF (i.GT.4) meta(i)%Ni = 1.0d+12                                  !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')      !

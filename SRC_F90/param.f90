@@ -22,7 +22,7 @@ MODULE MOD_PARAM
      INTEGER :: nx, P0 ! node number and max-node number
      REAL(DOUBLE) :: Emx, Dx ! grid step
      REAL(DOUBLE) :: Ra, L, volume
-     REAL(DOUBLE) :: E, Freq, Powr, IPowr, Pcent
+     REAL(DOUBLE) :: E, Emoy, Freq, Powr, IPowr, Pcent, Pwmoy
   END type SysVar
   !-----------------------------------------------------------
   TYPE, PUBLIC::Species
@@ -54,6 +54,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Santos/411W/"
   CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
   TYPE(Time)    :: Clock

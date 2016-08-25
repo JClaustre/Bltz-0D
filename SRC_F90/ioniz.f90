@@ -283,10 +283,11 @@ CONTAINS
     !*************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
     diag(13)%InM1 = br*Sr * Dx / ion(2)%Ni
     !***************
+    
     !**** br == branching ratio
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
-    ion(1)%Updens    = ion(1)%Updens    + Clock%Dt * (Si-Sr) * Dx
+    ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
   END SUBROUTINE Ioniz_Dimer100
   !***********************************************************************
 
@@ -377,11 +378,11 @@ CONTAINS
        !**** Recomb/Ioniz cross-section relation
        ichi = int(Eij/Dx) ; rchi = (Eij/Dx) - ichi
        DO k = 1, sys%nx
-          Du=IdU(k,Dx)/Eij
-          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = (sqrt(Pi)/4.d0)*(Du/(Du+1.d0))&
+          Du=Eij/IdU(k,Dx)
+          if(k .LE. sys%nx-ichi) ion(NumIon)%SecIon(2,k) = (sqrt(Pi)/4.d0)*(1.d0+Du)&
                * ( (1.0d0-rchi) * ion(NumIon)%SecIon(1,k+ichi) )
           if(k .LE. sys%nx-ichi-1) ion(NumIon)%SecIon(2,k) = ion(NumIon)%SecIon(2,k) &
-               + (sqrt(Pi)/4.d0)*(Du/(Du+1.d0))* ( rchi * ion(NumIon)%SecIon(1,k+ichi+1) )
+               + (sqrt(Pi)/4.d0)*(1.d0+Du)* ( rchi * ion(NumIon)%SecIon(1,k+ichi+1) )
        END DO
        ion(NumIon)%SecIon(1,sys%nx) = 0.d0
        ion(NumIon)%SecIon(2,sys%nx) = 0.d0
