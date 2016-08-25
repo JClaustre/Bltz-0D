@@ -56,6 +56,8 @@ CONTAINS
                 !**** Rate calcul for adaptative time-step
                 IF (emitF .GT. MaxR) MaxR = ratx
 
+                IF (i==3 .and. j==1) print*, emitF
+
                 !***************** Diagnostic for relative importance of reactions
                 IF ((emitF*meta(i)%Ni).GT.Rate) THEN
                    Rate = emitF * meta(i)%Ni
