@@ -32,14 +32,13 @@ CONTAINS
              Eij = meta(i)%En-meta(j)%En
              Kor = 2.8764d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
                   (dsqrt(meta(0)%Tp*qok)*Eij)
-             !write(*,"(2A,3ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Kor
+             EscapF = 1.d0
              IF (Kor .GT. 1.d0) THEN
                 damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
                      * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp*qok)) )
                 Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
                 Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
                 Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
-                EscapF = 0.d0
                 IF (Gcd/Gcol .GT. 8.d0) THEN
                    EscapF = Gcol * erf(Gcd/Gcol)
                    !print*, '>10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
@@ -47,41 +46,41 @@ CONTAINS
                    EscapF = Gdop / exp(Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
                    !print*, '<10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
                 END IF
-                emitF = meta(i)%Aij(j) * EscapF
-                
-                meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
-                meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
-                !**** Energy conservation Diagnostic
-                diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
-                !**** Rate calcul for adaptative time-step
-                IF (emitF .GT. MaxR) MaxR = ratx
-
-                IF (i==3 .and. j==1) print*, emitF
-
-                !***************** Diagnostic for relative importance of reactions
-                IF ((emitF*meta(i)%Ni).GT.Rate) THEN
-                   Rate = emitF * meta(i)%Ni
-                   diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
-                END IF
-                !****************
-                diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
-                !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
-                IF (j.EQ.1) THEN
-                   IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
-                      RateTmp = emitF * meta(i)%Ni    
-                      diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
-                   END IF
-                   diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
-                   !*************** Diagnostic for metastable and 2^3P rates (s-1)
-                   diag(3)%InM1 = diag(3)%InM1 + emitF
-                ELSE IF (j.EQ.3) THEN
-                   diag(3)%InM2 = diag(3)%InM2 + emitF
-                END IF
-                IF (i.EQ.3) THEN
-                   diag(3)%OutM2 = diag(3)%OutM2 + emitF
-                END IF
-                !****************
              END IF
+               
+             !write(*,"(2A,3ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Kor
+             emitF = meta(i)%Aij(j) * EscapF
+                
+             meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
+             meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
+             !**** Energy conservation Diagnostic
+             diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
+             !**** Rate calcul for adaptative time-step
+             IF (emitF .GT. MaxR) MaxR = ratx
+             
+             !***************** Diagnostic for relative importance of reactions
+             IF ((emitF*meta(i)%Ni).GT.Rate) THEN
+                Rate = emitF * meta(i)%Ni
+                diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
+             END IF
+             !****************
+             diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
+             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+             IF (j.EQ.1) THEN
+                IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
+                   RateTmp = emitF * meta(i)%Ni    
+                   diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
+                END IF
+                diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
+                !*************** Diagnostic for metastable and 2^3P rates (s-1)
+                diag(3)%InM1 = diag(3)%InM1 + emitF
+             ELSE IF (j.EQ.3) THEN
+                diag(3)%InM2 = diag(3)%InM2 + emitF
+             END IF
+             IF (i.EQ.3) THEN
+                diag(3)%OutM2 = diag(3)%OutM2 + emitF
+             END IF
+                !****************
           END IF
 
        END DO
