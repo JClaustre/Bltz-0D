@@ -27,7 +27,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx
-    GenPwr = 1.d-06 ! Time constant to start/end the generator.
+    GenPwr = 1.d-07 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power
@@ -60,7 +60,7 @@ CONTAINS
     END IF
 
     !**** RF - electric field*********************
-    sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
+    !sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
 
     !**** Diagnostic to calculate the absorbed power by the plasma
     sys%Emoy = sys%Emoy + abs(sys%E)
@@ -298,7 +298,7 @@ CONTAINS
     IF (l .GT. 500) THEN
        write(*,"(2A)") tabul, "No CONVERGENCE reach in Fokker-Plank routine !"
        write(*,"(A,2(A,ES15.6))") tabul, "CONVERGENCE error = ", small, " | Calculated error = ", err
-       write(*,"(2A)") tabul, "Stop Calculations !"
+       write(*,"(2A,ES10.2,A,ES10.2)") tabul, "Stop Calculations ! time: ", Clock%SumDt, " Dt= ", Clock%Dt
        Stop
     END IF
 

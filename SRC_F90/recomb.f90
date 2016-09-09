@@ -230,13 +230,13 @@ CONTAINS
        meta(1)%UpDens = meta(1)%UpDens - Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  + Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
-       ratx = excim / meta(3)%Ni
+       ratx = excim / meta(1)%Ni
        IF (ratx .GT. maxR) maxR = ratx
        !***************** Diagnostic for relative importance of reactions
        diag(14)%Tx(1) = excim
-       !*************** Diagnostic for metastable and 2^3P rates (m-3 s-1)
+       !*************** Diagnostic for metastable and 2^3S rates (m-3 s-1)
        diag(14)%TxTmp(1) = excim
-       !*************** Diagnostic for metastable and 2^3P rates (s-1)
+       !*************** Diagnostic for metastable and 2^3S rates (s-1)
        diag(14)%OutM1 = excim / meta(1)%Ni
     END SELECT
   END SUBROUTINE Conv_3Body

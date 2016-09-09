@@ -129,6 +129,13 @@ CONTAINS
 
              if (Sd .GT. MaxR) MaxR = Sd
              IF (Sx .GT. MaxR) MaxR = Sx
+
+             !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
+             IF (i==0.and.j==1) THEN
+                diag(1)%InM1  = diag(1)%InM1  + Sx
+                diag(1)%OutM1 = diag(1)%OutM1 + Sd
+             END IF
+
           END IF
        END DO
     END DO
@@ -323,20 +330,21 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
-    REAL(DOUBLE) :: SubDt
+    REAL(DOUBLE) :: Dt
     !Implicit Density VARIABLES
-    REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
-    !********************
-    Rate=0.d0 ; Rate2=0.d0 ; RateTmp=0.d0 ; RateTmp2=0.d0
-    SubDt = Clock%Dt
-    nx = sys%nx ; Dx = sys%Dx
+    REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd, Ndiff=0.d0
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
+    Rate=0.d0 ; Rate2=0.d0 ; RateTmp=0.d0 ; RateTmp2=0.d0
+    Dt = Clock%Dt
+    nx = sys%nx ; Dx = sys%Dx
+    !********************
     diag(1)%Tx(:)=0.d0    ; diag(10)%Tx(:)=0.d0 
     diag(1)%TxTmp(:)=0.d0 ; diag(10)%TxTmp(:)=0.d0
     diag(1)%InM1=0.d0 ; diag(1)%OutM1=0.d0
     diag(1)%InM2=0.d0 ; diag(1)%OutM2=0.d0
     !********************************************************
+
     DO i = 0, NumMeta-1
        coef1 = Ndens(i) * gama
        !********************************************************
@@ -374,14 +382,21 @@ CONTAINS
 
              !**** Implicit Density
              Ni = meta(i)%Ni ; Nj = meta(j)%Ni
-             meta(i)%Ni = ( 1.d0 / (1.d0 + SubDt*Sx) ) * (Ni + SubDt*meta(j)%Ni*Sd)
-             meta(j)%Ni = ( 1.d0 / (1.d0 + SubDt*Sd) ) * (Nj + SubDt*meta(i)%Ni*Sx)
-             Nexpl = 0.d0 ; Nexpl = Ni + SubDt * (Sd*Nj - Sx*Ni)
+             meta(i)%Ni = (Ni + Dt*Nj*Sd) / (1.d0 + Dt*Sx)
+             meta(j)%Ni = (Nj + Dt*Ni*Sx) / (1.d0 + Dt*Sd)
+             !Ndiff = meta(j)%Ni-Ni
+             !Ndens(i) = Ni - Ndiff
+
+             Nexpl = 0.d0 ; Nexpl = Ni + Dt * (Sd*Nj - Sx*Ni)
              Rmx = (meta(i)%Ni-Ni) / (Nexpl-Ni)
              IF ((Nexpl-Ni) .EQ. 0.d0 ) Rmx = 0.d0
-             Nexpl = 0.d0 ; Nexpl = Nj + SubDt * (Sx*Ni - Sd*Nj)
+             Nexpl = 0.d0 ; Nexpl = Nj + Dt * (Sx*Ni - Sd*Nj)
              Rmd = (meta(j)%Ni-Nj) / (Nexpl-Nj)
              IF ((Nexpl-Nj) .EQ. 0.d0 ) Rmd = 0.d0
+             !**** Update Dens:
+             !meta(i)%Updens = meta(i)%Updens - Ndiff
+             !meta(j)%Updens = meta(j)%Updens + Ndiff
+             !**********************
 
              DO k = 1, nx
                 kp = k + ichi
@@ -427,50 +442,64 @@ CONTAINS
                 END IF
 
                 !**** UpDate EEDF
-                Fi(k) = Fi(k) + SubDt * ( C_Exc * Rmx + C_Dxc * Rmd )
+                Fi(k) = Fi(k) + Dt * ( C_Exc * Rmx + C_Dxc * Rmd )
                 !**************************** 
              END DO
              !**** Energy conservation Diagnostic 
-             diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
-             diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
+             diag(1)%EnProd = diag(1)%EnProd + Dt * Sd*Ndens(j)* E_ij * Rmd
+             diag(1)%EnLoss = diag(1)%EnLoss + Dt * Sx*Ndens(i)* E_ij * Rmx
              !***************** Diagnostic for relative importance of reactions
-             IF ((Sx*Ndens(i)).GT.Rate) THEN
-                Rate = Sx*Ndens(i)
+             IF ((Sx*Ni).GT.Rate) THEN
+                Rate = Sx*Ni
                 diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
              END IF
-             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*Ndens(i)
-             IF ((Sd*Ndens(j)).GT.Rate2) THEN
-                Rate2 = Sd*Ndens(j)
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*Ni
+             IF ((Sd*Nj).GT.Rate2) THEN
+                Rate2 = Sd*Nj
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
-             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Ndens(j)
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Nj
              !*************** Diagnostic for metastable and 2^3P rates (m-3 s-1)
              IF (i==1.or.j==1) THEN
-                IF ((Sx*Ndens(i)).GT.RateTmp) then
-                   RateTmp = Sx*Ndens(i)
+                IF ((Sx*Ni).GT.RateTmp) then
+                   RateTmp = Sx*Ni
                    diag(1)%TxTmp(2) = real(i) ; diag(1)%TxTmp(3) = real(j)
                 END IF
-                diag(1)%Txtmp(1) = diag(1)%Txtmp(1) + Sx*Ndens(i)
-                IF ((Sd*Ndens(j)).GT.RateTmp2) then
-                   RateTmp2 = Sd*Ndens(j)
+                diag(1)%Txtmp(1) = diag(1)%Txtmp(1) + Sx*Ni
+                IF ((Sd*Nj).GT.RateTmp2) then
+                   RateTmp2 = Sd*Nj
                    diag(10)%TxTmp(2) = real(i) ; diag(10)%TxTmp(3) = real(j)
                 END IF
-                diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Ndens(j)
+                diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Nj
              END IF
              !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
-             IF (i==1) THEN
-                diag(1)%OutM1 = diag(1)%OutM1 + Sx
-             ELSE IF (i==3) THEN
-                diag(1)%OutM2 = diag(1)%OutM2 + Sx
+             IF (i==0.and.j==1) THEN
+                diag(1)%InM1  = diag(1)%InM1  + Sx
+                diag(1)%OutM1 = diag(1)%OutM1 + Sd
              END IF
-             IF (j==1) THEN
-                diag(1)%InM1 = diag(1)%InM1 + Sd
-             ELSE IF (j==3) THEN
+             IF (i==0.and.j==3) THEN
+                diag(1)%OutM2 = diag(1)%OutM2 + Sd
+                diag(1)%InM2 = diag(1)%InM2 + Sx
+             END IF
+             IF (i==1.and.j.NE.3) THEN
+                diag(1)%OutM1 = diag(1)%OutM1 + Sx
+                diag(1)%InM1  = diag(1)%InM1 + Sd
+             END IF
+             IF (i==2.and.j==3) THEN
+                diag(1)%OutM2 = diag(1)%OutM2 + Sd
+                diag(1)%InM2 = diag(1)%InM2 + Sx                
+             END IF
+             IF (i==3) THEN
+                diag(1)%OutM2 = diag(1)%OutM2 + Sx
                 diag(1)%InM2 = diag(1)%InM2 + Sd
              END IF
              IF (i==1.and.j==3) THEN
                 diag(15)%OutM1 = Sx
                 diag(15)%InM1  = Sd
+                diag(1)%OutM1 = diag(1)%OutM1 + Sx
+                diag(1)%InM2  = diag(1)%InM2 + Sx
+                diag(1)%InM1  = diag(1)%InM1 + Sd
+                diag(1)%OutM2 = diag(1)%OutM2 + Sd
              END IF
              !*****************
           END IF
@@ -480,6 +509,7 @@ CONTAINS
   END SUBROUTINE Exc_Impli
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** He2* + e --> He + e
   SUBROUTINE Dexc_Dimer(sys, U, ion, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys

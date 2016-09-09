@@ -37,16 +37,16 @@ CONTAINS
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 0.01d0  ! Time factor for external source.
-    Post_D = 90d-5 ! Time to ignitiate post_discharge (micro-sec)
-    MxDt   = 2d-10 ! Maximum time-step
+    Cgen   = 1d-02  ! Time factor for external source.
+    Post_D = 60d-6 ! Time to ignitiate post_discharge (micro-sec)
+    MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
 
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
-       meta(:)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
+       meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -403,6 +403,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:)        , INTENT(INOUT) :: F
     !**** LOCAL
     INTEGER :: i, nx, Mnul, Switch, mdlus
+    REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
     nx = sys%nx ; Switch = 0 ; mdlus = 501
 
@@ -466,12 +467,16 @@ CONTAINS
     !**** WRITE PART *********************************
 
     IF ( mod(iter,mdlus).EQ.0 ) THEN
+       RateSum = -(diag(3)%OutM2 + diag(15)%InM1)*meta(3)%Ni + (diag(10)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
-       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES15.6,A)",advance="no") &
-            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
+!       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES10.2,A)",advance="no") &
+!            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
+!            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
+!            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
+       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
+            tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
+            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," n0/tin=", RateSum," \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

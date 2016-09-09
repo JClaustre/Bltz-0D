@@ -26,13 +26,12 @@ CONTAINS
     Rate=0.d0 ; RateTmp=0.d0 ; diag(3)%Tx(:)=0.d0; diag(3)%TxTmp(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
 
-    DO i = 3, NumMeta!18
-       DO j = 0, i-1 !10
+    DO i = 3, NumMeta
+       DO j = 0, i-1
           IF (meta(i)%Aij(j).NE.0.d0) THEN
              Eij = meta(i)%En-meta(j)%En
              Kor = 2.8764d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
                   (dsqrt(meta(0)%Tp*qok)*Eij)
-             EscapF = 1.d0
              IF (Kor .GT. 1.d0) THEN
                 damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
                      * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp*qok)) )
@@ -46,6 +45,8 @@ CONTAINS
                    EscapF = Gdop / exp(Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
                    !print*, '<10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
                 END IF
+             ELSE
+                EscapF = 1.d0
              END IF
                
              !write(*,"(2A,3ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Kor
@@ -350,7 +351,7 @@ CONTAINS
     diag(9)%Tx(1) = Se  
     !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
     diag(9)%TxTmp(1) = Smeta1
-    !*************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
+    !*************** Diagnostic for metastable and 2^3S rates (s-1) for MEOP
     diag(9)%OutM1 = meta(1)%Damb / Coef
     !***************
   END SUBROUTINE Diffuz_Gaine

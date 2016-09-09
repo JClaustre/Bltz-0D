@@ -198,6 +198,8 @@ CONTAINS
 
   !***********************************************************************
   ! Second electron with 0 energy from excimer He2*
+  ! **** He2+ + e + e <<-->> He2* + e 
+  ! ****                -->> He(2S3) + He + e
   SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys

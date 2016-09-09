@@ -109,13 +109,8 @@ CONTAINS
                    diag(5)%TxTmp(2) = real(i) ; diag(5)%TxTmp(3) = real(j)
                 END IF
                 diag(5)%Txtmp(1) = diag(5)%Txtmp(1) + Penn
-                !*************** Diagnostic for metastable and 2^3P rates (s-1)
-                diag(5)%OutM1    = diag(5)%OutM1 + Penn/meta(j)%Ni
              END IF
-             !****************
-             IF (i==3.or.j==3) THEN
-                diag(5)%OutM2    = diag(5)%OutM2 + Penn/meta(j)%Ni
-             END IF
+
           END DO
           !**** Update population
           Penn = meta(i)%Ni*meta(j)%Ni * beta
@@ -123,12 +118,23 @@ CONTAINS
           meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
           ratx = Penn / meta(i)%Ni
           IF (ratx .GT. MaxR) MaxR = ratx
+          !*************** Diagnostic for metastable and 2^3P rates (s-1)
+          if(i==1) THEN
+             diag(5)%OutM1 = diag(5)%OutM1 + Penn/meta(i)%Ni
+          END if
+          if(j==1) THEN
+             diag(5)%OutM1 = diag(5)%OutM1 + Penn/meta(j)%Ni
+          END if
+          !****************
+          if(i==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(i)%Ni
+          if(j==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(j)%Ni
+
        END DO
     END DO
 
     ! Involving Dimer Penning processes 
     SELECT CASE (NumIon)
-    CASE (4)
+    CASE (3)
        RateTmp=0.d0 ; Diag(4)%TxTmp(:)=0.d0
        diag(4)%OutM1=0.d0 ; diag(4)%OutM2=0.d0
        Nion = 3
@@ -171,16 +177,16 @@ CONTAINS
                 END IF
                 diag(4)%Txtmp(1) = diag(4)%Txtmp(1) + Penn
                 !*************** Diagnostic for metastable and 2^3P rates (s-1)
-                diag(4)%OutM1    = diag(4)%OutM1 + Penn/ion(Nion)%Ni
+                diag(4)%OutM1    = diag(4)%OutM1 + Penn/meta(i)%Ni
              END IF
              IF (i==3) THEN
-                diag(4)%OutM2    = diag(4)%OutM2 + Penn/ion(Nion)%Ni
+                diag(4)%OutM2    = diag(4)%OutM2 + Penn/meta(i)%Ni
              END IF
              !****************
           END DO
           !**** Update population
           Penn = Ndens * ion(Nion)%Ni * beta
-          IF (i .GT. 0) meta(i)%Updens   = meta(i)%Updens   - Clock%Dt * Penn
+          IF (i.GT.0) meta(i)%Updens   = meta(i)%Updens   - Clock%Dt * Penn
           If (i == 0) ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
           ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
           ratx = Penn / Ndens

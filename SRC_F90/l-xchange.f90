@@ -25,9 +25,11 @@ CONTAINS
     REAL(DOUBLE) :: Coef1, Coef2, Eij
     !********************
     Coef1= 0.d0 ; coef2 = 0.d0
-    !**** l-change atomic reations
-    DO i = 1 , NumMeta
-       DO j = 1, NumMeta
+    diag(4)%OutM1 = 0.d0 ; diag(4)%InM1 = 0.d0 
+    
+    !**** l-change atomic reations (for n>=3)
+    DO i = 5 , NumMeta
+       DO j = 5, NumMeta
 
           IF (Kij(i,j) .NE. 0.d0) THEN
              Eij = (meta(i)%En-meta(j)%En)
@@ -43,7 +45,7 @@ CONTAINS
     END DO
 
     !**** s-change atomic reations
-    DO i = 1, NumMeta
+    DO i = 5, NumMeta
        if (meta(i)%Nl == 3 .and. meta(i)%Ns == 3) THEN
           Coef1 = meta(i)%Ni + meta(i+1)%Ni
           Coef2 = Kij(i+1,i)/Kij(i,i+1)
