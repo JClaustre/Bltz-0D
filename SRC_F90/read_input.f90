@@ -535,10 +535,10 @@ CONTAINS
        ion(2)%Ni = elec%Ni * 0.95d0                                         !
        ion(1)%Ni = elec%Ni * 0.05d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 4.0d+17                                  !
+       CASE (3) ; ion(NumIon)%Ni = 5.0d+17                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.LE.4) meta(i)%Ni = 2.0d+17                                  !
+          IF (i.LE.4) meta(i)%Ni = 3.0d+17                                  !
           IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
        END DO                                                               !
     ELSE                                                                    !
