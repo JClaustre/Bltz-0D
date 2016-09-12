@@ -32,7 +32,7 @@ CONTAINS
              Eij = meta(i)%En-meta(j)%En
              Kor = 2.8764d-10 * 1d-4 * Fosc(j,i) * meta(j)%Ni * sys%Ra /&
                   (dsqrt(meta(0)%Tp*qok)*Eij)
-             IF (Kor.GT.1.d0 .and. i.NE.3) THEN
+             IF (Kor.GT.1.d0 .and. i.NE.3) THEN ! Add i.NE.3 because of Kor > 1 during some cases!
                 damp = (1.d0 + 3.221d-14* meta(j)%Ni *(1d-6) * meta(i)%Deg / (meta(j)%Deg * Eij**3) )&
                      * (6.6379d-2*Fosc(j,i)*Eij*meta(j)%Deg / (meta(i)%Deg*dsqrt(meta(0)%Tp*qok)) )
                 Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
@@ -48,8 +48,6 @@ CONTAINS
              ELSE
                 EscapF = 1.d0
              END IF
-               
-             !write(*,"(2A,3ES15.6)") meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Kor
              emitF = meta(i)%Aij(j) * EscapF
   
              meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
