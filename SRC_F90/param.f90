@@ -56,9 +56,9 @@ MODULE MOD_PARAM
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Santos/165W/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/10_microS/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/10_microS/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/5_torr/8_mm/"
 
   TYPE(Time)    :: Clock

@@ -38,7 +38,7 @@ CONTAINS
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
     Cgen   = 1d+01  ! Time factor for external source.
-    Post_D = 60d-1 ! Time to ignitiate post_discharge (micro-sec)
+    Post_D = 50d-6 ! Time to ignitiate post_discharge (micro-sec)
     MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
 
@@ -405,7 +405,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 501
+    nx = sys%nx ; Switch = 0 ; mdlus = 5
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
