@@ -37,7 +37,7 @@ CONTAINS
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 1d+01  ! Time factor for external source.
+    Cgen   = 1d-03  ! Time factor for external source.
     Post_D = 50d-6 ! Time to ignitiate post_discharge (micro-sec)
     MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
@@ -107,9 +107,9 @@ CONTAINS
           END IF
       END DO
       
-       IF ( modulo(l,300) == 0 ) THEN
+       IF ( modulo(l,10) == 0 ) THEN
           !**** ALL rates
-          IF (l == 100) THEN
+          IF (l == 10) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
@@ -128,7 +128,7 @@ CONTAINS
           CLOSE(93)
           CLOSE(94)
           !**** 23S Metastable and 2^3P rates ONLY
-          IF (l == 300) THEN
+          IF (l == 10) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
