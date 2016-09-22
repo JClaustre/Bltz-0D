@@ -538,7 +538,7 @@ CONTAINS
        CASE (3) ; ion(NumIon)%Ni = 1.0d+14                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.EQ.1) meta(i)%Ni = 6.0d+16                                  !
+          IF (i.EQ.1) meta(i)%Ni = 1.0d+16                                  !
           IF (i.GT.1) meta(i)%Ni = 1.0d+15
           IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
        END DO                                                               !

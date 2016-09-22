@@ -27,7 +27,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx
-    GenPwr = 1.d-07 ! Time constant to start/end the generator.
+    GenPwr = 1.d-06 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power
@@ -60,10 +60,10 @@ CONTAINS
     END IF
 
     !**** RF - electric field*********************
-    !sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
+    sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
 
     !**** Diagnostic to calculate the absorbed power by the plasma
-    sys%Emoy = sys%Emoy + abs(sys%E)
+    sys%Emoy = sys%Emoy + dabs(sys%E)
     !**** Fix the power here function of Elec field ************************!
     DO i = 1, sys%nx - 1                                                    !
        nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
@@ -147,7 +147,7 @@ CONTAINS
     end do
 
     !**** Diagnostic 
-    diag(10)%EnProd = diag(10)%EnProd + abs(En2 - En1)
+    diag(10)%EnProd = diag(10)%EnProd + dabs(En2 - En1)
     !***************
   END SUBROUTINE Heating
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -213,7 +213,7 @@ CONTAINS
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
     !**** Diagnostic 
-    diag(11)%EnLoss = diag(11)%EnLoss + abs(En - En2)
+    diag(11)%EnLoss = diag(11)%EnLoss + dabs(En - En2)
     !***************
   END SUBROUTINE Elastic
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -303,7 +303,7 @@ CONTAINS
     END IF
 
     do i=1,nx
-       err = abs( (f1_new(i)-f1(i))/f1(i) )
+       err = dabs( (f1_new(i)-f1(i))/f1(i) )
        if(err.gt.small) go to 123 
     end do
 
@@ -312,7 +312,7 @@ CONTAINS
        f1(i) = f1(i) * part
        En2   = En2 + f1(i) * U(i)**(1.5d0) * Sys%Dx
     end do
-    DiagE = abs(1- En2/En)
+    DiagE = dabs(1- En2/En)
     IF (DiagE.GT.1.d-08) print*, "Energy In Fokker_planck Routine not well conserved!", DiagE
   END subroutine FP
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
