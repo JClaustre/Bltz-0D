@@ -37,9 +37,9 @@ CONTAINS
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 1d-03  ! Time factor for external source.
+    Cgen   = 1d-03 ! Time factor for external source.
     Post_D = 50d-2 ! Time to ignitiate post_discharge (micro-sec)
-    MxDt   = 2d-08 ! Maximum time-step
+    MxDt   = 2d-10 ! Maximum time-step
     !**** MAIN LOOP ***************************
 
     !**** MAIN LOOP ***************************
