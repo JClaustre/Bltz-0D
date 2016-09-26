@@ -461,9 +461,12 @@ CONTAINS
        meta(0)%Nuel(i) = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
        OneD%nuMoy = OneD%nuMoy + meta(0)%SecMtm(i)*gama*dsqrt(U(i))
 
-       !**** Maxwllian distribution function
-       IF (i.LT.sys%nx) F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
-       IF (Clock%Rstart == 1) READ(90,*) j, F(i)
+       !**** Maxwllian distribution function\
+       IF (Clock%Rstart == 1) THEN
+          READ(90,"(I6, ES15.6)") j, F(i)
+       ELSE IF (i.LT.sys%nx)THEN
+          F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
+       END IF
 
        consv(1) = consv(1) + F(i)*U(i)**(0.5d0)*sys%Dx
        consv(2) = consv(2) + F(i)*U(i)**(1.5d0)*sys%Dx
@@ -538,9 +541,9 @@ CONTAINS
        CASE (3) ; ion(NumIon)%Ni = 2.0d+16                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.EQ.1) meta(i)%Ni = 2.0d+18                                  !
-          IF (i.GT.1) meta(i)%Ni = 5.0d+17
-          IF (i.GT.4) meta(i)%Ni = 1.0d+15                                  !
+          IF (i.EQ.1) meta(i)%Ni = 2.0d+16                                  !
+          IF (i.GT.1) meta(i)%Ni = 5.0d+16
+          IF (i.GT.4) meta(i)%Ni = 1.0d+16                                  !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')

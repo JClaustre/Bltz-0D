@@ -60,7 +60,7 @@ CONTAINS
     END IF
 
     !**** RF - electric field*********************
-    !sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
+    sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
 
     !**** Diagnostic to calculate the absorbed power by the plasma
     sys%Emoy = sys%Emoy + dabs(sys%E)

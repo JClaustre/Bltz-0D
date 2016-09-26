@@ -39,9 +39,9 @@ CONTAINS
     sys%IPowr = sys%Powr ! Keep Power init in memory
     Cgen   = 1d-03 ! Time factor for external source.
     Post_D = 50d-2 ! Time to ignitiate post_discharge (micro-sec)
-    MxDt   = 2d-10 ! Maximum time-step
+    MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
-
+    CALL Write_Out1D( F, "F_start.dat")
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
