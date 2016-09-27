@@ -42,6 +42,7 @@ CONTAINS
     MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
     CALL Write_Out1D( F, "F_start.dat")
+
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)

@@ -535,15 +535,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.25d0                                         !
-       ion(1)%Ni = elec%Ni * 0.75d0                                         !
+       ion(2)%Ni = elec%Ni * 0.75d0                                         !
+       ion(1)%Ni = elec%Ni * 0.25d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 2.0d+16                                  !
+       CASE (3) ; ion(NumIon)%Ni = 2.0d+14                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
           IF (i.EQ.1) meta(i)%Ni = 2.0d+16                                  !
-          IF (i.GT.1) meta(i)%Ni = 5.0d+16
-          IF (i.GT.4) meta(i)%Ni = 1.0d+16                                  !
+          IF (i.GT.1) meta(i)%Ni = 5.0d+15
+          IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')
