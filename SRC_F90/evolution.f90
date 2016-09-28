@@ -39,7 +39,7 @@ CONTAINS
     sys%IPowr = sys%Powr ! Keep Power init in memory
     Cgen   = 1d-03  ! Time factor for external source.
     Post_D = 50d-2 ! Time to ignitiate post_discharge (micro-sec)
-    MxDt   = 2d-08 ! Maximum time-step
+    MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
 
     !**** MAIN LOOP ***************************
@@ -111,16 +111,16 @@ CONTAINS
           !**** ALL rates
           IF (l == 100) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
+             write(93,"(ES15.6, 2(15F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,15)
              OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
           ELSE
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,14)
+             write(93,"(ES15.6, 2(15F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,15)
              OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
           END IF
@@ -495,7 +495,8 @@ CONTAINS
                ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-    ELSE IF ( mod(iter,Clock%NumIter/10) == 0 ) then
+    END IF
+    IF ( mod(iter,Clock%NumIter/10) == 0 ) then
 
        !**** WRITE RARELY IN TERMINAL ******************!
        write(*,"(A,F7.2,A,3ES10.2,A,ES10.2,3(A,F7.1),2(A,2ES9.2))") &
@@ -503,7 +504,7 @@ CONTAINS
             (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",OneD%Tg(OneD%bnd), &
             "\n\t\t Pg(Torr)", meta(0)%Prs, " | M1 In/Out", diag(10)%InM1,diag(10)%OutM1, " | M2 In/Out", &
             diag(10)%InM2,diag(10)%OutM2
-
+       
        !**** WRITE IN DENSITY.DAT (cm^{-3}) ************!
        OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"density.dat",ACTION="WRITE",STATUS="UNKNOWN")
        DO i = 1, NumMeta+3

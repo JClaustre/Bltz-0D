@@ -72,7 +72,7 @@ CONTAINS
     READ (90,*) Clock%Rstart
     READ (90,*) sys%E
     READ (90,*) meta(0)%Ni, meta(0)%N0
-    READ (90,*) sys%Freq
+    READ (90,*) sys%Freq, sys%rf
     READ (90,*) meta(0)%Prs
     READ (90,*) meta(0)%Tp, OneD%Tw
     READ (90,*) elec%Tp
@@ -486,7 +486,11 @@ CONTAINS
     !**** Fix the power here function of Elec field ************************!
     IF (sys%P0 .EQ. 1) THEN                                                 !
        DO i = 1, sys%nx - 1                                                 !
-          Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 + sys%Freq**2)         !
+          IF (sys%rf == 1) THEN
+             Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 )                   !
+          ELSE
+             Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 * sys%Freq**2)      !
+          END IF
           Df = (F(i+1)-F(i))                                                !
           power = power - Uc * U(i)**(1.5d0) * Df * meta(0)%Nuel(i)*0.6667d0!
        END DO                                                               !
@@ -532,15 +536,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.85d0                                         !
-       ion(1)%Ni = elec%Ni * 0.15d0                                         !
+       ion(2)%Ni = elec%Ni * 0.45d0                                         !
+       ion(1)%Ni = elec%Ni * 0.55d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 1.0d+14                                  !
+       CASE (3) ; ion(NumIon)%Ni = 1.0d+13                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.EQ.1) meta(i)%Ni = 1.0d+16                                  !
-          IF (i.GT.1) meta(i)%Ni = 1.0d+15
-          IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
+          IF (i.LE.2) meta(i)%Ni = 5.0d+16                                  !
+          IF (i.GT.2) meta(i)%Ni = 1.0d+13
+          IF (i.GT.4) meta(i)%Ni = 1.0d+12                                  !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')
@@ -593,7 +597,7 @@ CONTAINS
     WRITE (990,"(I4)")     1
     WRITE (990,"(ES15.6)") sys%E
     WRITE (990,"(ES15.6,I2)") meta(0)%Ni, meta(0)%N0
-    WRITE (990,"(ES15.6)") sys%Freq
+    WRITE (990,"(ES15.6,I2)") sys%Freq, sys%rf
     WRITE (990,"(ES15.6)") meta(0)%Prs
     WRITE (990,"(2ES15.6)") meta(0)%Tp, OneD%Tw
     WRITE (990,"(ES15.6)") elec%Tp
