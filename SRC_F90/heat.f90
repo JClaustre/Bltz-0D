@@ -24,7 +24,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)  :: U, F
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: Dx, Fn, nuc
+    REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx
     GenPwr = 1.d-06 ! Time constant to start/end the generator.
@@ -60,14 +60,20 @@ CONTAINS
     END IF
 
     !**** RF - electric field*********************
-    sys%E = (sys%E*sqrt(2.d0)) * sin(2.d+06*(2.d0*pi) * Clock%SumDt)
-
+    IF (sys%rf == 1) THEN
+       sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
+       frq = 0.d0
+    ELSE
+       frq = sys%Freq
+    END IF
+    !*********************************************
+    
     !**** Diagnostic to calculate the absorbed power by the plasma
     sys%Emoy = sys%Emoy + dabs(sys%E)
     !**** Fix the power here function of Elec field ************************!
     DO i = 1, sys%nx - 1                                                    !
        nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-       Uc = qome * (sys%Emoy/iter)**2 / (nuc**2 + sys%Freq**2)              !
+       Uc = qome * (sys%Emoy/iter)**2 / (nuc**2 + Frq**2)                   !
        IF (i .LT. nx-1) THEN
           Df = F(i+1) - F(i)
        ELSE IF (i.EQ.nx-1) THEN
@@ -96,7 +102,7 @@ CONTAINS
     !LOCAL
     INTEGER      :: i, nx
     REAL(DOUBLE) :: Dx, part,alpha0, nucm,nucp
-    REAL(DOUBLE) :: YY,ZZ,XX, En1, En2
+    REAL(DOUBLE) :: YY,ZZ,XX, En1, En2, frq
     REAL(DOUBLE), DIMENSION(sys%nx) :: f0,AC1,BC1,CC1
     En1 = 0.d0 ; En2 = 0.d0
     nx = sys%nx ; Dx = sys%Dx
@@ -114,6 +120,13 @@ CONTAINS
        F(i) = F(i) / part
        f0(i)= F(i)
     end do
+
+    !**** Rf mode ******************************
+    IF (sys%rf == 1) THEN
+       frq = 0.d0
+    ELSE
+       frq = sys%Freq
+    END IF
     
     !**** SYSTEME TRIDIAGONALE A RESOUDRE CAS GENEGRAL***************
     do i=1,nx
@@ -132,10 +145,10 @@ CONTAINS
           nucp= 0.5d0*(meta(0)%Nuel(i)+meta(0)%Nuel(i+1))
        END IF
 
-       AC1(i)= -ZZ*alpha0 * sys%E**2*(XX**1.5d0)*nucm / (nucm**2 + sys%Freq**2)
-       CC1(i)= -ZZ*alpha0 * sys%E**2*(YY**1.5d0)*nucp / (nucp**2 + sys%Freq**2)    
-       BC1(i)= 1.d0 + ZZ*alpha0*sys%E**2*( (YY**1.5d0 *nucp / (nucp**2 + sys%Freq**2)) +&
-            (XX**1.5d0*nucm / (nucm**2 + sys%Freq**2)) )
+       AC1(i)= -ZZ*alpha0 * sys%E**2*(XX**1.5d0)*nucm / (nucm**2 + frq**2)
+       CC1(i)= -ZZ*alpha0 * sys%E**2*(YY**1.5d0)*nucp / (nucp**2 + frq**2)    
+       BC1(i)= 1.d0 + ZZ*alpha0*sys%E**2*( (YY**1.5d0 *nucp / (nucp**2 + frq**2)) +&
+            (XX**1.5d0*nucm / (nucm**2 + frq**2)) )
     end do
 
     !*****SOLUTION DU SYSTEME TRIDIAGONALE f1 AU TEMPS k+1-************************
@@ -161,10 +174,10 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(INOUT)  :: meta
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: Dx, XX,YY,ZZ, En, En2
+    REAL(DOUBLE) :: Dx, XX,YY,ZZ, En, En2, Ren
     REAL(DOUBLE), DIMENSION(sys%nx) :: AEN,BEN,CEN,f0
     REAL(DOUBLE) :: part,alpha1,alpha2,nucm,nucp
-    En = 0.d0 ; En2 = 0.d0
+    En = 0.d0 ; En2 = 0.d0 ; Ren = 0.d0
     nx = sys%nx ; Dx = sys%Dx
 
     !******PARAMETRES COLLISIONS ELASTIQUES*************
@@ -203,6 +216,8 @@ CONTAINS
        CEN(i)= -ZZ*(YY**1.5d0)*( 0.5d0 + alpha2) * nucp
        BEN(i)= 1.d0 + ZZ * ( (YY**1.5d0)*(-0.5d0 + alpha2)*nucp &
             + (XX**1.5d0)*(0.5d0 + alpha2) * nucm)
+       !**** Collision Rate e-n :
+       Ren = Ren + gama * F(i) * meta(0)%SecMtm(i) * U(i) * Dx
     end do
 
     !*****SOLUTION DU SYSTEME TRIDIAGONALE f1 AU TEMPS k+1-***************************************
@@ -214,6 +229,8 @@ CONTAINS
     end do
     !**** Diagnostic 
     diag(11)%EnLoss = diag(11)%EnLoss + dabs(En - En2)
+    !**** rate electron-neutral
+    diag(15)%Tx(1) = Ren * meta(0)%Ni
     !***************
   END SUBROUTINE Elastic
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

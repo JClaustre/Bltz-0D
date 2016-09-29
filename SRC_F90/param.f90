@@ -19,7 +19,7 @@ MODULE MOD_PARAM
   END type Time
   !-----------------------------------------------------------
   TYPE, PUBLIC::SysVar
-     INTEGER :: nx, P0 ! node number and max-node number
+     INTEGER :: nx, P0, rf! node number and max-node number
      REAL(DOUBLE) :: Emx, Dx ! grid step
      REAL(DOUBLE) :: Ra, L, volume
      REAL(DOUBLE) :: E, Emoy, Freq, Powr, IPowr, Pcent, Pwmoy
@@ -60,6 +60,7 @@ MODULE MOD_PARAM
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/0.001_microS/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/5_torr/8_mm/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Boisvert/760_torr/30W/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

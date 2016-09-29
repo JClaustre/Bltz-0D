@@ -112,16 +112,16 @@ CONTAINS
           !**** ALL rates
           IF (l == 100) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,14)
+             write(93,"(ES15.6, 2(15F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,15)
              OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
           ELSE
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,14)
+             write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,14)
+             write(93,"(ES15.6, 2(15F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,15)
              OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
              write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
           END IF
@@ -488,15 +488,16 @@ CONTAINS
        END IF
        SELECT CASE (NumIon) 
        CASE (3)
-          write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,&
+          write(99,"(52ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
                OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
                ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        CASE DEFAULT
-          write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, elec%Ni*1d-06,&
-               ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
+          write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
+               elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-    ELSE IF ( mod(iter,Clock%NumIter/10) == 0 ) then
+    END IF
+    IF ( mod(iter,Clock%NumIter/10) == 0 ) then
 
        !**** WRITE RARELY IN TERMINAL ******************!
        write(*,"(A,F7.2,A,3ES10.2,A,ES10.2,3(A,F7.1),2(A,2ES9.2))") &
@@ -504,7 +505,7 @@ CONTAINS
             (sys%E/meta(0)%Ni)/1d-21, " | Tg(K)",meta(0)%Tp*qok," | Tg(bnd)",OneD%Tg(OneD%bnd), &
             "\n\t\t Pg(Torr)", meta(0)%Prs, " | M1 In/Out", diag(10)%InM1,diag(10)%OutM1, " | M2 In/Out", &
             diag(10)%InM2,diag(10)%OutM2
-
+       
        !**** WRITE IN DENSITY.DAT (cm^{-3}) ************!
        OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"density.dat",ACTION="WRITE",STATUS="UNKNOWN")
        DO i = 1, NumMeta+3
