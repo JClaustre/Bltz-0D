@@ -492,7 +492,7 @@ CONTAINS
           IF (sys%rf == 1) THEN
              Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 )                   !
           ELSE
-             Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 * sys%Freq**2)      !
+             Uc = qome * sys%E**2 / (meta(0)%Nuel(i)**2 + sys%Freq**2)      !
           END IF
           Df = (F(i+1)-F(i))                                                !
           power = power - Uc * U(i)**(1.5d0) * Df * meta(0)%Nuel(i)*0.6667d0!
@@ -539,15 +539,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN
-       ion(2)%Ni = elec%Ni * 0.45d0                                         !
-       ion(1)%Ni = elec%Ni * 0.55d0                                         !
+       ion(2)%Ni = elec%Ni * 0.95d0                                         !
+       ion(1)%Ni = elec%Ni * 0.05d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 1.0d+13                                  !
+       CASE (3) ; ion(NumIon)%Ni = 5.0d+17                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.LE.2) meta(i)%Ni = 5.0d+16                                  !
-          IF (i.GT.2) meta(i)%Ni = 1.0d+13
-          IF (i.GT.4) meta(i)%Ni = 1.0d+12                                  !
+          IF (i.LE.2) meta(i)%Ni = 3.0d+17                                  !
+          IF (i.GT.2) meta(i)%Ni = 6.0d+16
+          IF (i.GT.4) meta(i)%Ni = 1.0d+14                                  !
        END DO                                                               !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')

@@ -37,12 +37,10 @@ CONTAINS
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 1d-03 ! Time factor for external source.
-    Post_D = 50d-2 ! Time to ignitiate post_discharge (micro-sec)
+    Cgen   = 1d-02 ! Time factor for external source.
+    Post_D = 50d-6 ! Time to ignitiate post_discharge (micro-sec)
     MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
-    CALL Write_Out1D( F, "F_start.dat")
-
     !**** MAIN LOOP ***************************
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
@@ -406,7 +404,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 500
+    nx = sys%nx ; Switch = 0 ; mdlus = 1
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -492,7 +490,7 @@ CONTAINS
                OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
                ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        CASE DEFAULT
-          write(99,"(48ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
+          write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
                elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)

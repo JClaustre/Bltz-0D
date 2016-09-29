@@ -26,7 +26,7 @@ CONTAINS
     INTEGER      :: i, nx
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
-    nx = sys%nx ; Dx = sys%Dx
+    nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
     GenPwr = 1.d-06 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
@@ -73,7 +73,8 @@ CONTAINS
     !**** Fix the power here function of Elec field ************************!
     DO i = 1, sys%nx - 1                                                    !
        nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-       Uc = qome * (sys%Emoy/iter)**2 / (nuc**2 + Frq**2)                   !
+!       Uc = qome * (sys%Emoy/iter)**2 / (nuc**2 + Frq**2)                   !
+       Uc = qome * sys%E**2 / (nuc**2 + Frq**2)                             !
        IF (i .LT. nx-1) THEN
           Df = F(i+1) - F(i)
        ELSE IF (i.EQ.nx-1) THEN

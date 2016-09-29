@@ -56,9 +56,9 @@ MODULE MOD_PARAM
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Santos/165W/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/5_Torr/20W/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/5_Torr/20W/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/0.001_microS/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/0.01_microS/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/5_torr/8_mm/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Boisvert/760_torr/30W/"
 
