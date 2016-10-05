@@ -539,8 +539,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN
-       ion(2)%Ni = elec%Ni * 0.95d0                                         !
-       ion(1)%Ni = elec%Ni * 0.05d0                                         !
+       ion(2)%Ni = elec%Ni * 0.50d0                                         !
+       ion(1)%Ni = elec%Ni * 0.50d0                                         !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 5.0d+17                                  !
        END SELECT                                                           !

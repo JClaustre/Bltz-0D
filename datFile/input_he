@@ -1,15 +1,15 @@
 5000		  Number of grid points 
-1          	  Restart simulation ( 0  - no restart | 1 - restart )
+0          	  Restart simulation ( 0  - no restart | 1 - restart )
 1.505E+01	  E (V/cm)	Electric field
 6.900E+16   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 2.450E+09   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
 7.600E+02	  prs (Torr)	Pressure
-1.800E+03  600	  Tp (K)	Temperature + Tp at tube boundary
-1.760E+00	  Tpe (eV)	Electronic Temperature
+2.500E+03  600	  Tp (K)	Temperature + Tp at tube boundary
+1.860E+00	  Tpe (eV)	Electronic Temperature
 0.300E+00	  Ra (cm)	Cylinder Radius
 1.000E+00	  L  (cm)       Tube Length
-1.900E+13	  ne (cm-3)	Initial electron density
-5.836E+02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
+5.000E+13	  ne (cm-3)	Initial electron density
+1.167E+03   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
 5.001E+01   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
 2.000E+02	  Emax (Energy grid max (eV) ) 

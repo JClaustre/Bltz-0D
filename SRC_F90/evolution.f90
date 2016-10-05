@@ -37,8 +37,8 @@ CONTAINS
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 1d-02 ! Time factor for external source.
-    Post_D = 50d-6 ! Time to ignitiate post_discharge (micro-sec)
+    Cgen   = 1d+01 ! Time factor for external source.
+    Post_D = 51d-6 ! Time to ignitiate post_discharge (micro-sec)
     MxDt   = 2d-09 ! Maximum time-step
     !**** MAIN LOOP ***************************
     !**** MAIN LOOP ***************************
@@ -54,7 +54,7 @@ CONTAINS
        CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen,l)
 
        !**** Heat + Elas + Fk-Pl
-       IF (sys%Pcent.NE.0.d0) CALL Heating (sys,meta, U, F)
+       CALL Heating (sys,meta, U, F)
        CALL Elastic      (sys,meta, U, F)
        CALL FP           (sys, elec, F, U)
        !**** Ioniz He+
@@ -108,7 +108,7 @@ CONTAINS
       
        IF ( modulo(l,100) == 0 ) THEN
           !**** ALL rates
-          IF (l == 100) THEN
+          IF (l == 100 .and. Clock%Rstart.EQ.0) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
@@ -127,7 +127,7 @@ CONTAINS
           CLOSE(93)
           CLOSE(94)
           !**** 23S Metastable and 2^3P rates ONLY
-          IF (l == 100) THEN
+          IF (l == 100 .and. Clock%Rstart == 0) THEN
              OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN")
              write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
              OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
@@ -404,11 +404,19 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 1
+    nx = sys%nx ; Switch = 0 ; mdlus = 500
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !**** CHECK PART *********************************
+
+    !**** UpDate Electron (Density + Temperature)
+    elec%Ni = 0.d0 ; elec%Tp = 0.d0
+    DO i = 1, sys%nx 
+       elec%Ni = elec%Ni + ( F(i) * U(i)**0.5d0 * sys%Dx )
+       elec%Tp = elec%Tp + ( F(i) * U(i)**1.5d0 * sys%Dx )
+    END DO
+    elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
 
     !**** Check EEDF Positivty
     DO i = 1, nx
@@ -416,14 +424,6 @@ CONTAINS
           F(i) = 0.d0 ; Switch = 10
        END IF
     END DO
-
-    !**** UpDate Electron (Density + Temperature)
-    elec%Ni = 0.d0 ; elec%Tp = 0.d0
-    DO i = 1, sys%nx 
-       elec%Ni = elec%Ni + ( F(i) * dsqrt(U(i)) * sys%Dx )
-       elec%Tp = elec%Tp + ( F(i) * dsqrt(U(i)**3) * sys%Dx )
-    END DO
-    elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta

@@ -211,13 +211,15 @@ CONTAINS
     INTEGER :: k, kp, km, ichi, case, Nion
     REAL(DOUBLE) :: prod, loss, rcmb, ionz, ratx
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
-    REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr
+    REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr, test
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     Dx = sys%Dx ; br = 0.5d0
     SELECT CASE (3)
     CASE (3) 
        Nion = 3
     END SELECT
+
+    test  = 1.1e-26 * ((meta(0)%Tp*qok)**2.3d0 / (elec%Tp*qok)**4.5)
 
     case = 1 ! if 0 then "Francois case" | else "J-P case"
     cnst = dsqrt(2.d0/Dx**3.d0)
@@ -288,6 +290,7 @@ CONTAINS
     
     !**** br == branching ratio
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
+!    ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*test*ion(2)%Ni*elec%Ni**2 - Si*Dx)
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
     ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
   END SUBROUTINE Ioniz_Dimer100

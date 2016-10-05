@@ -54,7 +54,7 @@ CONTAINS
        !**** Decrease External Electric source
        IF (Pwk == 0) sys%IPowr = sys%E
        sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
-       IF (sys%E.LT.1d-06) sys%E = 0.d0
+       IF (sys%E.LT.1d-08) sys%E = 0.d0
        sys%Pcent = sys%E
        Pwk = Pwk+1
     END IF
@@ -218,7 +218,7 @@ CONTAINS
        BEN(i)= 1.d0 + ZZ * ( (YY**1.5d0)*(-0.5d0 + alpha2)*nucp &
             + (XX**1.5d0)*(0.5d0 + alpha2) * nucm)
        !**** Collision Rate e-n :
-       Ren = Ren + gama * F(i) * meta(0)%SecMtm(i) * U(i) * Dx
+       Ren = Ren + gama * F(i) * meta(0)%SecMtm(i) * U(i) * Dx * part
     end do
 
     !*****SOLUTION DU SYSTEME TRIDIAGONALE f1 AU TEMPS k+1-***************************************
