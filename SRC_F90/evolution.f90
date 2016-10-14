@@ -18,30 +18,36 @@ MODULE MOD_EVOL
   USE MOD_TPGAZ
   IMPLICIT NONE
 
+  !**** Switch for excitation and ionization process ***
   INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
-  
+  !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
+
 CONTAINS
-  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, j, k, l, m                                                  !
+    INTEGER :: i, k, l                                                        !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MxDt                                      !
-    REAL(DOUBLE) :: Cgen, Res, Post_D, PwE                                    !
+    REAL(DOUBLE) :: Cgen, Post_D                                              !
     count1=0.d0 ; count2=0.d0 ; Res=0.d0                                      !
-    !*****************************                                            !
+    !*************************************************************************!
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
-    sys%IPowr = sys%Powr ! Keep Power init in memory
-    Cgen   = 1d-02 ! Time factor for external source.
-    Post_D = 50d-2 ! Time to ignitiate post_discharge (micro-sec)
-    MxDt   = 2d-09 ! Maximum time-step
-    !**** MAIN LOOP ***************************
-    !**** MAIN LOOP ***************************
+    !**** Keep Power-init in memory ***
+    sys%IPowr = sys%Powr 
+    !**** Time factor for external source ***
+    Cgen   = 1d-02 
+    !**** Start Time to ignitiate post_discharge (micro-sec) ***
+    Post_D = 50d-2
+    !**** Maximum time-step allowed (sec)***
+    MxDt   = 2d-09
+
+    !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
@@ -51,51 +57,51 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen,l)
+       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
 
-       !**** Heat + Elas + Fk-Pl
+       !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
-       CALL Elastic      (sys,meta, U, F)
-       CALL FP           (sys, elec, F, U)
-       !**** Ioniz He+
+       CALL Elastic (sys,meta, U, F)
+       CALL FP      (sys, elec, F, U)
+       !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
-       !**** Ioniz dimer 
+       !**** Ioniz Excimer *** 
        IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-       !**** Disso Recombination
+       !**** Dissociative Recombination ***
        CALL Recomb       (sys, meta, U, F, Diag)
-       !**** 3 Body ionic conversion
+       !**** 3 Body ionic conversion ***
        CALL Conv_3Body   (meta, ion)
-       !**** Penning + Associative ioniz
+       !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
-       !**** Radiative transfert
+       !**** Radiative transfert ***
        CALL Radiat       (sys, meta, Fosc, Diag)
-       !**** Diffusion
+       !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
-       !**** Excit + De-excit
+       !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-       !**** De-excit Dimer molecule (He2*)
+       !**** De-excit excimer molecule (He2*) ***
        IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-       !**** L-Exchange
+       !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
        !*************************************
 
-       !**** UpDateS
+       !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, F, diag, l, MxDt)
 
-       !**** Evaluation of Calculation Time
+       !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
-       !**** UpDate Simulation Time
+       !**** UpDate Simulation Time ***
        Clock%SumDt = Clock%SumDt + Clock%Dt
-       !**** Evaluation of Metastable and 2^3P rates
-       !**** Total rate is made in diag(10) and superelas and inelas in diag(15)
+       !**** Evaluation of Metastable and 2^3P rates *** 
+       !**** Total rate is written in diag(10) and D-excit and Excit in diag(15) ***
        diag(10)%InM1=0.d0 ; diag(10)%InM2=0.d0 ; diag(10)%OutM1=0.d0 ; diag(10)%OutM2=0.d0
        DO i = 1, 14
           IF (i.NE.10) THEN 
@@ -106,6 +112,7 @@ CONTAINS
           END IF
       END DO
       
+      !**** Write in files all rates ***
        IF ( modulo(l,100) == 0 ) THEN
           !**** ALL rates
           IF (l == 100 .and. Clock%Rstart.EQ.0) THEN
@@ -148,16 +155,15 @@ CONTAINS
        IF (l .GE. Clock%MaxIter) EXIT                                             !
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
-
-    !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
     
+    !**** Conservation test routine ***
     CALL Consv_Test(sys, U, F, Diag, consv)
+    !**** Write final EEDF ***
     CALL Write_Out1D( F, "F_final.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
 
   END SUBROUTINE EVOLUTION
-  !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   
   SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
     !INTENT
@@ -178,6 +184,7 @@ CONTAINS
     write(*,"(3A,ES15.4)") tabul,"Density (cm-3): ", elec%Name  , elec%Ni*1.d-6         !
     write(*,"(3A,ES15.4)") tabul,"Density (cm-3): ", ion(1)%Name, ion(1)%Ni*1.d-6       !
     write(*,"(3A,ES15.4)") tabul,"Density (cm-3): ", ion(2)%Name, ion(2)%Ni*1.d-6       !
+    !**** Relative error ***
     Coef = ABS(1.0d0 - (elec%Ni/(ion(1)%Ni+ion(2)%Ni)))                                 !
     write(*,"(2A,ES15.4)") tabul, "Partcl Error : ", Coef                               !
     write(*,"(2A,ES15.4)") tabul, "Particle Loss due to diffusion: ", diag(9)%SumTx/elec%Ni!
@@ -238,6 +245,7 @@ CONTAINS
   END SUBROUTINE Consv_Test
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** Output files with all parameters used in the simulation ***
   SUBROUTINE OutPutMD (sys, meta, ion, elec, diag, consv)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -247,9 +255,9 @@ CONTAINS
     TYPE(Species), DIMENSION(NumIon)   , INTENT(IN) :: ion
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(IN) :: meta
     !LOCAL
-    INTEGER :: i
+    INTEGER :: i, NumI
     REAL(DOUBLE) :: ne, Dt, gainE, gainP, SumMeta
-    ne = elec%Ni ; Dt = Clock%Dt
+    ne = elec%Ni ; Dt = Clock%Dt ; NumI = Clock%NumIter
     gainE = (Diag(10)%EnProd+Diag(5)%EnProd+Diag(6)%EnProd + &
          Diag(1)%EnProd+Diag(12)%EnProd+Diag(4)%EnProd)
     gainP = Diag(2)%SumTx + Diag(5)%SumTx + Diag(6)%SumTx + Diag(13)%SumTx + Diag(4)%SumTx 
@@ -291,7 +299,7 @@ CONTAINS
     write(99,"(A)") "TIME PARAMETERS"
     write(99,"(A)") "-----------------"
     write(99,"(A,ES11.2)")  "* Time step (Δt) : ", Clock%Dt
-    write(99,"(A,I10)")     "* Number of iterations : ", Clock%NumIter
+    write(99,"(A,I10)")     "* Number of iterations : ", NumI
     write(99,"(A,F6.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
     write(99,"(A,3(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
          int(Clock%Minutes), " Min ", int(Clock%Seconds), " sec" 
@@ -325,57 +333,57 @@ CONTAINS
     write(99,"(A)") "ELECTRON | IONS BALANCE"
     write(99,"(A)") "--------------------"
     write(99,"(A)") "### Power balance : Electron Energy Saving"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Heat :  ", Diag(10)%EnProd * qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Heat :  ", Diag(10)%EnProd * qe/(ne*Dt*NumI), &
          Diag(10)%EnProd *100.d0 / gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penn :  ", Diag(5)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penn :  ", Diag(5)%EnProd  * qe/(ne*Dt*NumI), &
          Diag(5)%EnProd *100.d0 / gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Asso :  ", Diag(6)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Asso :  ", Diag(6)%EnProd  * qe/(ne*Dt*NumI), &
          Diag(6)%EnProd *100.d0 / gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxct :  ", Diag(1)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxct :  ", Diag(1)%EnProd  * qe/(ne*Dt*NumI), &
          Diag(1)%EnProd *100.d0 / gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxim :  ", Diag(12)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Dxim :  ", Diag(12)%EnProd  * qe/(ne*Dt*NumI), &
          Diag(12)%EnProd *100.d0 / gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pxcim:  ", Diag(4)%EnProd  * qe/(ne*Dt*clock%NumIter), &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pxcim:  ", Diag(4)%EnProd  * qe/(ne*Dt*NumI), &
          Diag(4)%EnProd *100.d0 / gainE, " %"
 
     write(99,"(A)") "### Power balance : Electron Energy Loss"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*clock%NumIter)&
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Elas :  ", Diag(11)%EnLoss * qe/(ne*Dt*NumI)&
          , Diag(11)%EnLoss*100.d0/gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss Recb :  ", Diag(8)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Recb :  ", Diag(8)%EnLoss  * qe/(ne*Dt*NumI)&
          , Diag(8)%EnLoss*100.d0/gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss Ionz :  ", Diag(2)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Ionz :  ", Diag(2)%EnLoss  * qe/(ne*Dt*NumI)&
          , Diag(2)%EnLoss*100.d0/gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss Exct :  ", Diag(1)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Exct :  ", Diag(1)%EnLoss  * qe/(ne*Dt*NumI)&
          , Diag(1)%EnLoss*100.d0/gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Diff :  ", Diag(9)%EnLoss  * qe/(ne*Dt*NumI)&
          , Diag(9)%EnLoss*100.d0/gainE, " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss Iexc :  ", Diag(13)%EnLoss  * qe/(ne*Dt*clock%NumIter)&
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss Iexc :  ", Diag(13)%EnLoss  * qe/(ne*Dt*NumI)&
          , Diag(13)%EnLoss*100.d0/gainE, " %"
     
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Particle balance : Electron Saving"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain ioniz : ", Diag(2)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain ioniz : ", Diag(2)%SumTx/(ne*NumI),  &
          Diag(2)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Assoc : ", Diag(6)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Assoc : ", Diag(6)%SumTx/(ne*NumI),  &
          Diag(6)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penng : ", Diag(5)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Penng : ", Diag(5)%SumTx/(ne*NumI),  &
          Diag(5)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(4)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Pexci : ", Diag(4)%SumTx/(ne*NumI),  &
          Diag(4)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Gain Ioexc : ", Diag(13)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Gain Ioexc : ", Diag(13)%SumTx/(ne*NumI),  &
          Diag(13)%SumTx*100.d0 / abs(gainP), " %"
 
     write(99,"(A)") "### Particle balance : Electron Loss"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss recmb : ", Diag(8)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss recmb : ", Diag(8)%SumTx/(ne*NumI),  &
          Diag(8)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss diffz : ", Diag(9)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss diffz : ", Diag(9)%SumTx/(ne*NumI),  &
          Diag(9)%SumTx*100.d0 / abs(gainP), " %"
-    write(99,"(A,ES15.6,F8.2,A)") "* Loss recex : ", Diag(15)%SumTx/(ne*clock%NumIter),  &
+    write(99,"(A,ES15.6,F8.2,A)") "* Loss recex : ", Diag(15)%SumTx/(ne*NumI),  &
          Diag(15)%SumTx*100.d0 / abs(gainP), " %"
     write(99,"(/,A)") "-------------------------------------------------------"
-    write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
+    write(99,"(A,2ES15.4)")"* Gain elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*NumI) ) * &
          gainE, gainP
-    write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*clock%NumIter) ) * &
+    write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*NumI) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
     write(99,"(A)") " "
@@ -444,10 +452,6 @@ CONTAINS
           END IF
        END IF
     END do
-
-    !**** Report 
-    !IF (Switch==10) write(*,"(2A,F8.3)") tabul, "Carefull, EEDF has negative(s) values ! time= ",&
-    !     (Clock%SumDt*1e6)
 
     !**** Update Time-step
     IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN

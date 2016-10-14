@@ -17,6 +17,8 @@ MODULE MOD_EXCIT
 CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** Totally explicit driscretization but a little bit restrictive
+  !for the time step ***
   SUBROUTINE Exc_Begin(sys, meta, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -142,6 +144,8 @@ CONTAINS
   END SUBROUTINE Exc_Begin
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** Explicit routine but for very high rates we assume equilibrium
+  !less restrictive on the time step ***
   SUBROUTINE Exc_Equil(sys, meta, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -160,7 +164,7 @@ CONTAINS
     REAL(DOUBLE) :: SubDt, SubRt
     !Equili VaRIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
-    REAL(DOUBLE) :: ratx, Rate, Rate2, RateTmp, RateTmp2
+    REAL(DOUBLE) :: Rate, Rate2, RateTmp, RateTmp2
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
@@ -314,6 +318,8 @@ CONTAINS
   END SUBROUTINE Exc_Equil
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** Explicit calculation of the EEDF but densities are treated in an
+  !implicit form ***
   SUBROUTINE Exc_Impli(sys, meta, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -326,13 +332,13 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd, ratx, Rate, Rate2, RateTmp, RateTmp2
+    REAL(DOUBLE) :: Sx, Sd, Rate, Rate2, RateTmp, RateTmp2
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
     REAL(DOUBLE) :: Dt
     !Implicit Density VARIABLES
-    REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd, Ndiff=0.d0
+    REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
     Rate=0.d0 ; Rate2=0.d0 ; RateTmp=0.d0 ; RateTmp2=0.d0
@@ -384,8 +390,6 @@ CONTAINS
              Ni = meta(i)%Ni ; Nj = meta(j)%Ni
              meta(i)%Ni = (Ni + Dt*Nj*Sd) / (1.d0 + Dt*Sx)
              meta(j)%Ni = (Nj + Dt*Ni*Sx) / (1.d0 + Dt*Sd)
-             !Ndiff = meta(j)%Ni-Ni
-             !Ndens(i) = Ni - Ndiff
 
              Nexpl = 0.d0 ; Nexpl = Ni + Dt * (Sd*Nj - Sx*Ni)
              Rmx = (meta(i)%Ni-Ni) / (Nexpl-Ni)
@@ -393,10 +397,6 @@ CONTAINS
              Nexpl = 0.d0 ; Nexpl = Nj + Dt * (Sx*Ni - Sd*Nj)
              Rmd = (meta(j)%Ni-Nj) / (Nexpl-Nj)
              IF ((Nexpl-Nj) .EQ. 0.d0 ) Rmd = 0.d0
-             !**** Update Dens:
-             !meta(i)%Updens = meta(i)%Updens - Ndiff
-             !meta(j)%Updens = meta(j)%Updens + Ndiff
-             !**********************
 
              DO k = 1, nx
                 kp = k + ichi
@@ -509,7 +509,7 @@ CONTAINS
   END SUBROUTINE Exc_Impli
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  !**** He2* + e --> He + e
+  !**** He2* + e --> He + e ***
   SUBROUTINE Dexc_Dimer(sys, U, ion, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -541,31 +541,32 @@ CONTAINS
        km = k - ichi
        Fo(k) = Fi(k)
        prod= 0.d0 ; loss= 0.d0
-       !**** De-Excitation
+       !**** De-Excitation ***
        loss = U(k) * ion(Nion)%SecExc(1,k) * Fi(k)
        IF (km   .GT. 0) prod = U(km) * ion(Nion)%SecExc(1,km)* (1.d0-rchi) * Fo(km)
        IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * ion(Nion)%SecExc(1,km-1) * Fo(km-1)
        C_Dxc = coef1 * (prod - loss) / dsqrt(U(k))
        !**************************** 
 
-       !**** Excited states balance
+       !**** Excited states balance ***
        IF (k .LE. (nx-ichi-1) ) Sd = Sd + ( U(k) * ion(Nion)%SecExc(1,k) * Fi(k)* gama*Dx)
        !**************************** 
 
-       !**** UpDate EEDF
+       !**** UpDate EEDF ***
        Fi(k) = Fi(k) + Clock%Dt *  C_Dxc
        !**************************** 
     END DO
-    !**** Energy conservation Diagnostic
+    !**** Energy conservation Diagnostic ***
     diag(12)%EnProd = diag(12)%EnProd + Clock%Dt * Sd*ion(Nion)%Ni* E_ij
     !*****************
-    !**** UpDate Density
+    !**** UpDate Density ***
     ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
 
     if (Sd .GT. MaxR) MaxR = Sd
   END SUBROUTINE Dexc_Dimer
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
+  !**** Cross-section calculation for excitation and D-excitation processes ***
   SUBROUTINE Init_ExcDxc(sys, meta, Fosc, Q, A)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -738,8 +739,8 @@ CONTAINS
        END DO
     END DO
 
-    !**** De-excitation from Excimer He2*
-    !**** He2* + e- --> 2He+ + e-
+    !**** De-excitation from Excimer He2* ***
+    !**** He2* + e- --> 2He+ + e- ***
     SELECT CASE (NumIon)
     CASE (3) 
        ion(NumIon)%SecExc(1,:) = 6.74d-21

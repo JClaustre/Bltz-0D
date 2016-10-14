@@ -17,25 +17,25 @@ MODULE MOD_IONIZ
 CONTAINS
 
   !***********************************************************************
-  ! Second electron with 1/2 energy of primary one
+  !**** Second electron with 1/2 energy of primary one ***
   SUBROUTINE Ioniz_50 (sys, meta, U, Fi, diag)
-    !INTENT
+    !****INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
-    !LOCAL
+    !****LOCAL ***
     INTEGER :: i, k, kp, ichi
     REAL(DOUBLE) :: prod, loss, coef, coef1
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, ionz, ratx
-    !SubCYCLING VARIABLES
+    !**** SubCYCLING VARIABLES ***
     REAL(DOUBLE) :: SubDt
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; prod=0.d0 ; loss = 0.d0
 
     DO i = 0, NumMeta
-       !**** SubCycling for the direct ionization 
+       !**** SubCycling for the direct ionization *** 
        IF (i .NE. 0) THEN
           SubCycl = 1
           SubDt = Clock%Dt
@@ -72,13 +72,13 @@ CONTAINS
              IF (kp+2 .LE. sys%nx) &
                   prod = prod + rchi*0.5d0 * meta(i)%SecIon(1,kp+2) * Fi(kp+2) * U(kp+2)
 
-             !**** Excited states balance
+             !**** Excited states balance ***
              IF (k .GE. ichi+1) then
                 coef = 1.d0
                 if (k == ichi+1) coef = (1.0d0-rchi)
                 ionz = ionz + coef * Fi(k) * U(k) * meta(i)%SecIon(1,k)
              END IF
-             !**** UpDate EEDF
+             !**** UpDate EEDF *** 
              Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / sqrt(U(k))
           END DO
           ratx = ionz * Dx * gama
@@ -94,31 +94,32 @@ CONTAINS
   !***********************************************************************
 
   !***********************************************************************
-  ! Second electron with 0 energy
+  !**** Second electron with 0 energy ***
   SUBROUTINE Ioniz_100 (sys, meta, U, Fi, diag)
-    !INTENT
+    !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
-    !LOCAL
+    !**** LOCAL ***
     INTEGER :: i, k, kp, ichi, cas, nx
     REAL(DOUBLE) :: prod, loss, ratx, Rate, RateTmp
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src
-    !SubCYCLING VARIABLES
+    !**** SubCYCLING VARIABLES ***
     REAL(DOUBLE) :: SubDt
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; nx = sys%nx
     Rate=0.d0 ; RateTmp=0.d0 ; diag(2)%Tx(:)=0.d0 ; diag(2)%Txtmp(1)=0.d0
-
-    cas = 1 ! if 0 then "Vidal case" | else "Matte case"
+    !**** if (0) then "Vidal case" (change the threshold) ***
+    !**** else "Matte case" (remove electrons from 2nd cell) ***
+    cas = 1 
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     DO i = 0, NumMeta
        coef1 = gama * meta(i)%Ni
-       !**** SubCycling for the direct ionization 
+       !**** SubCycling for the direct ionization ***
        IF (i .NE. 0) THEN
           SubCycl = 1
           SubDt = Clock%Dt
@@ -146,23 +147,23 @@ CONTAINS
              loss = Coef * U(k) * meta(i)%SecIon(1,k) * Fi(k)
              IF (kp   .LE. nx) prod = U(kp) * meta(i)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
              IF (kp+1 .LE. nx) prod = prod + rchi * U(kp+1) * meta(i)%SecIon(1,kp+1) * Fi(kp+1)
-             !**** Excited states balance
+             !**** Excited states balance ***
              IF (k .GE. ichi+1) Then
                 coef = 1.d0
                 if (k == ichi+1) coef = (1.d0-rchi) * (1.d0- (rchi/chi) )
                 Src = Src + ( coef * U(k) * meta(i)%SecIon(1,k) * Fi(k) )
              END IF
-             !**** UpDate Distribution Function
+             !**** UpDate Distribution Function ***
              Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / dsqrt(U(k))
           END DO
           IF ( cas == 0 ) THEN
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx
-             !**** Energy conservation Diagnostic : case(0)
+             !**** Energy conservation Diagnostic : case(0) ***
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
           ELSE
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
              Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
-             !**** Energy conservation Diagnostic : case(1)
+             !**** Energy conservation Diagnostic : case(1) ***
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1 * Dx * Eij
           END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
@@ -170,14 +171,14 @@ CONTAINS
 
           ratx = Src * Dx * gama
           IF (ratx .GT. maxR) maxR = ratx
-          !**** Diagnostic for relative importance of reactions
+          !**** Diagnostic for relative importance of reactions ***
           diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
           IF ((ratx*meta(i)%Ni).GT.Rate) THEN
              Rate = ratx*meta(i)%Ni
              diag(2)%Tx(2)= real(i)
           END IF
           diag(2)%Tx(1) = diag(2)%Tx(1) + (ratx*meta(i)%Ni/SubCycl)
-          !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+          !**** Diagnostic for metastable and 2^3P rates (cm-3 s-1) ***
           IF (i==1) THEN
              IF ((ratx*meta(i)%Ni).GT.RateTmp) then
                 RateTmp = ratx*meta(i)%Ni
@@ -197,17 +198,17 @@ CONTAINS
   !***********************************************************************
 
   !***********************************************************************
-  ! Second electron with 0 energy from excimer He2*
+  ! **** Second electron with 0 energy from excimer He2* ***
   ! **** He2+ + e + e <<-->> He2* + e 
   ! ****                -->> He(2S3) + He + e
   SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi, diag)
-    !INTENT
+    !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(:), INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
     Type(Diagnos), DIMENSION(:), INTENT(INOUT) :: diag
-    !LOCAL
+    !**** LOCAL ***
     INTEGER :: k, kp, km, ichi, case, Nion
     REAL(DOUBLE) :: prod, loss, rcmb, ionz, ratx
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
@@ -221,7 +222,9 @@ CONTAINS
 
     test  = 1.1e-26 * ((meta(0)%Tp*qok)**2.3d0 / (elec%Tp*qok)**4.5)
 
-    case = 1 ! if 0 then "Francois case" | else "J-P case"
+    !**** if (0) then "Vidal case" (change the threshold) ***
+    !**** else "Matte case" (remove electrons from 2nd cell) ***
+    case = 1
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     Si = 0.d0 ; Sr = 0.d0
@@ -236,21 +239,21 @@ CONTAINS
        kp = k + ichi
        km = k - ichi
        Fo(k) = Fi(k)
-       !**** Ionization process
+       !**** Ionization process ***
        IF (k == ichi+1) Coef = (1.d0-rchi)
        loss = Coef * U(k) * ion(Nion)%SecIon(1,k) * Fi(k)
        IF (kp   .LE. sys%nx) prod = U(kp) * ion(Nion)%SecIon(1,kp)*Fi(kp) * (1.d0-rchi)
        IF (kp+1 .LE. sys%nx) prod = prod + rchi * U(kp+1) * ion(Nion)%SecIon(1,kp+1) * Fi(kp+1)
        ionz = (prod - loss) * coef1 / dsqrt(U(k))
 
-       !**** 3-body recombination
+       !**** 3-body recombination ***
        prod= 0.d0 ; loss= 0.d0
        loss = U(k) * ion(Nion)%SecIon(2,k) * Fi(k)
        IF (km   .GT. 0) prod = U(km) * ion(Nion)%SecIon(2,km)* (1.d0-rchi) * Fo(km)
        IF (km-1 .GT. 0) prod = prod + rchi * U(km-1) * ion(Nion)%SecIon(2,km-1) * Fo(km-1)
        rcmb = (prod - loss) * coef2 / dsqrt(U(k))
 
-       !**** Excited states balance
+       !**** Excited states balance ***
        IF (k .GE. ichi+1) Then
           coef = 1.d0
           if (k == ichi+1) coef = (1.d0-rchi) * (1.d0- (rchi/chi) )
@@ -258,23 +261,23 @@ CONTAINS
        END IF
        IF (k .LE. (sys%nx-ichi-1) ) Sr = Sr + ( U(k) * ion(Nion)%SecIon(2,k) * Fi(k)*coef2 )
 
-       !**** UpDate Electron Distribution Function
+       !**** UpDate Electron Distribution Function ***
        Fi(k) = Fi(k) + Clock%Dt * (ionz + rcmb)
     END DO
 
     IF ( case == 0 ) THEN
        Fi(1) = Fi(1) + Clock%Dt * (Si - Sr) * cnst * Dx
-       !**** Energy conservation Diagnostic : case(0)
+       !**** Energy conservation Diagnostic : case(0) ***
        diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx*(Eij-Dx*0.5d0)
        diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx*(Eij-Dx*0.5d0)
     ELSE
        Fi(1) = Fi(1) + Clock%Dt * (Si-Sr) * cnst * Dx * 3.d0 / 2.d0
        Fi(2) = Fi(2) - Clock%Dt * (Si-Sr) * cnst * Dx / (2.d0 * dsqrt(3.d0))
-       !**** Energy conservation Diagnostic : case(1)
+       !**** Energy conservation Diagnostic : case(1) ***
        diag(13)%EnLoss = diag(13)%EnLoss + Clock%Dt * Si * Dx * Eij
        diag(13)%EnProd = diag(13)%EnProd + Clock%Dt * Sr * Dx * Eij
     END IF
-    !**** Rate calcul for adaptative time-step
+    !**** Rate calcul for adaptative time-step ***
     ratx = Sr * Dx / ion(2)%Ni
     IF (ratx .GT. maxR) maxR = ratx
     ratx = Si * Dx / ion(Nion)%Ni
@@ -282,26 +285,27 @@ CONTAINS
 
     diag(13)%SumTx = diag(13)%SumTx + Clock%Dt * Si * Dx
     diag(15)%SumTx = diag(15)%SumTx + Clock%Dt * Sr * Dx
-    !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+    !**** Diagnostic for metastable and 2^3P rates (cm-3 s-1) ***
     diag(13)%Txtmp(1) = Sr * Dx * br
-    !*************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
+    !**** Diagnostic for metastable and 2^3P rates (s-1) for MEOP ***
     diag(13)%InM1 = br*Sr * Dx / ion(2)%Ni
     !***************
     
-    !**** br == branching ratio
+    !**** br == branching ratio ***
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
-!    ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*test*ion(2)%Ni*elec%Ni**2 - Si*Dx)
+    !    ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*test*ion(2)%Ni*elec%Ni**2 - Si*Dx)
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
     ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
   END SUBROUTINE Ioniz_Dimer100
   !***********************************************************************
 
   !***********************************************************************
+  !*** Cross-section calculation for ionization processes ***
   SUBROUTINE Init_ioniz (sys, meta)
-    !INTENT
+    !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
-    !LOCAL
+    !**** LOCAL ***
     INTEGER :: i, j, k, l, npts, ichi
     REAL(DOUBLE) :: Dx, Du, Eij, U, rchi
     REAL(DOUBLE) :: A, B, C

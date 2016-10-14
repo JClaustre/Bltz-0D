@@ -14,9 +14,8 @@ MODULE MOD_CHAUF
 
 CONTAINS
 
-  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen, iter)
+  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
     !INTENT
-    INTEGER, INTENT(IN) :: iter
     TYPE(Time)   , INTENT(IN)     :: Clock
     TYPE(SysVar) , INTENT(INOUT)  :: sys
     REAL(DOUBLE) , INTENT(IN)     :: Post_D, Cgen
@@ -51,7 +50,7 @@ CONTAINS
        sys%E = dsqrt ( sys%Powr / (power * qe) )
        !***************************************************
     ELSE
-       !**** Decrease External Electric source
+       !**** Decrease External Electric source ***
        IF (Pwk == 0) sys%IPowr = sys%E
        sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
        IF (sys%E.LT.1d-08) sys%E = 0.d0
@@ -68,17 +67,16 @@ CONTAINS
     END IF
     !*********************************************
     
-    !**** Diagnostic to calculate the absorbed power by the plasma
+    !**** Diagnostic to calculate the absorbed power by the plasma ***
     sys%Emoy = sys%Emoy + dabs(sys%E)
     !**** Fix the power here function of Elec field ************************!
     DO i = 1, sys%nx - 1                                                    !
        nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-!       Uc = qome * (sys%Emoy/iter)**2 / (nuc**2 + Frq**2)                   !
        Uc = qome * sys%E**2 / (nuc**2 + Frq**2)                             !
        IF (i .LT. nx-1) THEN
           Df = F(i+1) - F(i)
        ELSE IF (i.EQ.nx-1) THEN
-          !**** linear extrapolation for f(nx)
+          !**** linear extrapolation for f(nx) ***
           Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
           Df = Fn - F(i)
        END IF
@@ -87,9 +85,6 @@ CONTAINS
     power = power * qe                                                      !
     sys%Pwmoy = power
     !***********************************************************************!
-    !open(unit= 2001, file=TRIM(ADJUSTL(DirFile))//"Efield.dat",ACCESS="APPEND",ACTION="WRITE",STATUS="UNKNOWN")
-    !write(2001,"(I6,ES15.6)") iter, sys%E
-    !close(2001)
 
   END SUBROUTINE POWER_CONTROL
 

@@ -416,7 +416,7 @@ CONTAINS
        !**** workaround: it calls an extern program...
        call execute_command_line ('mkdir -p ' // adjustl(trim( dirFile ) ) )
        call execute_command_line ('mkdir -p ' // adjustl(trim( dirFile ) )//"Rstart/" )
-       write(*,"(2A)"), "dir doesn't exist! I create it for youuuuuu! --> ", DirFile
+       write(*,"(2A)") "dir doesn't exist! I create it for youuuuuu! --> ", DirFile
     end if
     !**************************************
 
