@@ -54,13 +54,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Santos/165W/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/20_Torr/20W/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/5_torr/8_mm/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Boisvert/760_torr/30W/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
