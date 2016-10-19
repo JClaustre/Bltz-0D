@@ -43,7 +43,7 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1d+01 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 50d-6
+    Post_D = 50d-2
     !**** Maximum time-step allowed (sec)***
     MxDt   = 2d-09
 

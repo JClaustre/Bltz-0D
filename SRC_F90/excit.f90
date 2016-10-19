@@ -494,8 +494,8 @@ CONTAINS
                 diag(1)%InM2 = diag(1)%InM2 + Sd
              END IF
              IF (i==1.and.j==3) THEN !**** 2S3 <--> 2P3
-                diag(15)%OutM1 = Sx
-                diag(15)%InM1  = Sd
+                diag(15)%OutM1 = diag(15)%OutM1 + Sx
+                diag(15)%InM1  = diag(15)%InM1  + Sd
              END IF
              !*****************
           END IF
