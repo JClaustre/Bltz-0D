@@ -41,9 +41,9 @@ CONTAINS
     !**** Keep Power-init in memory ***
     sys%IPowr = sys%Powr 
     !**** Time factor for external source ***
-    Cgen   = 1d-02 
+    Cgen   = 1d+01 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 50d-2
+    Post_D = 50d-6
     !**** Maximum time-step allowed (sec)***
     MxDt   = 2d-09
 
@@ -111,7 +111,7 @@ CONTAINS
              diag(10)%OutM2 = diag(10)%OutM2 + diag(i)%OutM2
           END IF
       END DO
-      
+
       !**** Write in files all rates ***
        IF ( modulo(l,100) == 0 ) THEN
           !**** ALL rates
@@ -148,6 +148,7 @@ CONTAINS
           CLOSE(92)
           CLOSE(93)
        END IF
+       diag(15)%InM1=0.d0 ; diag(15)%InM2=0.d0 ; diag(15)%OutM1=0.d0 ; diag(15)%OutM2=0.d0
        !**************************************************************************!
 
 

@@ -1,5 +1,5 @@
 5000		  Number of grid points 
-0          	  Restart simulation ( 0  - no restart | 1 - restart )
+1          	  Restart simulation ( 0  - no restart | 1 - restart )
 1.505E+01	  E (V/cm)	Electric field
 6.900E+16   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 2.000E+06   1	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )

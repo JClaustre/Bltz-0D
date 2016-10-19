@@ -66,21 +66,27 @@ CONTAINS
              !****************
              diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
              !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+             IF (j.EQ.3) THEN !**** 2P3 <-- N0
+                diag(3)%InM2 = diag(3)%InM2 + emitF
+             END IF
+             IF (i.EQ.3 .and. j==1) THEN !**** 2P3 --> 2S3 
+                diag(15)%OutM2 = diag(15)%OutM2 + emitF
+                diag(15)%InM1  = diag(15)%InM1 + emitF
+             ELSE IF (i.EQ.3.and.j.NE.1) THEN !**** 2P3 --> N0
+                diag(3)%OutM2 = diag(3)%OutM2 + emitF
+             END IF
              IF (j.EQ.1) THEN
                 IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
                    RateTmp = emitF * meta(i)%Ni    
                    diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
                 END IF
                 diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
-                !*************** Diagnostic for metastable and 2^3P rates (s-1)
+             END IF
+             !*************** Diagnostic for metastable and 2^3P rates (s-1)
+             IF (j.EQ.1.and.i.NE.3) THEN !**** No --> 2S3
                 diag(3)%InM1 = diag(3)%InM1 + emitF
-             ELSE IF (j.EQ.3) THEN
-                diag(3)%InM2 = diag(3)%InM2 + emitF
              END IF
-             IF (i.EQ.3) THEN
-                diag(3)%OutM2 = diag(3)%OutM2 + emitF
-             END IF
-                !****************
+             !****************
           END IF
 
        END DO
