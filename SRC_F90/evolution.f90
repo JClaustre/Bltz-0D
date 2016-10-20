@@ -471,7 +471,7 @@ CONTAINS
     !**** WRITE PART *********************************
 
     IF ( mod(iter,mdlus).EQ.0 ) THEN
-       RateSum = -(diag(3)%OutM2 + diag(15)%InM1)*meta(3)%Ni + (diag(10)%OutM1)*meta(1)%Ni
+       RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(10)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
 !       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES10.2,A)",advance="no") &
