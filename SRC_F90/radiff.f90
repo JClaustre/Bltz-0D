@@ -67,7 +67,7 @@ CONTAINS
              diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
              !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
              IF (j.EQ.3) THEN !**** 2P3 <-- N0
-                diag(3)%InM2 = diag(3)%InM2 + emitF
+                diag(3)%InM2 = diag(3)%InM2 + emitF* meta(i)%Ni
              END IF
              IF (i.EQ.3 .and. j==1) THEN !**** 2P3 --> 2S3 
                 diag(15)%OutM2 = diag(15)%OutM2 + emitF
@@ -84,7 +84,7 @@ CONTAINS
              END IF
              !*************** Diagnostic for metastable and 2^3P rates (s-1)
              IF (j.EQ.1.and.i.NE.3) THEN !**** No --> 2S3
-                diag(3)%InM1 = diag(3)%InM1 + emitF
+                diag(3)%InM1 = diag(3)%InM1 + emitF* meta(i)%Ni
              END IF
              !****************
           END IF

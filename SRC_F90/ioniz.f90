@@ -287,8 +287,8 @@ CONTAINS
     diag(15)%SumTx = diag(15)%SumTx + Clock%Dt * Sr * Dx
     !**** Diagnostic for metastable and 2^3P rates (cm-3 s-1) ***
     diag(13)%Txtmp(1) = Sr * Dx * br
-    !**** Diagnostic for metastable and 2^3P rates (s-1) for MEOP ***
-    diag(13)%InM1 = br*Sr * Dx / ion(2)%Ni
+    !**** Diagnostic for metastable and 2^3S rates (s-1) for MEOP ***
+    diag(13)%InM1 = br*Sr * Dx
     !***************
     
     !**** br == branching ratio ***

@@ -66,8 +66,8 @@ CONTAINS
     !*************** Diagnostic for metastable rates (m-3 s-1)
     diag(8)%TxTmp(1) = recmb*tx(1) * Dx
     !*************** Diagnostic for metastable and 2^3P rates (s-1)
-    diag(8)%InM1 = (tx(1)*recmb) * Dx / ion(2)%Ni
-    diag(8)%InM2 = (tx(3)*recmb) * Dx / ion(2)%Ni
+    diag(8)%InM1 = (tx(1)*recmb) * Dx
+    diag(8)%InM2 = (tx(3)*recmb) * Dx
     !****************
 
     !write (*,"(A,ES15.6)") "Recomb Rates: ", Rtmp/part
@@ -218,7 +218,7 @@ CONTAINS
        !***************** Diagnostic for relative importance of reactions
        diag(13)%Tx(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
-       diag(13)%InM2 = excim / ion(3)%Ni
+       diag(13)%InM2 = excim
        !**** He(2S3) + 2He --> He2* + He (cm6 s-1)
        IF (meta(0)%Tp*qok.LE.750d0) THEN
           !**** rate from Koymen et al (Chem.Phys.Lett 168 5 1990)

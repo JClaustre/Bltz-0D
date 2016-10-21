@@ -474,24 +474,24 @@ CONTAINS
              END IF
              !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
              IF (i==0.and.j==1) THEN !**** No(1S) <--> 2S3
-                diag(1)%InM1  = diag(1)%InM1  + Sx
+                diag(1)%InM1  = diag(1)%InM1  + Ndens(i)*Sx
                 diag(1)%OutM1 = diag(1)%OutM1 + Sd
              END IF
              IF (i==0.and.j==3) THEN !**** No(1S) <--> 2P3
                 diag(1)%OutM2 = diag(1)%OutM2 + Sd
-                diag(1)%InM2 = diag(1)%InM2 + Sx
+                diag(1)%InM2 = diag(1)%InM2 + Ndens(i)*Sx
              END IF
              IF (i==1.and.j.NE.3) THEN !**** 2S3 <--> N0
                 diag(1)%OutM1 = diag(1)%OutM1 + Sx
-                diag(1)%InM1  = diag(1)%InM1 + Sd
+                diag(1)%InM1  = diag(1)%InM1 + Ndens(j)*Sd
              END IF
              IF (i==2.and.j==3) THEN !**** No(2S1) <--> 2P3
                 diag(1)%OutM2 = diag(1)%OutM2 + Sd
-                diag(1)%InM2 = diag(1)%InM2 + Sx                
+                diag(1)%InM2 = diag(1)%InM2 + Ndens(i)*Sx                
              END IF
              IF (i==3) THEN !**** 2P3 <--> No
                 diag(1)%OutM2 = diag(1)%OutM2 + Sx
-                diag(1)%InM2 = diag(1)%InM2 + Sd
+                diag(1)%InM2 = diag(1)%InM2 + Ndens(j)*Sd
              END IF
              IF (i==1.and.j==3) THEN !**** 2S3 <--> 2P3
                 diag(15)%OutM1 = diag(15)%OutM1 + Sx
