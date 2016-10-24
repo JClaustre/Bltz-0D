@@ -56,7 +56,7 @@ MODULE MOD_PARAM
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/10_microS/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/20_Torr/20W/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/20_Torr/1W/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
