@@ -55,8 +55,9 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/10_microS/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/20_Torr/1W/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/0.01_microS/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/20_Torr/1W/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/Pw_180/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
