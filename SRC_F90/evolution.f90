@@ -43,9 +43,9 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1d-02 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 50d-6
+    Post_D = 10d-5
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-09
+    MxDt   = 5d-10
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -413,7 +413,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 1
+    nx = sys%nx ; Switch = 0 ; mdlus = 500
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -520,8 +520,8 @@ CONTAINS
        !************************************************!
     END IF
 
-    !IF ( Clock%SumDt.GE.Res ) THEN
-    IF ( mod(iter,10) == 0 ) THEN
+    IF ( Clock%SumDt.GE.Res ) THEN
+    !IF ( mod(iter,10) == 0 ) THEN
 
        !**** WRITE RESTART FILES ***********************!
        CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)
