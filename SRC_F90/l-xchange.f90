@@ -25,7 +25,6 @@ CONTAINS
     REAL(DOUBLE) :: Coef1, Coef2, Eij
     !********************
     Coef1= 0.d0 ; coef2 = 0.d0
-    diag(4)%OutM1 = 0.d0 ; diag(4)%InM1 = 0.d0 
     
     !**** l-change atomic reations (for n>=3)
     DO i = 5 , NumMeta

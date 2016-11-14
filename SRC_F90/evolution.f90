@@ -28,7 +28,7 @@ CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
-    INTEGER :: i, k, l                                                        !
+    INTEGER :: k, l                                                           !
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MxDt                                      !
     REAL(DOUBLE) :: Cgen, Post_D                                              !
@@ -43,9 +43,9 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1d-02 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 10d-5
+    Post_D = 10d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 5d-10
+    MxDt   = 2d-09
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -100,57 +100,6 @@ CONTAINS
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
        !**** UpDate Simulation Time ***
        Clock%SumDt = Clock%SumDt + Clock%Dt
-       !**** Evaluation of Metastable and 2^3P rates *** 
-       !**** Total rate is written in diag(10) and D-excit and Excit in diag(15) ***
-       diag(10)%InM1=0.d0 ; diag(10)%InM2=0.d0 ; diag(10)%OutM1=0.d0 ; diag(10)%OutM2=0.d0
-       DO i = 1, 14
-          IF (i.NE.10) THEN 
-             diag(10)%InM1  = diag(10)%InM1  + diag(i)%InM1
-             diag(10)%InM2  = diag(10)%InM2  + diag(i)%InM2
-             diag(10)%OutM1 = diag(10)%OutM1 + diag(i)%OutM1
-             diag(10)%OutM2 = diag(10)%OutM2 + diag(i)%OutM2
-          END IF
-      END DO
-
-      !**** Write in files all rates ***
-       IF ( modulo(l,100) == 0 ) THEN
-          !**** ALL rates
-          IF (l == 100 .and. Clock%Rstart.EQ.0) THEN
-             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
-             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(93,"(ES15.6, 2(15F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,15)
-             OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
-          ELSE
-             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(92,"(16ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,15)
-             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(93,"(ES15.6, 2(15F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,15)
-             OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(94,"(ES15.6,4(15ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=1,15)
-          END IF
-          CLOSE(92)
-          CLOSE(93)
-          CLOSE(94)
-          !**** 23S Metastable and 2^3P rates ONLY
-          IF (l == 100 .and. Clock%Rstart == 0) THEN
-             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
-             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%TxTmp(2), diag(i)%TxTmp(3), i=1,14)
-          ELSE
-             OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"MetaTx.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(92,"(15ES15.6)") Clock%SumDt*1d6, (diag(i)%TxTmp(1), i=1,14)
-             OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"MetaTx_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",ACCESS="Append")
-             write(93,"(ES15.6, 2(14F5.1))") Clock%SumDt*1d6, (diag(i)%TxTmp(2), diag(i)%TxTmp(3) , i=1,14)
-          END IF
-          CLOSE(92)
-          CLOSE(93)
-       END IF
-       diag(15)%InM1=0.d0 ; diag(15)%InM2=0.d0 ; diag(15)%OutM1=0.d0 ; diag(15)%OutM2=0.d0
-       !**************************************************************************!
-
 
        !**** Max iteration number (Else exit loop)********************************!
        IF (l .GE. Clock%MaxIter) EXIT                                             !
@@ -471,7 +420,7 @@ CONTAINS
     !**** WRITE PART *********************************
 
     IF ( mod(iter,mdlus).EQ.0 ) THEN
-       RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(10)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
+       RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(16)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
 !       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES10.2,A)",advance="no") &
@@ -486,7 +435,7 @@ CONTAINS
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
           OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACTION="WRITE",STATUS="UNKNOWN")
        ELSE 
-          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACCESS="APPEND",&
+          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",POSITION="APPEND",&
                ACTION="WRITE",STATUS="UNKNOWN")
        END IF
        SELECT CASE (NumIon) 
@@ -520,8 +469,51 @@ CONTAINS
        !************************************************!
     END IF
 
+    !**** Evaluation of Metastable and 2^3P rates *** 
+    !**** Total rate is written in diag(16) and D-excit and Excit in diag(15) ***
+    diag(16)%InM1=0.d0 ; diag(16)%OutM1=0.d0
+    diag(16)%InM2=0.d0 ; diag(16)%OutM2=0.d0
+    DO i = 1, 14
+       diag(16)%InM1  = diag(16)%InM1  + diag(i)%InM1
+       diag(16)%InM2  = diag(16)%InM2  + diag(i)%InM2
+       diag(16)%OutM1 = diag(16)%OutM1 + diag(i)%OutM1
+       diag(16)%OutM2 = diag(16)%OutM2 + diag(i)%OutM2
+    END DO
+
+    !**** Write in files all rates ***
+    IF ( modulo(iter,100) == 0 ) THEN
+       !**** ALL rates
+       IF (iter == 100 .and. Clock%Rstart.EQ.0) THEN
+          OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          write(92,"(17ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,16)
+          OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          write(93,"(ES15.6, 2(16F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3), i=1,16)
+          OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          write(94,"(ES15.6,4(2ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=15,16)
+       ELSE
+          OPEN(UNIT=92,File=TRIM(ADJUSTL(DirFile))//"rates.dat",ACTION="WRITE",STATUS="UNKNOWN",POSITION="Append")
+          write(92,"(17ES15.6)") Clock%SumDt*1d6, (diag(i)%Tx(1), i=1,16)
+          OPEN(UNIT=93,File=TRIM(ADJUSTL(DirFile))//"rates_bis.dat",ACTION="WRITE",STATUS="UNKNOWN",POSITION="Append")
+          write(93,"(ES15.6, 2(16F5.1))") Clock%SumDt*1d6, (diag(i)%Tx(2), diag(i)%Tx(3) , i=1,16)
+          OPEN(UNIT=94,File=TRIM(ADJUSTL(DirFile))//"MEOP_rates.dat",ACTION="WRITE",STATUS="UNKNOWN",POSITION="Append")
+          write(94,"(ES15.6,4(2ES13.5))") Clock%SumDt*1d6, (diag(i)%InM1, diag(i)%OutM1, diag(i)%InM2, diag(i)%OutM2, i=15,16)
+       END IF
+       CLOSE(92)
+       CLOSE(93)
+       CLOSE(94)
+    END IF
+    diag(15)%InM1=0.d0 ; diag(15)%OutM1=0.d0 
+    diag(15)%InM2=0.d0 ; diag(15)%OutM2=0.d0
+    !**************************************************************************!
+
+
+
+
+
+
+
+
     IF ( Clock%SumDt.GE.Res ) THEN
-    !IF ( mod(iter,10) == 0 ) THEN
 
        !**** WRITE RESTART FILES ***********************!
        CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)

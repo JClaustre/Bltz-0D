@@ -25,7 +25,7 @@ CONTAINS
     INTEGER :: i, j, k, l, ichi, Nion, Nmeta
     REAL(DOUBLE) :: asso, Penn, beta, Dx, Ndens
     REAL(DOUBLE) :: Eij, chi, rchi, coef1, coef2
-    REAL(DOUBLE) :: ratx, Rate, RateTmp
+    REAL(DOUBLE) :: ratx, Rate
     !*********************************
     beta = 2.9d-9 * 1d-6 * (meta(0)%Tp*qok/300.d0)**(-1.86d0)
     asso=0.d0 ; Penn=0.d0 ; coef1=0.d0 ; coef2=0.d0 ; Rate = 0.d0
@@ -33,6 +33,7 @@ CONTAINS
     Dx = sys%Dx
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
+
     !**** Associative process
     DO i = 5, Nmeta
        Eij = meta(i)%En - ion(2)%En ! associative threshold
@@ -60,17 +61,17 @@ CONTAINS
 
           ratx = Sn(i)*meta(0)%Ni
           IF (ratx .GT. MaxR) MaxR = ratx
-          !***************** Diagnostic for relative importance of reactions
+          !***************** Diagnostic for relative importance of reactions (m-3/s)
           IF (asso.GT.Rate) THEN
              Rate = asso
              Diag(6)%Tx(2) = real(i)
+             Diag(6)%Tx(1) = asso
           END IF
-          Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
        END IF
     END DO
 
     !**** Penning process
-    Rate=0.d0 ; RateTmp=0.d0 ; Diag(5)%Tx(:)=0.d0 ; Diag(5)%TxTmp(:)=0.d0
+    Rate=0.d0 ; Diag(5)%Tx(:)=0.d0
     diag(5)%OutM1 = 0.d0 ; diag(5)%OutM2 = 0.d0
     !********************
     DO i = 1, 3
@@ -96,19 +97,11 @@ CONTAINS
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
              !****************
              diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
-             !***************** Diagnostic for relative importance of reactions
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
              IF (Penn.GT.Rate) THEN
                 Rate = Penn
                 Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
-             END IF
-             Diag(5)%Tx(1) = Diag(5)%Tx(1) + Penn
-             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
-             IF (i==1.or.j==1) THEN
-                IF (Penn.GT.RateTmp) then
-                   RateTmp = Penn
-                   diag(5)%TxTmp(2) = real(i) ; diag(5)%TxTmp(3) = real(j)
-                END IF
-                diag(5)%Txtmp(1) = diag(5)%Txtmp(1) + Penn
+                Diag(5)%Tx(1) = Penn
              END IF
 
           END DO
@@ -135,7 +128,7 @@ CONTAINS
     ! Involving Dimer Penning processes 
     SELECT CASE (NumIon)
     CASE (3)
-       RateTmp=0.d0 ; Diag(4)%TxTmp(:)=0.d0
+       Rate = 0.d0
        diag(4)%OutM1=0.d0 ; diag(4)%OutM2=0.d0
        Nion = 3
        ! #1 He* + He2* --> He+ + He + e
@@ -167,15 +160,14 @@ CONTAINS
              !**** Energy conservation Diagnostic
              diag(4)%EnProd = diag(4)%EnProd + Eij*Clock%Dt * Penn
              diag(4)%SumTx = diag(4)%SumTx + Clock%Dt * Penn
-             !***************** Diagnostic for relative importance of reactions
-             Diag(4)%Tx(1) = Diag(4)%Tx(1) + Penn
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
+             IF (Penn.GT.Rate) THEN
+                Rate = Penn             
+                Diag(4)%Tx(2) = real(i)
+                Diag(4)%Tx(1) = Rate
+             END IF
              !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
              IF (i==1) THEN
-                IF (Penn.GT.RateTmp) then
-                   RateTmp = Penn
-                   diag(4)%TxTmp(2) = real(i)
-                END IF
-                diag(4)%Txtmp(1) = diag(4)%Txtmp(1) + Penn
                 !*************** Diagnostic for metastable and 2^3P rates (s-1)
                 diag(4)%OutM1    = diag(4)%OutM1 + Penn/meta(i)%Ni
              END IF

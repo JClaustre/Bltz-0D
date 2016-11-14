@@ -226,7 +226,7 @@ CONTAINS
     !**** Diagnostic 
     diag(11)%EnLoss = diag(11)%EnLoss + dabs(En - En2)
     !**** rate electron-neutral
-    diag(15)%Tx(1) = Ren * meta(0)%Ni
+    diag(18)%Tx(1) = Ren * meta(0)%Ni
     !***************
   END SUBROUTINE Elastic
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

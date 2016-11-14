@@ -132,12 +132,6 @@ CONTAINS
              if (Sd .GT. MaxR) MaxR = Sd
              IF (Sx .GT. MaxR) MaxR = Sx
 
-             !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
-             IF (i==0.and.j==1) THEN
-                diag(1)%InM1  = diag(1)%InM1  + Sx
-                diag(1)%OutM1 = diag(1)%OutM1 + Sd
-             END IF
-
           END IF
        END DO
     END DO
@@ -164,16 +158,15 @@ CONTAINS
     REAL(DOUBLE) :: SubDt, SubRt
     !Equili VaRIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
-    REAL(DOUBLE) :: Rate, Rate2, RateTmp, RateTmp2
+    REAL(DOUBLE) :: Rate, Rate2
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
     SubRt = 2.d-10 ! give a maximum value of collision rate
     nx = sys%nx ; Dx = sys%Dx
     !********************
-    Rate=0.d0; Rate2=0.d0; RateTmp=0.d0; RateTmp2=0.d0
+    Rate=0.d0; Rate2=0.d0
     diag(1)%Tx(:)=0.d0 ; diag(10)%Tx(:)=0.d0 
-    diag(1)%TxTmp(:)=0.d0 ;diag(10)%TxTmp(:)=0.d0
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
 
@@ -297,19 +290,6 @@ CONTAINS
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Ndens(j)
-             !***************
-             IF (i==1.or.j==1) THEN
-                IF ((Sx*Ndens(i)).GT.RateTmp) then
-                   RateTmp = Sx*Ndens(i)
-                   diag(1)%TxTmp(2) = real(i) ; diag(1)%TxTmp(3) = real(j)
-                END IF
-                diag(1)%Txtmp(1) = diag(1)%Txtmp(1) + Sx*Ndens(i)
-                IF ((Sd*Ndens(j)).GT.RateTmp2) then
-                   RateTmp2 = Sd*Ndens(j)
-                   diag(10)%TxTmp(2) = real(i) ; diag(10)%TxTmp(3) = real(j)
-                END IF
-                diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Ndens(j)
-             END IF
              !*****************
           END IF
        END DO
@@ -332,7 +312,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd, Rate, Rate2, RateTmp, RateTmp2
+    REAL(DOUBLE) :: Sx, Sd, Ratx, Ratd
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !SubCYCLING VARIABLES
@@ -340,13 +320,10 @@ CONTAINS
     !Implicit Density VARIABLES
     REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
     !********************
+    nx = sys%nx ; Dx = sys%Dx ; Dt = Clock%Dt
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
-    Rate=0.d0 ; Rate2=0.d0 ; RateTmp=0.d0 ; RateTmp2=0.d0
-    Dt = Clock%Dt
-    nx = sys%nx ; Dx = sys%Dx
+    Ratx=0.d0 ; Ratd=0.d0
     !********************
-    diag(1)%Tx(:)=0.d0    ; diag(10)%Tx(:)=0.d0 
-    diag(1)%TxTmp(:)=0.d0 ; diag(10)%TxTmp(:)=0.d0
     diag(1)%InM1=0.d0 ; diag(1)%OutM1=0.d0
     diag(1)%InM2=0.d0 ; diag(1)%OutM2=0.d0
     !********************************************************
@@ -448,30 +425,19 @@ CONTAINS
              !**** Energy conservation Diagnostic 
              diag(1)%EnProd = diag(1)%EnProd + Dt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + Dt * Sx*Ndens(i)* E_ij * Rmx
-             !***************** Diagnostic for relative importance of reactions
-             IF ((Sx*Ni).GT.Rate) THEN
-                Rate = Sx*Ni
+
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
+             IF ((Sx*Ni).GT.Ratx) THEN ! Excit
+                Ratx = Sx*Ni
                 diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+                diag(1)%Tx(1) = Ratx
              END IF
-             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*Ni
-             IF ((Sd*Nj).GT.Rate2) THEN
-                Rate2 = Sd*Nj
+             IF ((Sd*Nj).GT.Ratd) THEN ! De-Excit
+                Ratd = Sd*Nj
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+                diag(10)%Tx(1) = Ratd
              END IF
-             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Nj
-             !*************** Diagnostic for metastable and 2^3P rates (m-3 s-1)
-             IF (i==1.or.j==1) THEN
-                IF ((Sx*Ni).GT.RateTmp) then
-                   RateTmp = Sx*Ni
-                   diag(1)%TxTmp(2) = real(i) ; diag(1)%TxTmp(3) = real(j)
-                END IF
-                diag(1)%Txtmp(1) = diag(1)%Txtmp(1) + Sx*Ni
-                IF ((Sd*Nj).GT.RateTmp2) then
-                   RateTmp2 = Sd*Nj
-                   diag(10)%TxTmp(2) = real(i) ; diag(10)%TxTmp(3) = real(j)
-                END IF
-                diag(10)%Txtmp(1) = diag(10)%Txtmp(1) + Sd*Nj
-             END IF
+
              !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
              IF (i==0.and.j==1) THEN !**** No(1S) <--> 2S3
                 diag(1)%InM1  = diag(1)%InM1  + Ndens(i)*Sx
@@ -505,7 +471,7 @@ CONTAINS
   END SUBROUTINE Exc_Impli
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  !**** He2* + e --> He + e ***
+  !**** He2* + e --> 2He + e ***
   SUBROUTINE Dexc_Dimer(sys, U, ion, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
@@ -518,10 +484,10 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef1
     REAL(DOUBLE) :: C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sd
+    REAL(DOUBLE) :: Sd, ratx
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
-    Dx = sys%Dx ; nx = sys%nx
+    Dx = sys%Dx ; nx = sys%nx ; ratx=0.d0
     !********************
     SELECT CASE (3) ! used For the compilation
     CASE (3) 
@@ -559,6 +525,11 @@ CONTAINS
     ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
 
     if (Sd .GT. MaxR) MaxR = Sd
+    IF ((Sd*ion(Nion)%Ni).GT.Ratx) THEN ! Excit
+       Ratx = Sd*ion(Nion)%Ni
+       diag(15)%Tx(1) = Ratx
+    END IF
+
   END SUBROUTINE Dexc_Dimer
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -736,7 +707,7 @@ CONTAINS
     END DO
 
     !**** De-excitation from Excimer He2* ***
-    !**** He2* + e- --> 2He+ + e- ***
+    !**** He2* + e- --> 2He + e- ***
     SELECT CASE (NumIon)
     CASE (3) 
        do i = 1, sys%nx-1

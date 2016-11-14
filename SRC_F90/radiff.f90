@@ -23,8 +23,8 @@ CONTAINS
     !**** LOCAL ***
     INTEGER :: i, j
     REAL(DOUBLE) :: Eij, damp, EscapF, emitF
-    REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate, RateTmp
-    Rate=0.d0 ; RateTmp=0.d0 ; diag(3)%Tx(:)=0.d0; diag(3)%TxTmp(:)=0.d0
+    REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
+    Rate=0.d0 ; diag(3)%Tx(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
 
     DO i = 3, NumMeta
@@ -58,14 +58,15 @@ CONTAINS
              !**** Rate calcul for adaptative time-step ***
              IF (emitF .GT. MaxR) MaxR = emitF
              
-             !***************** Diagnostic for relative importance of reactions
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
              IF ((emitF*meta(i)%Ni).GT.Rate) THEN
                 Rate = emitF * meta(i)%Ni
                 diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
+                diag(3)%Tx(1) = Rate
              END IF
              !****************
-             diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
-             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+
+             !*************** Diagnostic for metastable and 2^3P rates (s-1)
              IF (j.EQ.3) THEN !**** 2P3 <-- N0
                 diag(3)%InM2 = diag(3)%InM2 + emitF* meta(i)%Ni
              END IF
@@ -74,13 +75,6 @@ CONTAINS
                 diag(15)%InM1  = diag(15)%InM1 + emitF
              ELSE IF (i.EQ.3.and.j.NE.1) THEN !**** 2P3 --> N0
                 diag(3)%OutM2 = diag(3)%OutM2 + emitF
-             END IF
-             IF (j.EQ.1) THEN
-                IF ((emitF*meta(i)%Ni).GT.RateTmp) THEN
-                   RateTmp = emitF * meta(i)%Ni    
-                   diag(3)%TxTmp(2) = real(i) ; diag(3)%TxTmp(3) = real(j)
-                END IF
-                diag(3)%TxTmp(1) = diag(3)%TxTmp(1) + emitF * meta(i)%Ni
              END IF
              !*************** Diagnostic for metastable and 2^3P rates (s-1)
              IF (j.EQ.1.and.i.NE.3) THEN !**** No --> 2S3
@@ -355,10 +349,8 @@ CONTAINS
     END DO
     !**** Energy conservation Diagnostic ***
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
-    !***************** Diagnostic for relative importance of reactions
-    diag(9)%Tx(1) = Se  
-    !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
-    diag(9)%TxTmp(1) = Smeta1
+    !***************** Diagnostic for relative importance of reactions (m-3/s)
+    diag(9)%Tx(1) = Se
     !*************** Diagnostic for metastable and 2^3S rates (s-1) for MEOP
     diag(9)%OutM1 = meta(1)%Damb / Coef
     !***************

@@ -61,11 +61,9 @@ CONTAINS
     IF (ratx .GT. maxR) maxR = ratx
     !****************
     diag(8)%SumTx =  diag(8)%SumTx + Clock%Dt * recmb * Dx
-    !***************** Diagnostic for relative importance of reactions
+    !***************** Diagnostic for relative importance of reactions (m-3/s)
     diag(8)%Tx(1) =  recmb * Dx
-    !*************** Diagnostic for metastable rates (m-3 s-1)
-    diag(8)%TxTmp(1) = recmb*tx(1) * Dx
-    !*************** Diagnostic for metastable and 2^3P rates (s-1)
+    !*************** Diagnostic for metastable and 2^3P rates (m-3 s-1)
     diag(8)%InM1 = (tx(1)*recmb) * Dx
     diag(8)%InM2 = (tx(3)*recmb) * Dx
     !****************
@@ -151,7 +149,7 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Conv_3Body (meta, ion)
     !INTENT
-    TYPE(Species), DIMENSION(0:), INTENT(InOut)    :: meta
+    TYPE(Species), DIMENSION(0:), INTENT(InOut) :: meta
     TYPE(Species), DIMENSION(:) , INTENT(InOUT) :: ion
     !LOCAL
     REAL(DOUBLE) :: eta, Src, Tp, excim, ratx
@@ -167,7 +165,7 @@ CONTAINS
        ion(2)%Updens = ion(2)%Updens + Clock%Dt * Src
        !**** Energy conservation Diagnostic
        diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
-       !***************** Diagnostic for relative importance of reactions
+       !***************** Diagnostic for relative importance of reactions (m-3/s)
        diag(7)%Tx(1) = Src
        !***************
     END IF
@@ -175,6 +173,7 @@ CONTAINS
     ratx = eta * meta(0)%Ni**2
     IF (ratx .GT. maxR) maxR = ratx
     !*************************************
+
     !**** cf. Belmonte 2007 : η (cm3 s-1)
     !**** He2+ + He(1S) --> He+ + 2He(1S)
     eta = 1.40d-06 * 1.d-6 * exp(-(ion(1)%En-ion(2)%En)*qok / Tp) / Tp**0.67
@@ -184,7 +183,7 @@ CONTAINS
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
        !**** Energy conservation Diagnostic
        diag(7)%EnProd = diag(7)%EnProd + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
-       !***************** Diagnostic for relative importance of reactions
+       !***************** Diagnostic for relative importance of reactions (m-3/s)
        diag(11)%Tx(1) = Src
        !***************** 
     END IF
@@ -203,7 +202,7 @@ CONTAINS
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(3)%Ni
        IF (ratx .GT. maxR) maxR = ratx
-       !***************** Diagnostic for relative importance of reactions
+       !***************** Diagnostic for relative importance of reactions (m-3/s)
        diag(12)%Tx(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
        diag(12)%OutM2 = excim / meta(3)%Ni
@@ -215,7 +214,7 @@ CONTAINS
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(3)%Ni
        IF (ratx .GT. maxR) maxR = ratx
-       !***************** Diagnostic for relative importance of reactions
+       !***************** Diagnostic for relative importance of reactions (m-3/s)
        diag(13)%Tx(1) = excim
        !*************** Diagnostic for metastable and 2^3P rates (s-1)
        diag(13)%InM2 = excim
@@ -232,10 +231,8 @@ CONTAINS
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(1)%Ni
        IF (ratx .GT. maxR) maxR = ratx
-       !***************** Diagnostic for relative importance of reactions
+       !***************** Diagnostic for relative importance of reactions (m-3/s)
        diag(14)%Tx(1) = excim
-       !*************** Diagnostic for metastable and 2^3S rates (m-3 s-1)
-       diag(14)%TxTmp(1) = excim
        !*************** Diagnostic for metastable and 2^3S rates (s-1)
        diag(14)%OutM1 = excim / meta(1)%Ni
     END SELECT

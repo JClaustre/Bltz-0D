@@ -38,7 +38,7 @@ MODULE MOD_PARAM
   TYPE, PUBLIC::Diagnos
      REAL(DOUBLE)      :: SumTx, EnProd, EnLoss
      REAL(DOUBLE)      :: InM1, OutM1, InM2, OutM2
-     REAL(DOUBLE), DIMENSION(3) :: Txtmp, Tx
+     REAL(DOUBLE), DIMENSION(3) :: Tx
      CHARACTER(len=10) :: Name
   END type Diagnos
   !-----------------------------------------------------------
@@ -54,18 +54,18 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
 
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/0.01_microS/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/20_Torr/1W/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.05W/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/Pw_180/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Santos/165W/modif_Rates/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/40_torr/8_mm/Test_Pwr/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/40_torr/8_mm/Test_Pwr/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
   TYPE(Species) :: elec
   TYPE(profil1D) :: OneD
-  TYPE(Diagnos), DIMENSION(15) :: diag
+  TYPE(Diagnos), DIMENSION(18) :: diag
   TYPE(Species), DIMENSION(NumIon)    :: ion
   TYPE(Species), DIMENSION(0:NumMeta) :: meta ! (0) --> fundamental state
 

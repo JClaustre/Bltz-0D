@@ -104,14 +104,14 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !**** LOCAL ***
     INTEGER :: i, k, kp, ichi, cas, nx
-    REAL(DOUBLE) :: prod, loss, ratx, Rate, RateTmp
+    REAL(DOUBLE) :: prod, loss, ratx, Rate
     REAL(DOUBLE) :: Eij, chi, rchi, Dx
     REAL(DOUBLE) :: Coef, coef1, cnst, Src
     !**** SubCYCLING VARIABLES ***
     REAL(DOUBLE) :: SubDt
     INTEGER :: SubCycl, l
     Dx = sys%Dx ; nx = sys%nx
-    Rate=0.d0 ; RateTmp=0.d0 ; diag(2)%Tx(:)=0.d0 ; diag(2)%Txtmp(1)=0.d0
+    Rate=0.d0 ; diag(2)%Tx(:)=0.d0
     !**** if (0) then "Vidal case" (change the threshold) ***
     !**** else "Matte case" (remove electrons from 2nd cell) ***
     cas = 1 
@@ -171,24 +171,20 @@ CONTAINS
 
           ratx = Src * Dx * gama
           IF (ratx .GT. maxR) maxR = ratx
-          !**** Diagnostic for relative importance of reactions ***
           diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
+
+          !**** Diagnostic for relative importance of reactions (m-3/s)***
           IF ((ratx*meta(i)%Ni).GT.Rate) THEN
              Rate = ratx*meta(i)%Ni
              diag(2)%Tx(2)= real(i)
+             diag(2)%Tx(1) = Rate
           END IF
-          diag(2)%Tx(1) = diag(2)%Tx(1) + (ratx*meta(i)%Ni/SubCycl)
-          !**** Diagnostic for metastable and 2^3P rates (cm-3 s-1) ***
-          IF (i==1) THEN
-             IF ((ratx*meta(i)%Ni).GT.RateTmp) then
-                RateTmp = ratx*meta(i)%Ni
-                diag(2)%TxTmp(2) = real(i)
-             END IF
-             diag(2)%Txtmp(1) = diag(2)%Txtmp(1) + (ratx*meta(i)%Ni/SubCycl)
+
+          !**** Diagnostic for metastable and 2^3P rates (s-1) ***
+          IF (i==1) THEN ! 2^3S --> He+
              diag(2)%OutM1 = ratx
-          END IF!          ^
-          !*************** | Diagnostic for metastable and 2^3P rates (s-1)
-          IF (i==3)THEN
+          END IF
+          IF (i==3)THEN ! 2^3P --> He+
              diag(2)%OutM2 = ratx
           END IF
           !***************
@@ -210,17 +206,16 @@ CONTAINS
     Type(Diagnos), DIMENSION(:), INTENT(INOUT) :: diag
     !**** LOCAL ***
     INTEGER :: k, kp, km, ichi, case, Nion
-    REAL(DOUBLE) :: prod, loss, rcmb, ionz, ratx
+    REAL(DOUBLE) :: prod, loss, rcmb, ionz, ratx, rati, ratr
     REAL(DOUBLE) :: Eij, chi, rchi, Dx, br
-    REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr, test
+    REAL(DOUBLE) :: Coef, coef1, coef2, cnst, Si, Sr
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     Dx = sys%Dx ; br = 0.5d0
+    rati = 0.d0 ; ratr = 0.d0
     SELECT CASE (3)
     CASE (3) 
        Nion = 3
     END SELECT
-
-    test  = 1.1e-26 * ((meta(0)%Tp*qok)**2.3d0 / (elec%Tp*qok)**4.5)
 
     !**** if (0) then "Vidal case" (change the threshold) ***
     !**** else "Matte case" (remove electrons from 2nd cell) ***
@@ -282,18 +277,25 @@ CONTAINS
     IF (ratx .GT. maxR) maxR = ratx
     ratx = Si * Dx / ion(Nion)%Ni
     IF (ratx .GT. maxR) maxR = ratx
+    !**** Diagnostic for relative importance of reactions (m-3/s)***
+    IF ( (Si*Dx).GT.Rati) THEN
+       Rati = (Si*Dx)
+       diag(16)%Tx(1) = Rati
+    END IF
+    IF ( (Sr*Dx).GT.Ratr) THEN
+       Ratr = (Sr*Dx)
+       diag(17)%Tx(1) = Ratr
+    END IF   
+    !***************
 
     diag(13)%SumTx = diag(13)%SumTx + Clock%Dt * Si * Dx
     diag(15)%SumTx = diag(15)%SumTx + Clock%Dt * Sr * Dx
-    !**** Diagnostic for metastable and 2^3P rates (cm-3 s-1) ***
-    diag(13)%Txtmp(1) = Sr * Dx * br
-    !**** Diagnostic for metastable and 2^3S rates (s-1) for MEOP ***
+    !**** Diagnostic for metastable and 2^3S rates (m-3 s-1) for MEOP ***
     diag(13)%InM1 = br*Sr * Dx
     !***************
     
     !**** br == branching ratio ***
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
-    !    ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*test*ion(2)%Ni*elec%Ni**2 - Si*Dx)
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
     ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
   END SUBROUTINE Ioniz_Dimer100
