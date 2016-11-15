@@ -35,6 +35,18 @@ MODULE MOD_PARAM
      REAL(DOUBLE), DIMENSION(:,:), POINTER :: SecIon, SecExc
   END type Species
   !-----------------------------------------------------------
+  TYPE, PUBLIC::Transit
+     INTEGER, DIMENSION(2) :: Ti, Tj 
+     REAL(DOUBLE)          :: Ediff
+     CHARACTER(len=4)      :: Name
+  END type Transit
+  !-----------------------------------------------------------
+  TYPE, PUBLIC::Excited
+     CHARACTER(len=4) :: Name
+     REAL(DOUBLE)     :: Dn_o, Dn_rad, Dn_tot, Ntot
+     REAL(DOUBLE), DIMENSION(:), POINTER :: Ni
+  END type Excited
+  !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
      REAL(DOUBLE)      :: SumTx, EnProd, EnLoss
      REAL(DOUBLE)      :: InM1, OutM1, InM2, OutM2
@@ -68,6 +80,8 @@ MODULE MOD_PARAM
   TYPE(Diagnos), DIMENSION(18) :: diag
   TYPE(Species), DIMENSION(NumIon)    :: ion
   TYPE(Species), DIMENSION(0:NumMeta) :: meta ! (0) --> fundamental state
+  TYPE(Transit), DIMENSION(9) :: Ck
+  TYPE(Excited), DIMENSION(2) :: pop
 
   REAL(DOUBLE), PARAMETER :: kb  = 1.3807d-23 ! Boltzmann constant (m2 kg s-2 K-1)
   REAL(DOUBLE), PARAMETER :: qe  = 1.602d-19  ! Elementary charge (C)
@@ -83,6 +97,10 @@ MODULE MOD_PARAM
   REAL(DOUBLE), PARAMETER :: MassR = me/mhe ! Mass Ratio (me/mhe)
   REAL(DOUBLE), PARAMETER :: Ry  = 13.605692  ! Rydberg energy (eV)
   REAL(DOUBLE), PARAMETER :: Nlosh = 2.6868d+25 ! Loschmidt Number (m-3) => (P=1atm, T=0C)
+  REAL(DOUBLE), PARAMETER :: Vcel = 2.9979d+08 ! speed of light in vacuum (m/s)
+  REAL(DOUBLE), PARAMETER :: Hp   = 6.6261d-34  ! Planck Constant (J s)
+  REAL(DOUBLE), PARAMETER :: Hpb  = Hp / (2.d0*Pi) ! H_barre (J s) 
+  REAL(DOUBLE), PARAMETER :: fineS= qe*qe / (2*eps*Hp*Vcel) ! Fine structure constant
   !REAL(DOUBLE), PARAMETER :: LnC = 10.d0      ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
   CHARACTER(len=1), PARAMETER :: tabul=char(9) ! tabulation 
   ! *******************************************************************************
@@ -92,6 +110,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(34)               :: Sn   ! Associative rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
+  REAL(DOUBLE), DIMENSION(18,6,2)           :: Tij  ! Transition for each Ck components
   REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
   REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
   REAL(DOUBLE) :: Vg                          ! Calculate sheath potential for diffusion routine
@@ -132,6 +151,9 @@ CONTAINS
     ALLOCATE ( elec%SecEI(nx) ) ; elec%SecEI(:) = 0.d0
     ALLOCATE ( elec%Nuei(nx) )  ; elec%Nuei(:)  = 0.d0
 
+    ALLOCATE ( pop(1)%Ni(6)  ) ; pop(1)%Ni(:) = 0.d0
+    ALLOCATE ( pop(2)%Ni(18) ) ; pop(2)%Ni(:) = 0.d0
+
   END SUBROUTINE AllocArray
   ! **********************************************************
   SUBROUTINE DelocArray()
@@ -147,6 +169,7 @@ CONTAINS
 
     DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(0)%SecRec )
     DEALLOCATE ( F, U, Meta(0)%Nuel )
+    DEALLOCATE ( pop(1)%Ni, pop(2)%Ni )
   END SUBROUTINE DelocArray
   ! **********************************************************
 

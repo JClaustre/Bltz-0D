@@ -14,9 +14,10 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Radiative transfer ***
-  SUBROUTINE Radiat (sys, meta, Fosc, diag)
+  SUBROUTINE Radiat (sys, meta, pop, Fosc, diag)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Excited), DIMENSION(2)    , INTENT(INOUT) :: pop 
     Type(Diagnos), DIMENSION(:)    , INTENT(INOUT) :: diag
     TYPE(Species), DIMENSION(0:)   , INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
@@ -26,7 +27,8 @@ CONTAINS
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
     Rate=0.d0 ; diag(3)%Tx(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
-
+    pop(1)%Dn_rad = 0.d0
+    
     DO i = 3, NumMeta
        DO j = 0, i-1
           IF (meta(i)%Aij(j).NE.0.d0) THEN
@@ -73,6 +75,7 @@ CONTAINS
              IF (i.EQ.3 .and. j==1) THEN !**** 2P3 --> 2S3 
                 diag(15)%OutM2 = diag(15)%OutM2 + emitF
                 diag(15)%InM1  = diag(15)%InM1 + emitF
+                pop(1)%Dn_rad = Clock%Dt* emitF * meta(i)%Ni
              ELSE IF (i.EQ.3.and.j.NE.1) THEN !**** 2P3 --> N0
                 diag(3)%OutM2 = diag(3)%OutM2 + emitF
              END IF

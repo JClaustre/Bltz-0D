@@ -22,11 +22,12 @@ CONTAINS
   !                    SUBROUTINE READ_INPUT
   !***********************************************************************
   !**** Read the input file and init cross-sections
-  SUBROUTINE Read_input (sys, ion, elec, Meta)
+  SUBROUTINE Read_input (sys, ion, elec, Meta, Ck)
     IMPLICIT NONE
     !INTENT
     TYPE(SysVar), INTENT(INOUT) :: sys
     TYPE(Species), INTENT(INOUT) :: elec
+    TYPE(Transit), DIMENSION(9)  :: Ck
     TYPE(Species), DIMENSION(NumIon), INTENT(INOUT) :: ion
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL 
@@ -407,6 +408,29 @@ CONTAINS
     CALL Init_ioniz (sys, meta)
     !**************************************
 
+    !**** READ Probability transitions for laser's pumping
+    OPEN(UNIT=51,FILE='./datFile/pumping.cs',ACTION="READ",STATUS="OLD")
+    do i = 1, 9
+       READ(51,*)
+    END do
+    do i = 1, 18 ! Read transition elements
+       READ(51,*) (Tij(i,j,1), j=1,6)
+    END do
+    do i = 1, 5
+       READ(51,*)
+    END do
+    do i = 1, 18 ! Read polarization elements
+       READ(51,*) (Tij(i,j,2), j=1,6)
+    END do
+    do i = 1, 4
+       READ(51,*)
+    END do
+    do i = 1, 9 ! Read Tij coordinates
+       READ(51,*) Ck(i)%Name, Ck(i)%Ti(1), Ck(i)%Ti(2),Ck(i)%Tj(1), Ck(i)%Tj(2), Ck(i)%Ediff
+    END do
+    CLOSE(51)
+    !**************************************
+
     !**** Check if directories are OK.
     write(*,"(2A)",advance="no") tabul, "Check directories ... "
     inquire( file=DirFile, exist=file_exists)
@@ -425,11 +449,12 @@ CONTAINS
 
   END SUBROUTINE Read_input
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Init (sys, clock, ion, elec, meta)
+  SUBROUTINE Init (sys, clock, ion, elec, meta, Ck)
     !INTENT
     TYPE(SysVar) , INTENT(INOUT) :: sys
     TYPE(Time)   , INTENT(INOUT) :: clock
     TYPE(Species), INTENT(INOUT) :: elec
+    TYPE(Transit), DIMENSION(9)  :: Ck
     TYPE(Species), DIMENSION(:) , INTENT(INOUT) :: ion
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     !LOCAL
@@ -453,7 +478,7 @@ CONTAINS
     !**** Alloc Arrays
     CALL AllocArray(sys%nx)
     !**** Read Init
-    CALL Read_Input(sys, ion, elec, meta)
+    CALL Read_Input(sys, ion, elec, meta,Ck)
     !**** Init EEDF
     IF (Clock%Rstart == 1) OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/EEDF.dat',STATUS='OLD')
     DO i = 1, sys%nx

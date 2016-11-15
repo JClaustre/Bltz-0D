@@ -16,6 +16,7 @@ MODULE MOD_EVOL
   USE MOD_CHAUF
   USE MOD_READ
   USE MOD_TPGAZ
+  USE MOD_PUMP
   IMPLICIT NONE
 
   !**** Switch for excitation and ionization process ***
@@ -46,12 +47,15 @@ CONTAINS
     Post_D = 10d-1
     !**** Maximum time-step allowed (sec)***
     MxDt   = 2d-09
+    !**** Allocate densities for sublevels in 2S3 and 2P3 ***
+    pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
+       pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -77,7 +81,7 @@ CONTAINS
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
        !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag)
+       CALL Radiat       (sys, meta, pop, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
@@ -90,10 +94,14 @@ CONTAINS
        IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
-       !*************************************
 
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, F, diag, l, MxDt)
+
+       !*************************************
+       !**** LASER PUMPING
+       !*************************************
+       CALL Sublev_coll(Clock,meta,pop,Tij)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -434,8 +442,12 @@ CONTAINS
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
           OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          !**** Verif des densites pop ***
+          OPEN(UNIT=909,File=TRIM(ADJUSTL(DirFile))//"pop.dat",ACTION="WRITE",STATUS="UNKNOWN")
        ELSE 
           OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",POSITION="APPEND",&
+               ACTION="WRITE",STATUS="UNKNOWN")
+          OPEN(UNIT=909,File=TRIM(ADJUSTL(DirFile))//"pop.dat",POSITION="APPEND",&
                ACTION="WRITE",STATUS="UNKNOWN")
        END IF
        SELECT CASE (NumIon) 
@@ -448,6 +460,9 @@ CONTAINS
                elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
+       write(909,"(25ES15.6E3)") Clock%SumDt, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
+       CLOSE(909)
+
     END IF
     IF ( mod(iter,Clock%NumIter/10) == 0 ) then
 
