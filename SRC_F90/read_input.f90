@@ -22,12 +22,12 @@ CONTAINS
   !                    SUBROUTINE READ_INPUT
   !***********************************************************************
   !**** Read the input file and init cross-sections
-  SUBROUTINE Read_input (sys, ion, elec, Meta, Ck)
+  SUBROUTINE Read_input (sys, ion, elec, Meta, lasr)
     IMPLICIT NONE
     !INTENT
     TYPE(SysVar), INTENT(INOUT) :: sys
     TYPE(Species), INTENT(INOUT) :: elec
-    TYPE(Transit), DIMENSION(9)  :: Ck
+    TYPE(Laser)  , INTENT(INOUT) :: lasr
     TYPE(Species), DIMENSION(NumIon), INTENT(INOUT) :: ion
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL 
@@ -89,6 +89,15 @@ CONTAINS
     READ (90,*) Clock%Dt
     READ (90,*) sys%Emx
     READ (90,*) Clock%TRstart
+    READ (90,*) !/********************************/!
+    READ (90,*) lasr%OnOff
+    READ (90,*) lasr%Lwave
+    READ (90,*) lasr%plz
+    READ (90,*) lasr%Is
+    READ (90,*) lasr%Sec
+    READ (90,*) lasr%Stime
+    READ (90,*) lasr%Ntr
+    READ (90,*) (lasr%Ck(j), j=1,lasr%Ntr)
     IF (Clock%Rstart == 1) READ (90,*) Clock%SumDt
     CLOSE(90)
     !**********************************************************************
@@ -105,6 +114,9 @@ CONTAINS
        sys%L  = sys%L  * 1.d-2
        elec%Ni= elec%Ni * 1.d+6
        sys%Powr = sys%Powr * 1d+6
+       lasr%Lwave = lasr%Lwave * 1d-9
+       lasr%Sec = lasr%Sec * 1d-4
+       lasr%Stime = lasr%Stime * 1d-6
     END IF
     !*******************************
     sys%Dx = sys%Emx / dble(sys%nx)
@@ -422,12 +434,18 @@ CONTAINS
     do i = 1, 18 ! Read polarization elements
        READ(51,*) (Tij(i,j,2), j=1,6)
     END do
-    do i = 1, 4
+    do i = 1, 3
        READ(51,*)
     END do
-    do i = 1, 9 ! Read Tij coordinates
-       READ(51,*) Ck(i)%Name, Ck(i)%Ti(1), Ck(i)%Ti(2),Ck(i)%Tj(1), Ck(i)%Tj(2), Ck(i)%Ediff
-    END do
+    DO i = 1, 18 ! Read Ck transition components
+       READ(51,*) (Tij(i,j,3), j=1,6)
+    END DO
+!    do i = 1, 4
+!       READ(51,*)
+!    END do
+!    do i = 1, 9 ! Read Tij coordinates
+!       READ(51,*) Ck(i)%Name, Ck(i)%Ti(1), Ck(i)%Ti(2),Ck(i)%Tj(1), Ck(i)%Tj(2), Ck(i)%Ediff
+!    END do
     CLOSE(51)
     !**************************************
 
@@ -449,12 +467,12 @@ CONTAINS
 
   END SUBROUTINE Read_input
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Init (sys, clock, ion, elec, meta, Ck)
+  SUBROUTINE Init (sys, clock, ion, elec, meta, lasr)
     !INTENT
     TYPE(SysVar) , INTENT(INOUT) :: sys
     TYPE(Time)   , INTENT(INOUT) :: clock
     TYPE(Species), INTENT(INOUT) :: elec
-    TYPE(Transit), DIMENSION(9)  :: Ck
+    TYPE(Laser)  , INTENT(INOUT) :: lasr
     TYPE(Species), DIMENSION(:) , INTENT(INOUT) :: ion
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     !LOCAL
@@ -478,7 +496,7 @@ CONTAINS
     !**** Alloc Arrays
     CALL AllocArray(sys%nx)
     !**** Read Init
-    CALL Read_Input(sys, ion, elec, meta,Ck)
+    CALL Read_Input(sys, ion, elec, meta, lasr)
     !**** Init EEDF
     IF (Clock%Rstart == 1) OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/EEDF.dat',STATUS='OLD')
     DO i = 1, sys%nx
@@ -563,22 +581,26 @@ CONTAINS
     END IF
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
-    IF (Clock%Rstart == 0) THEN
-       ion(2)%Ni = elec%Ni * 0.45d0                                         !
-       ion(1)%Ni = elec%Ni * 0.55d0                                         !
+    IF (Clock%Rstart == 0) THEN                                             !
+       ion(2)%Ni = elec%Ni * 0.25d0                                         !
+       ion(1)%Ni = elec%Ni * 0.75d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 1.3d+17                                  !
+       CASE (3) ; ion(NumIon)%Ni = 4.2d+11                                  !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.LE.2) meta(i)%Ni = 2.0d+17                                  !
-          IF (i.GT.2) meta(i)%Ni = 1.4d+17
-          IF (i.GT.4) meta(i)%Ni = 1.0d+12                                  !
+          IF (i.LE.2) meta(i)%Ni = 1.7d+16                                  !
+          IF (i.GT.2) meta(i)%Ni = 2.5d+12                                  !
+          IF (i.GT.4) meta(i)%Ni = 1.0d+11                                  !
        END DO                                                               !
+       !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
+       pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0     !
     ELSE                                                                    !
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Density.dat',STATUS='OLD')
-       READ(90,*) (meta(i)%Ni, i=1,NumMeta)                                 !
+       READ(90,*) (meta(i)%Ni, i=1,NumMeta), &                              !
+            (pop(1)%Ni(i),i=1,6), (pop(2)%Ni(i), i=1,18)                    !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; READ(90,*) ion(NumIon)%Ni                                 !
+       CASE (3) ; READ(90,*) ion(NumIon)%Ni, &                              !
+            (pop(1)%Ni(i),i=1,6), (pop(2)%Ni(i), i=1,18)                    !
        END SELECT                                                           !
        CLOSE (90)                                                           !
     END IF                                                                  !
@@ -587,11 +609,12 @@ CONTAINS
 
   END SUBROUTINE Init
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Rstart_SaveFiles (sys, clock, ion, elec, meta, F)
+  SUBROUTINE Rstart_SaveFiles (sys, clock, ion, elec, meta, pop, F)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Time)   , INTENT(IN) :: clock
     TYPE(Species), INTENT(IN) :: elec
+    TYPE(Excited), DIMENSION(2) , INTENT(IN) :: pop
     TYPE(Species), DIMENSION(:) , INTENT(IN) :: ion
     TYPE(Species), DIMENSION(0:), INTENT(IN) :: meta
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: F
@@ -606,9 +629,11 @@ CONTAINS
     CLOSE(990)
     !**** Save excited states density
     OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/Density.dat",ACTION="WRITE",STATUS="UNKNOWN")
-    write(990,"(42ES15.6)") (meta(i)%Ni, i=1,NumMeta)
+    write(990,"(42ES15.6,6ES15.6,18ES15.6)") (meta(i)%Ni, i=1,NumMeta), &
+         (pop(1)%Ni(i), i=1,6), (pop(2)%Ni(i), i=1,18)
     SELECT CASE (NumIon) 
-    CASE (3) ; write(990,"(ES15.6)") ion(NumIon)%Ni
+    CASE (3) ; write(990,"(ES15.6,6ES15.6,18ES15.6)") ion(NumIon)%Ni, &
+         (pop(1)%Ni(i), i=1,6), (pop(2)%Ni(i), i=1,18)
     END SELECT
     CLOSE(990)
     !**** Save neutral gas temperature profile
@@ -637,6 +662,15 @@ CONTAINS
     WRITE (990,"(ES15.6)") Clock%Dt
     WRITE (990,"(ES15.6)") sys%Emx
     WRITE (990,"(ES15.6)") Clock%TRstart
+    WRITE (990,"(A)") "!********************************!"
+    WRITE (990,"(I4)") lasr%OnOff
+    WRITE (990,"(ES15.6)") lasr%Lwave
+    WRITE (990,"(I4)") lasr%plz
+    WRITE (990,"(ES15.6)") lasr%Is
+    WRITE (990,"(ES15.6)") lasr%Sec
+    WRITE (990,"(ES15.6)") lasr%Stime
+    WRITE (990,"(I4)") lasr%Ntr
+    WRITE (990,"(9I4)") (lasr%Ck(i), i=1,lasr%Ntr)
     !*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
     WRITE (990,"(ES15.6)") Clock%SumDt
     !*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

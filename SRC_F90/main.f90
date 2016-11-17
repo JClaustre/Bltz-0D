@@ -16,7 +16,7 @@ PROGRAM MAIN
 
   CALL welcome()
   !**** INIT PARAM ****!
-  CALL Init(sys, Clock, ion, elec, meta, Ck)
+  CALL Init(sys, Clock, ion, elec, meta, lasr)
 
   CALL SYSTEM_CLOCK (t1, clock_rate)
   CALL Evolution ()

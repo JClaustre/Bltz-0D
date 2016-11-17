@@ -35,17 +35,18 @@ MODULE MOD_PARAM
      REAL(DOUBLE), DIMENSION(:,:), POINTER :: SecIon, SecExc
   END type Species
   !-----------------------------------------------------------
-  TYPE, PUBLIC::Transit
-     INTEGER, DIMENSION(2) :: Ti, Tj 
-     REAL(DOUBLE)          :: Ediff
-     CHARACTER(len=4)      :: Name
-  END type Transit
-  !-----------------------------------------------------------
   TYPE, PUBLIC::Excited
      CHARACTER(len=4) :: Name
      REAL(DOUBLE)     :: Dn_o, Dn_rad, Dn_tot, Ntot
+     REAL(DOUBLE)     :: T_relax
      REAL(DOUBLE), DIMENSION(:), POINTER :: Ni
   END type Excited
+  !-----------------------------------------------------------
+  TYPE, PUBLIC::laser
+     INTEGER      :: plz, OnOff, Ntr
+     REAL(DOUBLE) :: Is, sec, Lwave, Stime  
+     INTEGER, DIMENSION(9) :: Ck
+  END type Laser
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
      REAL(DOUBLE)      :: SumTx, EnProd, EnLoss
@@ -65,22 +66,21 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Lv=44
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
   INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
+  INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
+  INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
+
 
   CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/Zoomed/0.01_microS/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.05W/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Belmonte/Pw_180/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Santos/165W/modif_Rates/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Hamdan/40_torr/8_mm/Test_Pwr/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.03W/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
   TYPE(Species) :: elec
-  TYPE(profil1D) :: OneD
+  TYPE(profil1D):: OneD
+  TYPE(Laser)   :: lasr
   TYPE(Diagnos), DIMENSION(18) :: diag
   TYPE(Species), DIMENSION(NumIon)    :: ion
   TYPE(Species), DIMENSION(0:NumMeta) :: meta ! (0) --> fundamental state
-  TYPE(Transit), DIMENSION(9) :: Ck
   TYPE(Excited), DIMENSION(2) :: pop
 
   REAL(DOUBLE), PARAMETER :: kb  = 1.3807d-23 ! Boltzmann constant (m2 kg s-2 K-1)
@@ -93,6 +93,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), PARAMETER :: mhe = 4.002*mi   ! Helium mass (kg)
   REAL(DOUBLE), PARAMETER :: eps = 8.8542d-12 ! Permittivity of free space (F.m-1)
   REAL(DOUBLE), PARAMETER :: Pi  = 4*ATAN(1.d0)
+  REAL(DOUBLE), PARAMETER :: PPi = 2.d0*Pi 
   REAL(DOUBLE), PARAMETER :: gama= dsqrt(2.d0*qome)
   REAL(DOUBLE), PARAMETER :: MassR = me/mhe ! Mass Ratio (me/mhe)
   REAL(DOUBLE), PARAMETER :: Ry  = 13.605692  ! Rydberg energy (eV)
@@ -110,7 +111,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(34)               :: Sn   ! Associative rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
-  REAL(DOUBLE), DIMENSION(18,6,2)           :: Tij  ! Transition for each Ck components
+  REAL(DOUBLE), DIMENSION(Npop2,Npop1,3)    :: Tij  ! Transition for each Ck components
   REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
   REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
   REAL(DOUBLE) :: Vg                          ! Calculate sheath potential for diffusion routine

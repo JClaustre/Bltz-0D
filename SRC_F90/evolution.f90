@@ -46,9 +46,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 10d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-09
-    !**** Allocate densities for sublevels in 2S3 and 2P3 ***
-    pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0
+    MxDt   = 1d-09
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -96,12 +94,12 @@ CONTAINS
        CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
-       CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, F, diag, l, MxDt)
+       CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
 
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij)
+       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -355,13 +353,14 @@ CONTAINS
   END SUBROUTINE OutPutMD
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
-  SUBROUTINE CHECK_AND_WRITE(Clock, sys, meta, elec, ion, F, diag, iter, MxDt)
+  SUBROUTINE CHECK_AND_WRITE(Clock, sys, meta, elec, ion, pop, F, diag, iter, MxDt)
     !**** INTENT
     INTEGER      , INTENT(IN)    :: iter
     REAL(DOUBLE) , INTENT(INOUT) :: MxDt
     TYPE(SysVar) , INTENT(IN)    :: sys
     TYPE(TIME)   , INTENT(INOUT) :: Clock
     TYPE(Species), INTENT(INOUT) :: elec
+    TYPE(Excited), DIMENSION(2)        , INTENT(INOUT) :: pop
     TYPE(Species), DIMENSION(NumIon)   , INTENT(INOUT) :: ion
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     TYPE(Diagnos), DIMENSION(:)        , INTENT(INOUT) :: diag
@@ -531,7 +530,7 @@ CONTAINS
     IF ( Clock%SumDt.GE.Res ) THEN
 
        !**** WRITE RESTART FILES ***********************!
-       CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, F)
+       CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, pop, F)
 
        !**** WRITE EEDF ********************************!
        write(fileName,"('F_evol_',I3.3,'.dat')") int(Res/Clock%TRstart)
