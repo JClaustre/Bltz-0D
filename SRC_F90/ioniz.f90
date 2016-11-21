@@ -177,8 +177,8 @@ CONTAINS
           IF ((ratx*meta(i)%Ni).GT.Rate) THEN
              Rate = ratx*meta(i)%Ni
              diag(2)%Tx(2)= real(i)
-             diag(2)%Tx(1) = Rate
           END IF
+          diag(2)%Tx(1) = diag(2)%Tx(1) + ratx*meta(i)%Ni
 
           !**** Diagnostic for metastable and 2^3P rates (s-1) ***
           IF (i==1) THEN ! 2^3S --> He+
@@ -280,12 +280,12 @@ CONTAINS
     !**** Diagnostic for relative importance of reactions (m-3/s)***
     IF ( (Si*Dx).GT.Rati) THEN
        Rati = (Si*Dx)
-       diag(16)%Tx(1) = Rati
     END IF
+    diag(16)%Tx(1) = Si*Dx
     IF ( (Sr*Dx).GT.Ratr) THEN
        Ratr = (Sr*Dx)
-       diag(17)%Tx(1) = Ratr
     END IF   
+    diag(17)%Tx(1) = Sr*Dx
     !***************
 
     diag(13)%SumTx = diag(13)%SumTx + Clock%Dt * Si * Dx

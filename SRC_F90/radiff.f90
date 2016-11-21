@@ -64,8 +64,8 @@ CONTAINS
              IF ((emitF*meta(i)%Ni).GT.Rate) THEN
                 Rate = emitF * meta(i)%Ni
                 diag(3)%Tx(2) = real(i) ; diag(3)%Tx(3) = real(j)
-                diag(3)%Tx(1) = Rate
              END IF
+             diag(3)%Tx(1) = diag(3)%Tx(1) + emitF * meta(i)%Ni
              !****************
 
              !*************** Diagnostic for metastable and 2^3P rates (s-1)

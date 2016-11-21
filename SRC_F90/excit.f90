@@ -324,6 +324,7 @@ CONTAINS
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
     Ratx=0.d0 ; Ratd=0.d0
     !********************
+    diag(1)%Tx(:)=0.d0; diag(10)%Tx(:)=0.d0 
     diag(1)%InM1=0.d0 ; diag(1)%OutM1=0.d0
     diag(1)%InM2=0.d0 ; diag(1)%OutM2=0.d0
     !********************************************************
@@ -430,13 +431,13 @@ CONTAINS
              IF ((Sx*Ni).GT.Ratx) THEN ! Excit
                 Ratx = Sx*Ni
                 diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
-                diag(1)%Tx(1) = Ratx
              END IF
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*Ni ! Sum over all contrib
              IF ((Sd*Nj).GT.Ratd) THEN ! De-Excit
                 Ratd = Sd*Nj
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
-                diag(10)%Tx(1) = Ratd
              END IF
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*Nj
 
              !***************** Diagnostic for metastable and 2^3P rates (s-1) for MEOP
              IF (i==0.and.j==1) THEN !**** No(1S) <--> 2S3
@@ -484,10 +485,10 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef1
     REAL(DOUBLE) :: C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sd, ratx
+    REAL(DOUBLE) :: Sd
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
-    Dx = sys%Dx ; nx = sys%nx ; ratx=0.d0
+    Dx = sys%Dx ; nx = sys%nx
     !********************
     SELECT CASE (3) ! used For the compilation
     CASE (3) 
@@ -525,10 +526,7 @@ CONTAINS
     ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
 
     if (Sd .GT. MaxR) MaxR = Sd
-    IF ((Sd*ion(Nion)%Ni).GT.Ratx) THEN ! Excit
-       Ratx = Sd*ion(Nion)%Ni
-       diag(15)%Tx(1) = Ratx
-    END IF
+    diag(15)%Tx(1) = Sd*ion(Nion)%Ni
 
   END SUBROUTINE Dexc_Dimer
 

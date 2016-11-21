@@ -65,8 +65,8 @@ CONTAINS
           IF (asso.GT.Rate) THEN
              Rate = asso
              Diag(6)%Tx(2) = real(i)
-             Diag(6)%Tx(1) = asso
           END IF
+          Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
        END IF
     END DO
 
@@ -101,8 +101,8 @@ CONTAINS
              IF (Penn.GT.Rate) THEN
                 Rate = Penn
                 Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
-                Diag(5)%Tx(1) = Penn
              END IF
+             Diag(5)%Tx(1) = Diag(5)%Tx(1) + Penn
 
           END DO
           !**** Update population
@@ -128,7 +128,7 @@ CONTAINS
     ! Involving Dimer Penning processes 
     SELECT CASE (NumIon)
     CASE (3)
-       Rate = 0.d0
+       Rate = 0.d0 ; Diag(4)%Tx(:) = 0.d0
        diag(4)%OutM1=0.d0 ; diag(4)%OutM2=0.d0
        Nion = 3
        ! #1 He* + He2* --> He+ + He + e
@@ -164,8 +164,9 @@ CONTAINS
              IF (Penn.GT.Rate) THEN
                 Rate = Penn             
                 Diag(4)%Tx(2) = real(i)
-                Diag(4)%Tx(1) = Rate
              END IF
+             Diag(4)%Tx(1) = Diag(4)%Tx(1) + Penn
+
              !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
              IF (i==1) THEN
                 !*************** Diagnostic for metastable and 2^3P rates (s-1)
