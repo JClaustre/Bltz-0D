@@ -86,7 +86,7 @@ CONTAINS
        Updens(2,j) = Updens(2,j) + Dt * (meta(3)%Ni/N2 - pop(2)%Ni(j) ) / pop(2)%T_relax
     END DO
 
-    !**** Update of the densities and the total densities of 2S3 and 2P3 ***
+    !**** Update of the pop densities and the total densities of 2S3 and 2P3 ***
     pop(1)%Ni(1:Npop1) = pop(1)%Ni(1:Npop1) + Updens(1,1:Npop1)
     pop(2)%Ni(1:Npop2) = pop(2)%Ni(1:Npop2) + Updens(2,1:Npop2)
 
@@ -97,8 +97,6 @@ CONTAINS
     END do
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
 
-!    write(*,"(A,2ES15.6)") "Verif des densites : ", &
-!         (1.d0- (meta(1)%Ni/tot1)), (1.d0 - (meta(3)%Ni/tot2))
   END Subroutine Sublev_coll
 
 END MODULE MOD_PUMP
