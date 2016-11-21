@@ -46,6 +46,8 @@ MODULE MOD_PARAM
      INTEGER      :: plz, OnOff, Ntr
      REAL(DOUBLE) :: Is, sec, Lwave, Stime  
      INTEGER, DIMENSION(9) :: Ck
+     INTEGER, DIMENSION(6,6) :: Eij, Fij
+     INTEGER, DIMENSION(6) :: lamb
   END type Laser
   !-----------------------------------------------------------
   TYPE, PUBLIC::Diagnos
@@ -70,8 +72,8 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.03W/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.03W/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

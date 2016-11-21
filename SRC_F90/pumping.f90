@@ -38,7 +38,7 @@ CONTAINS
     ! Doppler Width due to metastable velocity distribution
     Dop  = Omeg * Vm / (ppi*Vcel)
     ! Laser coefficient 
-    gammak = sqrt(pi/2.d0) * fineS * fosc(1,3) * lasr%Is / (mhe*Omeg*Dop*lasr%Sec)
+    gammak = sqrt(pi/2.d0) * fineS * fosc(1,3) * lasr%Is / (me*Omeg*Dop*lasr%Sec)
     !************************
     IF (lasr%OnOff.EQ.1 .and. Clock%SumDt.GT.lasr%Stime) THEN
        switch = 1

@@ -440,9 +440,18 @@ CONTAINS
     DO i = 1, 18 ! Read Ck transition components
        READ(51,*) (Tij(i,j,3), j=1,6)
     END DO
-!    do i = 1, 4
-!       READ(51,*)
-!    END do
+    do i = 1, 5
+       READ(51,*)
+    END do
+    DO i = 1, 6 ! Read E Matrix
+       READ(51,*) (lasr%Eij(i,j), j=1,6)
+    END DO
+    READ(51,*)
+    DO i = 1, 6 ! Read F Matrix
+       READ(51,*) (lasr%Fij(i,j), j=1,6)
+    END DO
+    READ(51,*)
+    READ(51,*) (lasr%lamb(j), j=1,6)
 !    do i = 1, 9 ! Read Tij coordinates
 !       READ(51,*) Ck(i)%Name, Ck(i)%Ti(1), Ck(i)%Ti(2),Ck(i)%Tj(1), Ck(i)%Tj(2), Ck(i)%Ediff
 !    END do
