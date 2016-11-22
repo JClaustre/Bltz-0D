@@ -79,7 +79,7 @@ CONTAINS
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
        !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, pop, Fosc, Diag)
+       CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***

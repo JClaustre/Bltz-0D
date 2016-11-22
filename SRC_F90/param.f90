@@ -37,7 +37,7 @@ MODULE MOD_PARAM
   !-----------------------------------------------------------
   TYPE, PUBLIC::Excited
      CHARACTER(len=4) :: Name
-     REAL(DOUBLE)     :: Dn_o, Dn_rad, Dn_tot, Ntot
+     REAL(DOUBLE)     :: Dn_o, Ntot
      REAL(DOUBLE)     :: T_relax
      REAL(DOUBLE), DIMENSION(:), POINTER :: Ni
   END type Excited
@@ -73,7 +73,7 @@ MODULE MOD_PARAM
 
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.03W/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Rhanem_MEOP/0.3_Torr/0.03W/pump_test/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

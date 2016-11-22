@@ -14,10 +14,9 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Radiative transfer ***
-  SUBROUTINE Radiat (sys, meta, pop, Fosc, diag)
+  SUBROUTINE Radiat (sys, meta, Fosc, diag)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
-    TYPE(Excited), DIMENSION(2)    , INTENT(INOUT) :: pop 
     Type(Diagnos), DIMENSION(:)    , INTENT(INOUT) :: diag
     TYPE(Species), DIMENSION(0:)   , INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
@@ -27,7 +26,6 @@ CONTAINS
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
     Rate=0.d0 ; diag(3)%Tx(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
-    pop(1)%Dn_rad = 0.d0
     
     DO i = 3, NumMeta
        DO j = 0, i-1
@@ -52,9 +50,10 @@ CONTAINS
                 EscapF = 1.d0
              END IF
              emitF = meta(i)%Aij(j) * EscapF
-  
-             meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
-             meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
+             IF (i.NE.3.or.j.NE.1) THEN
+                meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
+                meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
+             END IF
              !**** Energy conservation Diagnostic ***
              diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
              !**** Rate calcul for adaptative time-step ***
@@ -75,7 +74,6 @@ CONTAINS
              IF (i.EQ.3 .and. j==1) THEN !**** 2P3 --> 2S3 
                 diag(15)%OutM2 = diag(15)%OutM2 + emitF
                 diag(15)%InM1  = diag(15)%InM1 + emitF
-                pop(1)%Dn_rad = Clock%Dt* emitF * meta(i)%Ni
              ELSE IF (i.EQ.3.and.j.NE.1) THEN !**** 2P3 --> N0
                 diag(3)%OutM2 = diag(3)%OutM2 + emitF
              END IF
@@ -88,6 +86,7 @@ CONTAINS
 
        END DO
     END DO
+
   END SUBROUTINE Radiat
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
