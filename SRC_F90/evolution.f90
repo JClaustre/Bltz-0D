@@ -46,7 +46,8 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 10d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-09
+    MxDt   = 1d-10
+    sys%Emax = sys%E
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -60,6 +61,7 @@ CONTAINS
 
        !**** Increase Power exponantially function of time
        CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       !CALL E_PROFIL (Clock, sys, l)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -369,7 +371,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 500
+    nx = sys%nx ; Switch = 0 ; mdlus = 5
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -412,7 +414,7 @@ CONTAINS
 
     !**** Update Time-step
     IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN
-       Clock%Dt = 1.0d0 / (MaxR*3.d0)
+       Clock%Dt = 1.0d0 / (MaxR*10.d0)
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
@@ -434,9 +436,9 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,F6.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," n0/tin=", RateSum," \r"!
+            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," n0/tin=", RateSum,elec%Tp," \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -452,11 +454,11 @@ CONTAINS
        SELECT CASE (NumIon) 
        CASE (3)
           write(99,"(52ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-               OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
+               elec%mobl,elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
                ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        CASE DEFAULT
-          write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
-               elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
+          write(99,"(51ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
+               elec%mobl,elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
        write(909,"(25ES15.6E3)") Clock%SumDt, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)

@@ -14,6 +14,42 @@ MODULE MOD_CHAUF
 
 CONTAINS
 
+
+  SUBROUTINE E_PROFIL (Clock, sys, iter)
+    !INTENT
+    INTEGER      , INTENT(IN)     :: iter
+    TYPE(Time)   , INTENT(IN)     :: Clock
+    TYPE(SysVar) , INTENT(INOUT)  :: sys
+    !LOCAL
+    INTEGER      :: i, nx
+    REAL(DOUBLE) :: x, xmax, SumDt
+    REAL(DOUBLE) :: Dx, Dt, lp, vs
+    nx = sys%nx ; Dx = sys%Dx ; SumDt = Clock%SumDt
+    xmax = 3.d-2 ! (m)
+    lp = 2.6d-04 ! (m)
+    vs = 1.0d+05 ! (m/s)
+    !**** Calcul of E(x,t) ***
+    x =  (xmax-(vs*SumDt)) - 9d-03
+    IF (x.LE.-lp) THEN
+       sys%E = sys%Emax / (1.d0 + (xmax- 9d-03)/(2.d0*lp))
+    ELSE IF (x.GT.-lp .and.x.LT.0.d0) THEN
+       sys%E = sys%Emax * (1.d0 + x/lp) 
+    ELSE IF (x.GE. 0.d0) THEN
+       sys%E = sys%Emax / (1.d0 + x/(2.d0*lp))
+    END IF
+
+    !**** Write E in file ***
+    IF (iter.EQ.1) THEN
+       OPEN(UNIT=91,File=TRIM(ADJUSTL(DirFile))//"E_time.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    ELSE 
+       OPEN(UNIT=91,File=TRIM(ADJUSTL(DirFile))//"E_time.dat",POSITION="APPEND",&
+            ACTION="WRITE",STATUS="UNKNOWN")
+    END IF
+    write(91,"(2ES15.6)") SumDt*1d6, sys%E
+    CLOSE(91)
+
+  END SUBROUTINE E_PROFIL
+
   SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
     !INTENT
     TYPE(Time)   , INTENT(IN)     :: Clock
@@ -26,7 +62,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
-    GenPwr = 1.d-06 ! Time constant to start/end the generator.
+    GenPwr = 1.d-07 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power
@@ -85,7 +121,7 @@ CONTAINS
     power = power * qe                                                      !
     sys%Pwmoy = power
     !***********************************************************************!
-
+    !print*, sys%powr* sys%volume, sys%E*1d-2
   END SUBROUTINE POWER_CONTROL
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
