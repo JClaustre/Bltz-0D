@@ -47,7 +47,7 @@ CONTAINS
     Post_D = 1.2d-4
     !**** Maximum time-step allowed (sec)***
     MxDt   = 1d-09
-
+    
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
@@ -64,7 +64,7 @@ CONTAINS
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
-!       CALL FP      (sys, elec, F, U)
+       CALL FP      (sys, elec, F, U)
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
@@ -112,13 +112,13 @@ CONTAINS
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
-    
+
     !**** Conservation test routine ***
     CALL Consv_Test(sys, U, F, Diag, consv)
     !**** Write final EEDF ***
     CALL Write_Out1D( F, "F_final.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
-
+    
   END SUBROUTINE EVOLUTION
   
   SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
