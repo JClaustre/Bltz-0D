@@ -14,7 +14,6 @@ MODULE MOD_CHAUF
 
 CONTAINS
 
-
   SUBROUTINE E_PROFIL (Clock, sys, iter)
     !INTENT
     INTEGER      , INTENT(IN)     :: iter
@@ -29,7 +28,7 @@ CONTAINS
     lp = 2.6d-04 ! (m)
     vs = 1.0d+05 ! (m/s)
     !**** Calcul of E(x,t) ***
-    x =  (xmax-(vs*SumDt)) - 9d-03
+    x =  (xmax-(vs*iter*Dt)) - 9d-03
     IF (x.LE.-lp) THEN
        sys%E = sys%Emax / (1.d0 + (xmax- 9d-03)/(2.d0*lp))
     ELSE IF (x.GT.-lp .and.x.LT.0.d0) THEN

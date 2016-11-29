@@ -73,7 +73,7 @@ MODULE MOD_PARAM
 
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/steady_state/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/15KV/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

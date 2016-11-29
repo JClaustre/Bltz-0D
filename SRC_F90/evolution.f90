@@ -46,8 +46,8 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 10d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-10
-    sys%Emax = sys%E
+    MxDt   = 2d-12
+    sys%Emax = 15000*1.d2 ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -60,8 +60,8 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
-       !CALL E_PROFIL (Clock, sys, l)
+       !CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       CALL E_PROFIL (Clock, sys, l)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
