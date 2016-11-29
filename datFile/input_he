@@ -2,18 +2,18 @@
 0          	  Restart simulation ( 0  - no restart | 1 - restart )
 1.505E+01	  E (V/cm)	Electric field
 4.000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
-1.360E+07   1	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
-7.600E+02	  prs (Torr)	Pressure
+1.360E+07   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
+0.300E+00	  prs (Torr)	Pressure
 3.000E+02  600	  Tp (K)	Temperature + Tp at tube boundary
 5.600E+00	  Tpe (eV)	Electronic Temperature
-0.150E+00	  Ra (cm)	Cylinder Radius
-4.000E+00	  L  (cm)       Tube Length
+2.500E+00	  Ra (cm)	Cylinder Radius
+5.000E+00	  L  (cm)       Tube Length
 8.800E+07	  ne (cm-3)	Initial electron density
 1.055E-02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-5.010E+00   	  Simulation Time (mic-sec)  
+2.010E+00   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
-2.000E+02	  Emax (Energy grid max (eV) ) 
-0.500E+00	  save data's every XXX micro-sec (Restart files + EEDF)
+9.000E+02	  Emax (Energy grid max (eV) ) 
+1.500E+00	  save data's every XXX micro-sec (Restart files + EEDF)
 *************************************************************************
 0                 Activate the laser (1) or don't use laser pumping (0)
 1083              lenght wave of the laser (nm)

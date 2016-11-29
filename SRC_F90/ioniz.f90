@@ -114,7 +114,7 @@ CONTAINS
     Rate=0.d0 ; diag(2)%Tx(:)=0.d0
     !**** if (0) then "Vidal case" (change the threshold) ***
     !**** else "Matte case" (remove electrons from 2nd cell) ***
-    cas = 1 
+    cas = 0
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     DO i = 0, NumMeta
@@ -124,7 +124,7 @@ CONTAINS
           SubCycl = 1
           SubDt = Clock%Dt
        ELSE
-          SubDt = 1.0d-11
+          SubDt = 1.0d-10
           IF (Clock%Dt .GT. SubDt) SubCycl = ceiling(Clock%Dt / SubDt)
           IF (Clock%Dt .LE. SubDt) SubCycl = 1
           IF (Clock%Dt .LE. SubDt) SubDt = Clock%Dt
@@ -154,15 +154,15 @@ CONTAINS
                 Src = Src + ( coef * U(k) * meta(i)%SecIon(1,k) * Fi(k) )
              END IF
              !**** UpDate Distribution Function ***
-             Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / dsqrt(U(k))
+             Fi(k) = Fi(k) + SubDt * (prod-loss) * coef1 / sqrt(U(k))
           END DO
-          IF ( cas == 0 ) THEN
+          IF ( cas.EQ.0 ) THEN
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx
              !**** Energy conservation Diagnostic : case(0) ***
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1* Dx*(Eij-Dx*0.5d0)
           ELSE
              Fi(1) = Fi(1) + SubDt * Src * coef1* cnst * Dx * 3.d0 / 2.d0
-             Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * dsqrt(3.d0))
+             Fi(2) = Fi(2) - SubDt * Src * coef1* cnst * Dx / (2.d0 * sqrt(3.d0))
              !**** Energy conservation Diagnostic : case(1) ***
              diag(2)%EnLoss = diag(2)%EnLoss + SubDt * Src * coef1 * Dx * Eij
           END IF
@@ -219,7 +219,7 @@ CONTAINS
 
     !**** if (0) then "Vidal case" (change the threshold) ***
     !**** else "Matte case" (remove electrons from 2nd cell) ***
-    case = 1
+    case = 0
     cnst = dsqrt(2.d0/Dx**3.d0)
 
     Si = 0.d0 ; Sr = 0.d0

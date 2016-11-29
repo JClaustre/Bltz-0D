@@ -44,9 +44,9 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1d-02 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 10d-1
+    Post_D = 1.2d-4
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 5d-12
+    MxDt   = 1d-09
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -64,7 +64,7 @@ CONTAINS
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
-       CALL FP      (sys, elec, F, U)
+!       CALL FP      (sys, elec, F, U)
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
@@ -369,7 +369,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 500
+    nx = sys%nx ; Switch = 0 ; mdlus = 5
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -519,11 +519,6 @@ CONTAINS
     diag(15)%InM1=0.d0 ; diag(15)%OutM1=0.d0 
     diag(15)%InM2=0.d0 ; diag(15)%OutM2=0.d0
     !**************************************************************************!
-
-
-
-
-
 
 
 
