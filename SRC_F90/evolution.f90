@@ -46,7 +46,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 10d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-09
+    MxDt   = 5d-12
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -452,11 +452,11 @@ CONTAINS
        SELECT CASE (NumIon) 
        CASE (3)
           write(99,"(52ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-               OneD%Tg(OneD%bnd),elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
+               elec%mobl,elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
                ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        CASE DEFAULT
-          write(99,"(50ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
-               elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
+          write(99,"(51ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
+               elec%mobl,elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
        write(909,"(25ES15.6E3)") Clock%SumDt, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)

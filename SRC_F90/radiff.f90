@@ -269,10 +269,10 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN) :: U
     !LOCAL
     INTEGER :: i, iVg
-    REAL(DOUBLE) :: mua, mum, Da, Dm, Damb, De, En, En2
+    REAL(DOUBLE) :: mua, mum, mue, Da, Dm, Damb, De, En, En2
     REAL(DOUBLE) :: Coef, Coef2, Coef3
     REAL(DOUBLE) :: Sa, Sm, Se, Smeta1, Smeta2, smeta3
-    En = 0.d0 ; En2 = 0.d0
+    En = 0.d0 ; En2 = 0.d0 ; mue = 0.d0
 
     elec%Ni = 0.d0 ; elec%Tp = 0.d0
     DO i = 1, sys%nx
@@ -320,9 +320,17 @@ CONTAINS
        coef2 = 0.d0
        if (meta(0)%SecMtm(i) .ne. 0.d0) Coef2 = Coef * U(i) / meta(0)%SecMtm(i)
        De = De + Coef2*F(i)
+       IF (i < sys%nx-1) THEN
+          mue = mue - Coef2 * (F(i+1)-F(i)) / sys%Dx
+       ELSE IF (i == sys%nx-1) THEN
+          !**** linear extrapolation for f(nx) - f(nx-1)
+          F(sys%nx) = F(sys%nx-2) + (F(sys%nx-1)-F(sys%nx-2))/(sys%Dx)
+          mue = mue - Coef2 * (F(i+1)-F(i)) / sys%Dx
+       END IF
     END DO
+    F(sys%nx) = 0.d0
     elec%Dfree = De ; ion(1)%Dfree = Da ; ion(2)%Dfree = Dm 
-    ion(1)%mobl = mua ; ion(2)%mobl = mum 
+    elec%mobl = mue ; ion(1)%mobl = mua ; ion(2)%mobl = mum 
 
     !**** Calcul du potentiel de gaine dans le cas de la diffusion 
     !**** ambipolaire ***
