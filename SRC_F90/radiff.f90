@@ -270,7 +270,7 @@ CONTAINS
     !LOCAL
     INTEGER :: i, iVg
     REAL(DOUBLE) :: mua, mum, mue, Da, Dm, Damb, De, En, En2
-    REAL(DOUBLE) :: Coef, Coef2, Coef3
+    REAL(DOUBLE) :: Coef, Coef2, Coef3, ratx
     REAL(DOUBLE) :: Sa, Sm, Se, Smeta1, Smeta2, smeta3
     En = 0.d0 ; En2 = 0.d0 ; mue = 0.d0
 
@@ -351,12 +351,14 @@ CONTAINS
        IF (i.GT.iVg) F(i) = F(i) - Clock%Dt * F(i) * De / Coef
        En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
-
+    ratx = De/ Coef ! Rate of change of the EEDF (s-1)
     !**** electron density ***
     elec%Ni = 0.d0
     DO i = 1, sys%Nx
        elec%Ni = elec%Ni + F(i) * sqrt(U(i)) * sys%Dx
     END DO
+    IF (ratx .GT. maxR) maxR = ratx
+
     !**** Energy conservation Diagnostic ***
     diag(9)%EnLoss = diag(9)%EnLoss + (En-En2)
     !***************** Diagnostic for relative importance of reactions (m-3/s)

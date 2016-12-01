@@ -23,12 +23,12 @@ CONTAINS
     INTEGER      :: i, nx
     REAL(DOUBLE) :: x, xmax, SumDt
     REAL(DOUBLE) :: Dx, Dt, lp, vs
-    nx = sys%nx ; Dx = sys%Dx ; SumDt = Clock%SumDt
+    nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Clock%Dt
     xmax = 3.d-2 ! (m)
     lp = 2.6d-04 ! (m)
     vs = 1.0d+05 ! (m/s)
     !**** Calcul of E(x,t) ***
-    x =  (xmax-(vs*iter*Dt)) - 9d-03
+    x =  (xmax-(vs*SumDt)) - 9d-03
     IF (x.LE.-lp) THEN
        sys%E = sys%Emax / (1.d0 + (xmax- 9d-03)/(2.d0*lp))
     ELSE IF (x.GT.-lp .and.x.LT.0.d0) THEN
@@ -61,7 +61,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
-    GenPwr = 1.d-07 ! Time constant to start/end the generator.
+    GenPwr = 5.d-07 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power
@@ -275,12 +275,12 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(:), INTENT(IN)    :: U
     !LOCAL
     INTEGER :: i, l, nx
-    REAL(DOUBLE) :: part, En, En2, DiagE
+    REAL(DOUBLE) :: part, En, En2, DiagE, Ree
     REAL(DOUBLE) :: hdu, tt, nu, v3, cnst, cn, err
     REAL(DOUBLE) :: y00, yy1, yy2, xx, truc, small
     REAL(DOUBLE), DIMENSION(0:sys%nx) :: II,JJ
     REAL(DOUBLE), DIMENSION(sys%nx) :: utt, usq, A, B, C, D, f1_new
-    En = 0.d0 ; En2 = 0.d0
+    En = 0.d0 ; En2 = 0.d0 ; Ree = 0.d0
     nx = sys%nx
     hdu = 0.5d0*sys%Dx
     tt  = 2.d0/3.d0
@@ -296,6 +296,7 @@ CONTAINS
        !*****Calcul des quantites initiales
        part = part + f1(i) * U(i)**(0.5d0) * Sys%Dx
        En   = En + f1(i) * U(i)**(1.5d0) * Sys%Dx
+       Ree = Ree + F1(i) * nu * U(i)**(0.5d0) * sys%Dx
     end do
     !**** Log Coulomb (cf. NRL formulary) (Ne--> cm-3 !)
     IF (elec%Tp.LE.10.d0) THEN
@@ -360,6 +361,7 @@ CONTAINS
        f1(i) = f1(i) * part
        En2   = En2 + f1(i) * U(i)**(1.5d0) * Sys%Dx
     end do
+    diag(19)%Tx = Ree
     DiagE = dabs(1- En2/En)
     IF (DiagE.GT.1.d-08) print*, "Energy In Fokker_planck Routine not well conserved!", DiagE
   END subroutine FP

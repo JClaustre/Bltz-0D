@@ -44,10 +44,10 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1d-02 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 10d-1
+    Post_D = 1.2d-4
     !**** Maximum time-step allowed (sec)***
     MxDt   = 2d-12
-    sys%Emax = 15000*1.d2 ! (V/m)
+    sys%Emax = 1.5d6 ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -114,13 +114,13 @@ CONTAINS
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
-    
+
     !**** Conservation test routine ***
     CALL Consv_Test(sys, U, F, Diag, consv)
     !**** Write final EEDF ***
     CALL Write_Out1D( F, "F_final.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
-
+    
   END SUBROUTINE EVOLUTION
   
   SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
@@ -521,11 +521,6 @@ CONTAINS
     diag(15)%InM1=0.d0 ; diag(15)%OutM1=0.d0 
     diag(15)%InM2=0.d0 ; diag(15)%OutM2=0.d0
     !**************************************************************************!
-
-
-
-
-
 
 
 
