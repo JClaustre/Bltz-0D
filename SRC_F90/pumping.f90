@@ -31,8 +31,8 @@ CONTAINS
     pop(1)%T_relax = 1.d0/(meta(1)%Damb / (sys%Ra/2.405d0)**2)
     pop(2)%T_relax = 1.d0/(3.2d06*1.33322*meta(0)%Prs)
     pop(1)%tau_e   = 1d-06 !(s)
-    pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
-    pop(1)%Tr      = 1.d0 !(s)
+    pop(1)%Te      = 1d-04 !meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
+    pop(1)%Tr      = 100.d0 !(s)
 
     !**** Laser variables ***
     ! mean velocity of the metastables
@@ -107,7 +107,7 @@ CONTAINS
 
     !**** Calculate the polarization of the Helium gas ***
     pop(1)%polarz = pop(1)%polarz + Dt * &
-         (- pop(1)%polarz/pop(1)%Tr + (-pop(1)%polarz + pol)/pop(1)%Te )
+         ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
 
   END Subroutine Sublev_coll
 
