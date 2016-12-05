@@ -22,7 +22,7 @@ CONTAINS
     INTEGER :: i, j, k, switch
     REAL(DOUBLE) :: Dt, nu_ij 
     REAL(DOUBLE) :: gammak, Dop, Omeg, Is, Sec, vm
-    REAL(DOUBLE) :: tot1, tot2, N1, N2
+    REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
     !**************************
     switch = 0
@@ -30,6 +30,9 @@ CONTAINS
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
     pop(1)%T_relax = 1.d0/(meta(1)%Damb / (sys%Ra/2.405d0)**2)
     pop(2)%T_relax = 1.d0/(3.2d06*1.33322*meta(0)%Prs)
+    pop(1)%tau_e   = 1d-06 !(s)
+    pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
+    pop(1)%Tr      = 1.d0 !(s)
 
     !**** Laser variables ***
     ! mean velocity of the metastables
@@ -64,7 +67,10 @@ CONTAINS
                 END IF
              END DO    
           END IF
-
+          !**** Update A_i sublevels due to metastability exchange between A_k sublevels ***
+          IF (j.LE.6) THEN
+             Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) * pop(1)%Ni(j) / pop(1)%tau_e
+          END IF
        END DO
     END DO
 
@@ -75,7 +81,10 @@ CONTAINS
     Updens(1,1:Npop1) = Updens(1,1:Npop1) + pop(1)%Dn_o / N1
     Updens(2,1:Npop2) = Updens(2,1:Npop2) + pop(2)%Dn_o / N2
 
+    pol = 0.d0
     DO i = 1, Npop1
+       !**** calculation of the third term in polarization's equation ***
+       pol = pol + lasr%lamb(i) * pop(1)%Ni(i) / meta(1)%Ni
        !**** Update A_i sublevels due to relaxation from collisions ***
        Updens(1,i) = Updens(1,i) + Dt * ( meta(1)%Ni/N1 - pop(1)%Ni(i) ) / pop(1)%T_relax
        !**** Update of the densities and the total densities of 2S3 and 2P3 ***
@@ -88,12 +97,17 @@ CONTAINS
        pop(2)%Ni(j) = pop(2)%Ni(j) + Updens(2,j)
     END DO
 
+    !**** Calculate the total density of metastable 2S3 and radiative state 2P3 ***
     tot1 = 0.d0 ; tot2 = 0.d0
     do i = 1, Npop2    
        if (i.LE.Npop1) tot1 = tot1 + pop(1)%Ni(i)
        tot2 = tot2 + pop(2)%Ni(i)
     END do
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
+
+    !**** Calculate the polarization of the Helium gas ***
+    pop(1)%polarz = pop(1)%polarz + Dt * &
+         (- pop(1)%polarz/pop(1)%Tr + (-pop(1)%polarz + pol)/pop(1)%Te )
 
   END Subroutine Sublev_coll
 

@@ -38,7 +38,8 @@ MODULE MOD_PARAM
   TYPE, PUBLIC::Excited
      CHARACTER(len=4) :: Name
      REAL(DOUBLE)     :: Dn_o, Ntot
-     REAL(DOUBLE)     :: T_relax
+     REAL(DOUBLE)     :: T_relax, Te, Tr, tau_e
+     REAL(DOUBLE)     :: polarz
      REAL(DOUBLE), DIMENSION(:), POINTER :: Ni
   END type Excited
   !-----------------------------------------------------------
