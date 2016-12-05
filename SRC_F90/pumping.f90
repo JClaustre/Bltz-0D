@@ -30,9 +30,9 @@ CONTAINS
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
     pop(1)%T_relax = 1.d0/(meta(1)%Damb / (sys%Ra/2.405d0)**2)
     pop(2)%T_relax = 1.d0/(3.2d06*1.33322*meta(0)%Prs)
-    pop(1)%tau_e   = 1d-06 !(s)
-    pop(1)%Te      = 1d-04 !meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
-    pop(1)%Tr      = 100.d0 !(s)
+    pop(1)%tau_e   = 1d-06  ! (s)
+    pop(1)%Te      = 1d-04  ! meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
+    pop(1)%Tr      = 100.d0 ! (s)
 
     !**** Laser variables ***
     ! mean velocity of the metastables
@@ -68,8 +68,9 @@ CONTAINS
              END DO    
           END IF
           !**** Update A_i sublevels due to metastability exchange between A_k sublevels ***
-          IF (j.LE.6) THEN
-             Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) * pop(1)%Ni(j) / pop(1)%tau_e
+          IF (j.LE.Npop1) THEN
+             Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) &
+                  * pop(1)%Ni(j) / (18.d0*pop(1)%tau_e)
           END IF
        END DO
     END DO
@@ -84,7 +85,7 @@ CONTAINS
     pol = 0.d0
     DO i = 1, Npop1
        !**** calculation of the third term in polarization's equation ***
-       pol = pol + lasr%lamb(i) * pop(1)%Ni(i) / meta(1)%Ni
+       pol = pol + lasr%lamb(i) * pop(1)%Ni(i) / (3.d0*meta(1)%Ni)
        !**** Update A_i sublevels due to relaxation from collisions ***
        Updens(1,i) = Updens(1,i) + Dt * ( meta(1)%Ni/N1 - pop(1)%Ni(i) ) / pop(1)%T_relax
        !**** Update of the densities and the total densities of 2S3 and 2P3 ***
