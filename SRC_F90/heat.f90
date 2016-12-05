@@ -24,15 +24,15 @@ CONTAINS
     REAL(DOUBLE) :: x, xmax, SumDt
     REAL(DOUBLE) :: Dx, Dt, lp, vs
     nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Clock%Dt
-    xmax = 3.d-2 ! (m)
+    xmax = 2.d-2 ! (m)
     lp = 2.6d-04 ! (m)
     vs = 1.0d+05 ! (m/s)
     !**** Calcul of E(x,t) ***
     x =  (xmax-(vs*SumDt)) - 9d-03
     IF (x.LE.-lp) THEN
-       sys%E = sys%Emax / (1.d0 + (xmax- 9d-03)/(2.d0*lp))
+       sys%E = sys%Emax !/ (1.d0 + (xmax- 9d-03)/(2.d0*lp))
     ELSE IF (x.GT.-lp .and.x.LT.0.d0) THEN
-       sys%E = sys%Emax * (1.d0 + x/lp) 
+       sys%E = sys%Emax !* (1.d0 + x/lp) 
     ELSE IF (x.GE. 0.d0) THEN
        sys%E = sys%Emax / (1.d0 + x/(2.d0*lp))
     END IF
@@ -249,6 +249,7 @@ CONTAINS
             + (XX**1.5d0)*(0.5d0 + alpha2) * nucm)
        !**** Collision Rate e-n :
        Ren = Ren + gama * F(i) * meta(0)%SecMtm(i) * U(i) * Dx * part
+       if (Ren .GT. MaxR) MaxR = Ren
     end do
 
     !*****SOLUTION DU SYSTEME TRIDIAGONALE f1 AU TEMPS k+1-***************************************

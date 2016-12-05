@@ -44,7 +44,7 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1d-02 
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 1.2d-4
+    Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
     MxDt   = 2d-12
     sys%Emax = 1.5d6 ! (V/m)
@@ -436,9 +436,9 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,F6.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," n0/tin=", RateSum,elec%Tp," \r"!
+            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," polariz", pop(1)%polarz*100," \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
