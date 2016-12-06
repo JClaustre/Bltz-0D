@@ -46,7 +46,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-12
+    MxDt   = 2d-09
     sys%Emax = 1.5d6 ! (V/m)
 
     !**** MAIN LOOP ***
@@ -60,8 +60,8 @@ CONTAINS
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-       !CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
-       CALL E_PROFIL (Clock, sys, l)
+       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       !CALL E_PROFIL (Clock, sys, l)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -371,7 +371,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 5
+    nx = sys%nx ; Switch = 0 ; mdlus = 500
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -413,8 +413,8 @@ CONTAINS
     END do
 
     !**** Update Time-step
-    IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN
-       Clock%Dt = 1.0d0 / (MaxR*10.d0)
+    IF ( 1.d0/MaxR.GE.1d-14 .and. iter.GT.1 ) THEN
+       Clock%Dt = 1.0d0 / (MaxR*3.d0)
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
@@ -438,7 +438,7 @@ CONTAINS
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
        write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," polariz", pop(1)%polarz*100," \r"!
+            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," E(V/cm)", sys%E*1d-2," \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

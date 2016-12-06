@@ -44,7 +44,7 @@ CONTAINS
        OPEN(UNIT=91,File=TRIM(ADJUSTL(DirFile))//"E_time.dat",POSITION="APPEND",&
             ACTION="WRITE",STATUS="UNKNOWN")
     END IF
-    write(91,"(2ES15.6)") SumDt*1d6, sys%E
+    write(91,"(2ES15.6)") Clock%SumDt*1d6, sys%E
     CLOSE(91)
 
   END SUBROUTINE E_PROFIL
