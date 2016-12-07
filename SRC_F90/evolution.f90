@@ -436,7 +436,8 @@ CONTAINS
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
        write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," polariz", pop(1)%polarz*100," \r"!
+            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
+            " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni))," \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
