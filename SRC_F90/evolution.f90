@@ -33,7 +33,8 @@ CONTAINS
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MxDt                                      !
     REAL(DOUBLE) :: Cgen, Post_D                                              !
-    count1=0.d0 ; count2=0.d0 ; Res=0.d0                                      !
+    count1=0.d0 ; count2=0.d0                                                 !
+    Res = Clock%SumDt + Clock%TRstart                                         !
     !*************************************************************************!
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
@@ -47,7 +48,10 @@ CONTAINS
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
     MxDt   = 1d-09
-    
+    IF (Clock%Rstart.EQ.1)THEN
+       IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
+    END IF
+
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)

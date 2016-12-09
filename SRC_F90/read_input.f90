@@ -347,7 +347,6 @@ CONTAINS
     READ(51,*) (EnRead(i), i=1,Npts)
     READ(51,*) ; READ(51,*)
     READ(51,*) (SecRead(i), i=1,Npts)
-    CLOSE(51)
     !**************************************
     !**** Interpolat Cross-Sect Momentum
     DO i=1, sys%nx
@@ -363,7 +362,29 @@ CONTAINS
        END DO
     END DO
     meta(0)%SecMtM(:) = meta(0)%SecMtM(:) * 1e-20
-    !meta(0)%SecMtM(sys%nx) = 0.d0
+    do i = 1, 3
+       READ(51,*)
+    END do
+    READ(51,*) Npts 
+    READ(51,*) (EnRead(i), i=1,Npts)
+    READ(51,*) ; READ(51,*)
+    READ(51,*) (SecRead(i), i=1,Npts)
+    CLOSE(51)
+    !**** Interpolat Cross-Sect Effective Momentum
+    DO i=1, sys%nx
+       Du0=0.d0
+       U0 = IdU(i,sys%Dx)
+       DO j = 1, Npts-1
+          IF ( U0 == EnRead(j) ) meta(1)%SecMtM(i) = SecRead(j)
+          IF ( U0 .gt. EnRead(j) .and. U0 .lt. EnRead(j+1)) Then
+             Du0 = EnRead(j+1) - EnRead(j)
+             meta(1)%SecMtM(i) = ((EnRead(j+1) - U0)*SecRead(j) )/Du0 &
+                  + ((U0 - EnRead(j))*SecRead(j+1) )/Du0
+          END IF
+       END DO
+    END DO
+    !**************************************
+
     !**************************************
     !**** Cross-Sec Electron-Ion Momentum transfer
     DO i = 1, sys%nx
@@ -613,6 +634,14 @@ CONTAINS
             (pop(1)%Ni(i),i=1,6), (pop(2)%Ni(i), i=1,18)                    !
        END SELECT                                                           !
        CLOSE (90)                                                           !
+       !**** Check electron conservation from Rstart files ***              !
+       IF (Clock%Rstart.EQ.1) THEN                                          !
+          IF (ion(1)%Ni.GT.ion(2)%Ni) THEN                                  !
+             ion(2)%Ni = elec%Ni - ion(1)%Ni                                !
+          ELSE                                                              !
+             ion(1)%Ni = elec%Ni - ion(1)%Ni                                !
+          END IF                                                            !
+       END IF                                                               !
     END IF                                                                  !
     !***********************************************************************!
     CALL Write_Out1D( F,  "F_init.dat")
@@ -634,15 +663,15 @@ CONTAINS
     !**** Save Energy Electron Distribution Function
     OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/EEDF.dat",ACTION="WRITE",STATUS="UNKNOWN")
     DO i = 1, sys%nx
-       write(990,"(I6, ES15.6)") i, F(i)
+       write(990,"(I6, ES19.10)") i, F(i)
     END DO
     CLOSE(990)
     !**** Save excited states density
     OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/Density.dat",ACTION="WRITE",STATUS="UNKNOWN")
-    write(990,"(42ES15.6,6ES15.6,18ES15.6)") (meta(i)%Ni, i=1,NumMeta), &
+    write(990,"(42ES19.10,6ES19.10,18ES19.10)") (meta(i)%Ni, i=1,NumMeta), &
          (pop(1)%Ni(i), i=1,6), (pop(2)%Ni(i), i=1,18)
     SELECT CASE (NumIon) 
-    CASE (3) ; write(990,"(ES15.6,6ES15.6,18ES15.6)") ion(NumIon)%Ni, &
+    CASE (3) ; write(990,"(ES19.10,6ES19.10,18ES19.10)") ion(NumIon)%Ni, &
          (pop(1)%Ni(i), i=1,6), (pop(2)%Ni(i), i=1,18)
     END SELECT
     CLOSE(990)
@@ -666,7 +695,7 @@ CONTAINS
     WRITE (990,"(ES15.6)") elec%Tp
     WRITE (990,"(ES15.6)") sys%Ra
     WRITE (990,"(ES15.6)") sys%L
-    WRITE (990,"(3ES15.6)") elec%Ni, (ion(i)%Ni, i=1,2)
+    WRITE (990,"(3ES19.10)") elec%Ni, (ion(i)%Ni, i=1,2)
     WRITE (990,"(ES15.6,I2)") sys%Powr, sys%P0
     WRITE (990,"(ES15.6)") Clock%SimuTime
     WRITE (990,"(ES15.6)") Clock%Dt
