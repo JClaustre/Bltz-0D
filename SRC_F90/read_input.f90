@@ -347,7 +347,6 @@ CONTAINS
     READ(51,*) (EnRead(i), i=1,Npts)
     READ(51,*) ; READ(51,*)
     READ(51,*) (SecRead(i), i=1,Npts)
-    CLOSE(51)
     !**************************************
     !**** Interpolat Cross-Sect Momentum
     DO i=1, sys%nx
@@ -363,7 +362,29 @@ CONTAINS
        END DO
     END DO
     meta(0)%SecMtM(:) = meta(0)%SecMtM(:) * 1e-20
-    !meta(0)%SecMtM(sys%nx) = 0.d0
+    do i = 1, 3
+       READ(51,*)
+    END do
+    READ(51,*) Npts 
+    READ(51,*) (EnRead(i), i=1,Npts)
+    READ(51,*) ; READ(51,*)
+    READ(51,*) (SecRead(i), i=1,Npts)
+    CLOSE(51)
+    !**** Interpolat Cross-Sect Effective Momentum
+    DO i=1, sys%nx
+       Du0=0.d0
+       U0 = IdU(i,sys%Dx)
+       DO j = 1, Npts-1
+          IF ( U0 == EnRead(j) ) meta(1)%SecMtM(i) = SecRead(j)
+          IF ( U0 .gt. EnRead(j) .and. U0 .lt. EnRead(j+1)) Then
+             Du0 = EnRead(j+1) - EnRead(j)
+             meta(1)%SecMtM(i) = ((EnRead(j+1) - U0)*SecRead(j) )/Du0 &
+                  + ((U0 - EnRead(j))*SecRead(j+1) )/Du0
+          END IF
+       END DO
+    END DO
+    !**************************************
+
     !**************************************
     !**** Cross-Sec Electron-Ion Momentum transfer
     DO i = 1, sys%nx
@@ -613,14 +634,14 @@ CONTAINS
             (pop(1)%Ni(i),i=1,6), (pop(2)%Ni(i), i=1,18)                    !
        END SELECT                                                           !
        CLOSE (90)                                                           !
-       !**** Check electron conservation from restart files ***
-       IF (Clock%Rstart == 1) THEN
-          IF (ion(1)%Ni.GT.ion(2)%Ni) THEN
-             ion(2)%Ni = elec%Ni - ion(1)%Ni
-          ELSE
-             ion(1)%Ni = elec%Ni - ion(2)%Ni
-          END IF
-       END IF
+       !**** Check electron conservation from Rstart files ***              !
+       IF (Clock%Rstart.EQ.1) THEN                                          !
+          IF (ion(1)%Ni.GT.ion(2)%Ni) THEN                                  !
+             ion(2)%Ni = elec%Ni - ion(1)%Ni                                !
+          ELSE                                                              !
+             ion(1)%Ni = elec%Ni - ion(2)%Ni                                !
+          END IF                                                            !
+       END IF                                                               !
     END IF                                                                  !
     !***********************************************************************!
     CALL Write_Out1D( F,  "F_init.dat")

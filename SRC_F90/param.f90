@@ -115,9 +115,10 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE), DIMENSION(Npop2,Npop1,3)    :: Tij  ! Transition for each Ck components
-  REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
-  REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
-  REAL(DOUBLE) :: Vg                          ! Calculate sheath potential for diffusion routine
+  REAL(DOUBLE) :: MaxR                      ! Max rate calculated --> used for adaptative time
+  REAL(DOUBLE) :: LnC                       ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
+  REAL(DOUBLE) :: Vg                        ! Calculate sheath potential for diffusion routine
+  REAL(DOUBLE) :: Twnsd_a                   ! First Townsend coefficient
 CONTAINS
 
   ! **********************************************************
@@ -146,7 +147,8 @@ CONTAINS
     END SELECT
     
     ALLOCATE ( Meta(0)%SecTot(nx) ) ; Meta(0)%SecTot(:) = 0.d0
-    ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0
+    ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0 ! Elastic momentum transfer
+    ALLOCATE ( Meta(1)%SecMtM(nx) ) ; Meta(1)%SecMtM(:) = 0.d0 ! Effective momentum transfer
     ALLOCATE ( Meta(0)%SecRec(nx) ) ; Meta(0)%SecRec(:) = 0.d0
     ALLOCATE ( Meta(0)%Nuel(nx)  ) ; Meta(0)%Nuel(:)   = 0.d0
 
@@ -171,7 +173,7 @@ CONTAINS
        DEALLOCATE ( ion(NumIon)%SecIon, ion(NumIon)%SecExc )
     END SELECT
 
-    DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(0)%SecRec )
+    DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(1)%SecMtM, Meta(0)%SecRec )
     DEALLOCATE ( F, U, Meta(0)%Nuel )
     DEALLOCATE ( pop(1)%Ni, pop(2)%Ni )
   END SUBROUTINE DelocArray
