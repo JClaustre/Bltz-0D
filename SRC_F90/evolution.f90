@@ -33,7 +33,7 @@ CONTAINS
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MxDt                                      !
     REAL(DOUBLE) :: Cgen, Post_D                                              !
-    count1=0.d0 ; count2=0.d0 ; Res=0.d0                                      !
+    count1=0.d0 ; count2=0.d0 ; Res=Clock%SumDt + Clock%TRstart                !
     !*************************************************************************!
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
@@ -46,8 +46,11 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-09
-    sys%Emax = 1.5d6 ! (V/m)
+    MxDt   = 1d-12
+    IF (Clock%Rstart == 1) THEN
+       if (Clock%Dt > MxDt) Clock%Dt = MxDt
+    END IF
+    sys%Emax = 1.0d6 ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -56,17 +59,24 @@ CONTAINS
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
 
+       IF (Clock%SumDt.LT.1d-6) THEN
+          sys%E = 100.d2
+       ELSE 
+          IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
+       END IF
+
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       !CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
        !CALL E_PROFIL (Clock, sys, l)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
        CALL FP      (sys, elec, F, U)
+       !print*, "Heat and Co"
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
@@ -74,6 +84,7 @@ CONTAINS
        END SELECT
        !**** Ioniz Excimer *** 
        IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+       !print*, "Ioniz 'n Co"
        !**** Dissociative Recombination ***
        CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion ***
@@ -371,7 +382,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 500
+    nx = sys%nx ; Switch = 0 ; mdlus = 1
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -436,9 +447,10 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,2ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr)," E(V/cm)", sys%E*1d-2," \r"!
+            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
+            " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), sys%E*1d-5," \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -530,7 +542,7 @@ CONTAINS
        CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, pop, F)
 
        !**** WRITE EEDF ********************************!
-       write(fileName,"('F_evol_',I3.3,'.dat')") int(Res/Clock%TRstart)
+       write(fileName,"('F_evol_',I4.4,'.dat')") int(Res/Clock%TRstart)
        OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
        DO i = 1, nx
           write(90,"(3ES15.6E3)") real(i)*sys%Dx, F(i), Clock%SumDt*1d06

@@ -61,7 +61,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
-    GenPwr = 5.d-07 ! Time constant to start/end the generator.
+    GenPwr = 1.d-12 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power

@@ -537,7 +537,7 @@ CONTAINS
     elec%Ni = consv(1)
     write(*,"(2A, F6.2,A)"  ) tabul, "Tpe init : ", 0.66667d0*consv(2)/consv(1), " (eV)"
     write(*,"(2A, ES19.10,A)") tabul, "Ne init  : ", consv(1)*1d-6, " (cm-3) "
-    
+
     !**** Fix the power here function of Elec field ************************!
     IF (sys%P0 .EQ. 1) THEN                                                 !
        DO i = 1, sys%nx - 1                                                 !
@@ -591,15 +591,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.90d0                                         !
-       ion(1)%Ni = elec%Ni * 0.10d0                                         !
+       ion(2)%Ni = elec%Ni * 0.98d0                                         !
+       ion(1)%Ni = elec%Ni * 0.02d0                                         !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 6.0d+14     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
           IF (i.EQ.1) meta(i)%Ni = 1.4d+15     ! Metastable 2S3             !
           IF (i.EQ.2) meta(i)%Ni = 1.6d+13     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 2.7d+13     ! Radiative state 2P3        !
+          IF (i.EQ.3) meta(i)%Ni = 2.7d+14     ! Radiative state 2P3        !
           IF (i.GE.4) meta(i)%Ni = 1.0d+06                                  !
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
@@ -613,6 +613,14 @@ CONTAINS
             (pop(1)%Ni(i),i=1,6), (pop(2)%Ni(i), i=1,18)                    !
        END SELECT                                                           !
        CLOSE (90)                                                           !
+       !**** Check electron conservation from restart files ***
+       IF (Clock%Rstart == 1) THEN
+          IF (ion(1)%Ni.GT.ion(2)%Ni) THEN
+             ion(2)%Ni = elec%Ni - ion(1)%Ni
+          ELSE
+             ion(1)%Ni = elec%Ni - ion(2)%Ni
+          END IF
+       END IF
     END IF                                                                  !
     !***********************************************************************!
     CALL Write_Out1D( F,  "F_init.dat")
@@ -634,15 +642,15 @@ CONTAINS
     !**** Save Energy Electron Distribution Function
     OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/EEDF.dat",ACTION="WRITE",STATUS="UNKNOWN")
     DO i = 1, sys%nx
-       write(990,"(I6, ES15.6)") i, F(i)
+       write(990,"(I6, ES19.10)") i, F(i)
     END DO
     CLOSE(990)
     !**** Save excited states density
     OPEN(UNIT=990,File=TRIM(ADJUSTL(DirFile))//"Rstart/Density.dat",ACTION="WRITE",STATUS="UNKNOWN")
-    write(990,"(42ES15.6,6ES15.6,18ES15.6)") (meta(i)%Ni, i=1,NumMeta), &
+    write(990,"(42ES19.10,6ES19.10,18ES19.10)") (meta(i)%Ni, i=1,NumMeta), &
          (pop(1)%Ni(i), i=1,6), (pop(2)%Ni(i), i=1,18)
     SELECT CASE (NumIon) 
-    CASE (3) ; write(990,"(ES15.6,6ES15.6,18ES15.6)") ion(NumIon)%Ni, &
+    CASE (3) ; write(990,"(ES19.10,6ES19.10,18ES19.10)") ion(NumIon)%Ni, &
          (pop(1)%Ni(i), i=1,6), (pop(2)%Ni(i), i=1,18)
     END SELECT
     CLOSE(990)
@@ -666,7 +674,7 @@ CONTAINS
     WRITE (990,"(ES15.6)") elec%Tp
     WRITE (990,"(ES15.6)") sys%Ra
     WRITE (990,"(ES15.6)") sys%L
-    WRITE (990,"(3ES15.6)") elec%Ni, (ion(i)%Ni, i=1,2)
+    WRITE (990,"(3ES19.10)") elec%Ni, (ion(i)%Ni, i=1,2)
     WRITE (990,"(ES15.6,I2)") sys%Powr, sys%P0
     WRITE (990,"(ES15.6)") Clock%SimuTime
     WRITE (990,"(ES15.6)") Clock%Dt
