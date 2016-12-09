@@ -639,7 +639,7 @@ CONTAINS
           IF (ion(1)%Ni.GT.ion(2)%Ni) THEN                                  !
              ion(2)%Ni = elec%Ni - ion(1)%Ni                                !
           ELSE                                                              !
-             ion(1)%Ni = elec%Ni - ion(1)%Ni                                !
+             ion(1)%Ni = elec%Ni - ion(2)%Ni                                !
           END IF                                                            !
        END IF                                                               !
     END IF                                                                  !
