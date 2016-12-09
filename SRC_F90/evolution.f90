@@ -347,6 +347,17 @@ CONTAINS
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
     write(99,"(A)") " "
+    write(99,"(/,A)") "-------------------------------------------------------"
+    write(99,"(A)") "### Laser Parameters "
+    IF (lasr%OnOff.EQ.0) THEN
+       write(99,"(A)") " Laser Off !"
+    ELSE
+       write(99,"(A,2F7.2)") "Laser Intensity (W) and section (cm2) :", lasr%Is, lasr%sec*1d+04
+       write(99,"(A,I3)") "Polarization (0=neutral, +1=right, +2=left) : ", lasr%plz
+       write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
+       write(99,"(A,F6.1)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
+    END IF
+
     DO i = 1, NumMeta                                                       !
        write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &
             meta(i)%Ni*1d-06, meta(i)%Ni *100.d0/SumMeta, " %"
@@ -375,6 +386,10 @@ CONTAINS
     CHARACTER(LEN=250)::fileName
     nx = sys%nx ; Switch = 0 ; mdlus = 5
 
+    !**** Calculation of the first Townsend coefficient. Coef found in
+    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
+    !**** kV/cm ***
+    Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !**** CHECK PART *********************************
@@ -445,31 +460,35 @@ CONTAINS
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
-          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol_dens.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"evol_time.dat",ACTION="WRITE",STATUS="UNKNOWN")
           !**** Verif des densites pop ***
-          OPEN(UNIT=909,File=TRIM(ADJUSTL(DirFile))//"pop.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          OPEN(UNIT=97,File=TRIM(ADJUSTL(DirFile))//"pop.dat",ACTION="WRITE",STATUS="UNKNOWN")
        ELSE 
-          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol.dat",POSITION="APPEND",&
+          OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"evol_dens.dat",POSITION="APPEND",&
                ACTION="WRITE",STATUS="UNKNOWN")
-          OPEN(UNIT=909,File=TRIM(ADJUSTL(DirFile))//"pop.dat",POSITION="APPEND",&
+          OPEN(UNIT=98,File=TRIM(ADJUSTL(DirFile))//"evol_time.dat",POSITION="APPEND",&
+               ACTION="WRITE",STATUS="UNKNOWN")
+          OPEN(UNIT=97,File=TRIM(ADJUSTL(DirFile))//"pop.dat",POSITION="APPEND",&
                ACTION="WRITE",STATUS="UNKNOWN")
        END IF
        SELECT CASE (NumIon) 
        CASE (3)
-          write(99,"(52ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-               elec%mobl,elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
+          write(99,"(47ES15.4)") (Clock%SumDt*1e6), elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06,&
                ion(NumIon)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
        CASE DEFAULT
-          write(99,"(51ES15.4)") (Clock%SumDt*1e6), elec%Tp, meta(0)%Tp*qok, sys%Pwmoy*1d-6, sys%E*1d-2, &
-               elec%mobl,elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, (meta(i)%Ni*1d-06,i=1,NumMeta)
+          write(99,"(46ES15.4)") (Clock%SumDt*1e6), elec%Ni*1d-06,ion(1)%Ni*1d-06, ion(2)%Ni*1d-06, &
+               (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(909,"(25ES15.6E3)") Clock%SumDt, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
-       CLOSE(909)
-
+       write(98,"(7ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, Twnsd_a
+       write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
+       CLOSE(98)
+       CLOSE(97)
     END IF
-    IF ( mod(iter,Clock%NumIter/10) == 0 ) then
 
+    IF ( mod(iter,Clock%NumIter/10) == 0 ) then
        !**** WRITE RARELY IN TERMINAL ******************!
        write(*,"(A,F7.2,A,3ES10.2,A,ES10.2,3(A,F7.1),2(A,2ES9.2))") &
             tabul//"**", (Clock%SumDt*1e6), " μs", meta(1)%Ni*1d-06, meta(3)%Ni*1d-06, elec%Ni," | E/N(Td)",&

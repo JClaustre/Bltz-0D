@@ -115,9 +115,10 @@ MODULE MOD_PARAM
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE), DIMENSION(Npop2,Npop1,3)    :: Tij  ! Transition for each Ck components
-  REAL(DOUBLE) :: MaxR                        ! Max rate calculated --> used for adaptative time
-  REAL(DOUBLE) :: LnC                         ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
-  REAL(DOUBLE) :: Vg                          ! Calculate sheath potential for diffusion routine
+  REAL(DOUBLE) :: MaxR                      ! Max rate calculated --> used for adaptative time
+  REAL(DOUBLE) :: LnC                       ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
+  REAL(DOUBLE) :: Vg                        ! Calculate sheath potential for diffusion routine
+  REAL(DOUBLE) :: Twnsd_a                   ! First Townsend coefficient
 CONTAINS
 
   ! **********************************************************
