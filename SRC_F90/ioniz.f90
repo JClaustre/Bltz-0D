@@ -117,7 +117,7 @@ CONTAINS
     cas = 0
     cnst = dsqrt(2.d0/Dx**3.d0)
 
-    DO i = 0, NumMeta
+    DO i = 0, 0!NumMeta
        coef1 = gama * meta(i)%Ni
        !**** SubCycling for the direct ionization ***
        IF (i .NE. 0) THEN

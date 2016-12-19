@@ -28,7 +28,7 @@ MODULE MOD_PARAM
   TYPE, PUBLIC::Species
      INTEGER           :: Nn, Ns, Nl, N0
      REAL(DOUBLE)      :: Ni, Tp, Prs, En, Deg, Damb
-     REAL(DOUBLE)      :: Dfree, mobl, Updens, J
+     REAL(DOUBLE)      :: Dfree, mobl, Updens, J, Nstart
      CHARACTER(len=10) :: Name
      REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, Nuel, Nuei
      REAL(DOUBLE), DIMENSION(:), POINTER :: SecRec, SecTot, SecMtM, SecEI
@@ -74,7 +74,7 @@ MODULE MOD_PARAM
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/15KV/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/T2/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Towsend/25kV/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

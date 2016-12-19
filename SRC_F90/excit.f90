@@ -38,7 +38,7 @@ CONTAINS
     !********************
 
     !********************************************************
-    DO i = 0, NumMeta-1
+    DO i = 0, 0!NumMeta-1
        coef1 = meta(i)%Ni * gama
        !********************************************************
        DO j = i+1, NumMeta
@@ -329,7 +329,7 @@ CONTAINS
     diag(1)%InM2=0.d0 ; diag(1)%OutM2=0.d0
     !********************************************************
 
-    DO i = 0, NumMeta-1
+    DO i = 0, 0!NumMeta-1
        coef1 = Ndens(i) * gama
        !********************************************************
        DO j = i+1, NumMeta
@@ -714,6 +714,8 @@ CONTAINS
        ion(NumIon)%SecExc(1,sys%nx) = 0.d0
     END SELECT
 
+    !CALL Write_Out1D( meta(0)%SecExc(1,:), "meta_sec.dat")
+    !Stop
   END SUBROUTINE Init_ExcDxc
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 END MODULE MOD_EXCIT

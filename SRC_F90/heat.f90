@@ -24,16 +24,16 @@ CONTAINS
     REAL(DOUBLE) :: x, xmax, SumDt
     REAL(DOUBLE) :: Dx, Dt, lp, vs
     nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Clock%Dt
-    xmax = 2.d-2 ! (m)
+    xmax = 3.d-2 ! (m)
     lp = 2.6d-04 ! (m)
     vs = 1.0d+05 ! (m/s)
     !**** Calcul of E(x,t) ***
     x =  (xmax-(vs*SumDt)) - 9d-03
     IF (x.LE.-lp) THEN
-       sys%E = sys%Emax !/ (1.d0 + (xmax- 9d-03)/(2.d0*lp))
-    ELSE IF (x.GT.-lp .and.x.LT.0.d0) THEN
-       sys%E = sys%Emax !* (1.d0 + x/lp) 
-    ELSE IF (x.GE. 0.d0) THEN
+       sys%E = sys%Emax / (1.d0 + (xmax- 9d-03)/(2.d0*lp))
+    ELSE IF (x.GT.-lp .and.x.LE.0.d0) THEN
+       sys%E = sys%Emax * (1.d0 + x/lp) 
+    ELSE IF (x.GT. 0.d0) THEN
        sys%E = sys%Emax / (1.d0 + x/(2.d0*lp))
     END IF
 
@@ -47,6 +47,8 @@ CONTAINS
     write(91,"(2ES15.6)") Clock%SumDt*1d6, sys%E
     CLOSE(91)
 
+    sys%Pcent = sys%E
+    sys%IPowr = sys%Emax
   END SUBROUTINE E_PROFIL
 
   SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)

@@ -20,7 +20,7 @@ MODULE MOD_EVOL
   IMPLICIT NONE
 
   !**** Switch for excitation and ionization process ***
-  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 2 ! 1 == equil | 2 == begin | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
@@ -33,12 +33,8 @@ CONTAINS
     INTEGER :: t1, t2, clock_rate                                             !
     REAL(DOUBLE) :: count1, count2, MxDt                                      !
     REAL(DOUBLE) :: Cgen, Post_D                                              !
-<<<<<<< HEAD
-    count1=0.d0 ; count2=0.d0 ; Res=Clock%SumDt + Clock%TRstart                !
-=======
     count1=0.d0 ; count2=0.d0                                                 !
     Res = Clock%SumDt + Clock%TRstart                                         !
->>>>>>> master
     !*************************************************************************!
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
@@ -51,18 +47,11 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-<<<<<<< HEAD
     MxDt   = 1d-12
-    IF (Clock%Rstart == 1) THEN
-       if (Clock%Dt > MxDt) Clock%Dt = MxDt
+    IF (Clock%Rstart.EQ.1) THEN
+       if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = 1.0d6 ! (V/m)
-=======
-    MxDt   = 1d-09
-    IF (Clock%Rstart.EQ.1)THEN
-       IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
-    END IF
->>>>>>> master
+    sys%Emax = 2.5d6 ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -70,12 +59,13 @@ CONTAINS
        l = l + 1
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
+       elec%NStart = elec%Ni
 
-       IF (Clock%SumDt.LT.1d-6) THEN
-          sys%E = 100.d2
-       ELSE 
-          IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
-       END IF
+       !IF (Clock%SumDt.LT.1d-6) THEN
+       !   sys%E = 100.d2
+       !ELSE 
+       IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
+       !END IF
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -88,7 +78,6 @@ CONTAINS
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
        CALL FP      (sys, elec, F, U)
-       !print*, "Heat and Co"
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
@@ -378,6 +367,7 @@ CONTAINS
        write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
        write(99,"(A,F6.1)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
     END IF
+    write(99,"(/,A)") "-------------------------------------------------------"
 
     DO i = 1, NumMeta                                                       !
        write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &
@@ -403,14 +393,10 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:)        , INTENT(INOUT) :: F
     !**** LOCAL
     INTEGER :: i, nx, Mnul, Switch, mdlus
-    REAL(DOUBLE) :: RateSum = 0.d0
+    REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
     nx = sys%nx ; Switch = 0 ; mdlus = 1
 
-    !**** Calculation of the first Townsend coefficient. Coef found in
-    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
-    !**** kV/cm ***
-    Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !**** CHECK PART *********************************
@@ -422,6 +408,14 @@ CONTAINS
        elec%Tp = elec%Tp + ( F(i) * U(i)**1.5d0 * sys%Dx )
     END DO
     elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
+
+    !**** Calculation of the first Townsend coefficient. Coef found in
+    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
+    !**** kV/cm ***
+    !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+    nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
+    Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
+         /(2.d0*elec%Dfree)
 
     !**** Check EEDF Positivty
     DO i = 1, nx
@@ -477,7 +471,7 @@ CONTAINS
        write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,2ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), sys%E*1d-5," \r"!
+            " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), sys%E*1d-5,"(kV/cm) \r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -502,8 +496,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(7ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, Twnsd_a
+       write(98,"(8ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a*1d-2
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
@@ -573,7 +567,7 @@ CONTAINS
        CALL Rstart_SaveFiles (sys, Clock, ion, elec, meta, pop, F)
 
        !**** WRITE EEDF ********************************!
-       write(fileName,"('F_evol_',I4.4,'.dat')") int(Res/Clock%TRstart)
+       write(fileName,"('F_evol_',I5.5,'.dat')") int(Res/Clock%TRstart)
        OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
        DO i = 1, nx
           write(90,"(3ES15.6E3)") real(i)*sys%Dx, F(i), Clock%SumDt*1d06
