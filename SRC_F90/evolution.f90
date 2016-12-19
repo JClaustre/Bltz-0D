@@ -51,7 +51,7 @@ CONTAINS
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = 2.5d6 ! (V/m)
+    sys%Emax = 1.d6 ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)

@@ -34,7 +34,7 @@ CONTAINS
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
 
-!    !**** Associative process
+    !**** Associative process
 !    DO i = 5, Nmeta
 !       Eij = meta(i)%En - ion(2)%En ! associative threshold
 !       IF (Eij > 0.d0) THEN
