@@ -72,9 +72,9 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/15KV/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Towsend/10kV/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Towsend/10kV/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

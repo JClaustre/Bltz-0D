@@ -47,11 +47,11 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-12
+    MxDt   = 1d-11
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = 1.d6 ! (V/m)
+    sys%Emax = 3.d3 ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -395,7 +395,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 1
+    nx = sys%nx ; Switch = 0 ; mdlus = 100
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -415,7 +415,7 @@ CONTAINS
     !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
-         /(2.d0*elec%Dfree)
+         /(2.d0*elec%Dfree*meta(0)%Ni)
 
     !**** Check EEDF Positivty
     DO i = 1, nx
@@ -496,8 +496,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(8ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, elec%Dfree, Twnsd_a*1d-2
+       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
