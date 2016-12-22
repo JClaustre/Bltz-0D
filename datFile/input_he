@@ -3,7 +3,7 @@
 1.500E+04	  E (V/cm)	Electric field
 4.000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 0.000E+00   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
-7.600E+00	  prs (Torr)	Pressure
+7.600E+02	  prs (Torr)	Pressure
 3.000E+02  600	  Tp (K)	Temperature + Tp at tube boundary
 1.500E+00	  Tpe (eV)	Electronic Temperature
 0.150E+00	  Ra (cm)	Cylinder Radius
@@ -13,7 +13,7 @@
 1.000E+01   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
 8.000E+02	  Emax (Energy grid max (eV) ) 
-0.001E+00	  save data's every XXX micro-sec (Restart files + EEDF)
+0.100E+00	  save data's every XXX micro-sec (Restart files + EEDF)
 *************************************************************************
 0		  Activate the laser (1) or don't use laser pumping (0)
 1083		  lenght wave of the laser (nm)

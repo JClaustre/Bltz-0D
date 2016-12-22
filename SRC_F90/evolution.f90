@@ -24,6 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
+  REAL(DOUBLE), PRIVATE :: ETownsd = 2.5d6
 
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
@@ -47,11 +48,11 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-11
+    MxDt   = 1d-12
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = 3.d3 ! (V/m)
+    sys%Emax = ETownsd ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -61,11 +62,7 @@ CONTAINS
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
 
-       !IF (Clock%SumDt.LT.1d-6) THEN
-       !   sys%E = 100.d2
-       !ELSE 
        IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
-       !END IF
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -77,23 +74,23 @@ CONTAINS
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
-       CALL FP      (sys, elec, F, U)
+!       CALL FP      (sys, elec, F, U)
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
-       !**** Ioniz Excimer *** 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-       !print*, "Ioniz 'n Co"
-       !**** Dissociative Recombination ***
-       CALL Recomb       (sys, meta, U, F, Diag)
-       !**** 3 Body ionic conversion ***
-       CALL Conv_3Body   (meta, ion)
-       !**** Penning + Associative ioniz ***
-       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-       !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag)
+!       !**** Ioniz Excimer *** 
+!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+!       !print*, "Ioniz 'n Co"
+!       !**** Dissociative Recombination ***
+!       CALL Recomb       (sys, meta, U, F, Diag)
+!       !**** 3 Body ionic conversion ***
+!       CALL Conv_3Body   (meta, ion)
+!       !**** Penning + Associative ioniz ***
+!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+!       !**** Radiative transfert ***
+!       CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
@@ -102,10 +99,10 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-       !**** De-excit excimer molecule (He2*) ***
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-       !**** (L&S)-Exchange ***
-       CALL l_change     (meta, K_ij)
+!       !**** De-excit excimer molecule (He2*) ***
+!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+!       !**** (L&S)-Exchange ***
+!       CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
@@ -464,14 +461,10 @@ CONTAINS
        RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(16)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
-!       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES10.2,A)",advance="no") &
-!            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-!            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-!            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,2ES10.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), sys%E*1d-5,"(kV/cm) \r"!
+            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
+            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
