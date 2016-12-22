@@ -28,7 +28,7 @@ MODULE MOD_PARAM
   TYPE, PUBLIC::Species
      INTEGER           :: Nn, Ns, Nl, N0
      REAL(DOUBLE)      :: Ni, Tp, Prs, En, Deg, Damb
-     REAL(DOUBLE)      :: Dfree, mobl, Updens, J
+     REAL(DOUBLE)      :: Dfree, mobl, Updens, J, NStart
      CHARACTER(len=10) :: Name
      REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, Nuel, Nuei
      REAL(DOUBLE), DIMENSION(:), POINTER :: SecRec, SecTot, SecMtM, SecEI

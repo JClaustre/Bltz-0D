@@ -58,6 +58,7 @@ CONTAINS
        l = l + 1
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
+       elec%NStart = elec%Ni
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -382,14 +383,10 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:)        , INTENT(INOUT) :: F
     !**** LOCAL
     INTEGER :: i, nx, Mnul, Switch, mdlus
-    REAL(DOUBLE) :: RateSum = 0.d0
+    REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 5
+    nx = sys%nx ; Switch = 0 ; mdlus = 100
 
-    !**** Calculation of the first Townsend coefficient. Coef found in
-    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
-    !**** kV/cm ***
-    Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !**** CHECK PART *********************************
@@ -401,6 +398,14 @@ CONTAINS
        elec%Tp = elec%Tp + ( F(i) * U(i)**1.5d0 * sys%Dx )
     END DO
     elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
+
+    !**** Calculation of the first Townsend coefficient. Coef found in
+    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
+    !**** kV/cm ***
+    !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+    nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
+    Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
+         /(2.d0*elec%Dfree*meta(0)%Ni)
 
     !**** Check EEDF Positivty
     DO i = 1, nx
@@ -430,7 +435,7 @@ CONTAINS
     END do
 
     !**** Update Time-step
-    IF ( 1.d0/MaxR.GE.1d-12 .and. iter.GT.1 ) THEN
+    IF ( 1.d0/MaxR.GE.1d-14 .and. iter.GT.1 ) THEN
        Clock%Dt = 1.0d0 / (MaxR*3.d0)
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
@@ -453,10 +458,10 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES9.3,A,F5.1,A,ES10.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni))," \r"!
+            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
+            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -481,8 +486,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(7ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, Twnsd_a
+       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
