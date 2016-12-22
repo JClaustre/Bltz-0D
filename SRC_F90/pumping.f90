@@ -11,8 +11,9 @@ MODULE MOD_PUMP
 
 CONTAINS
 
-  Subroutine Sublev_coll (Clock,meta,pop,Tij,lasr)
+  Subroutine Sublev_coll (Clock,meta,pop,Tij,lasr,iter)
     !INTENT
+    INTEGER      , INTENT(IN) :: iter
     TYPE(TIME)   , INTENT(IN) :: Clock
     TYPE(Laser)  , INTENT(IN) :: lasr
     REAL(DOUBLE) , DIMENSION(Npop2,Npop1,3) :: Tij
@@ -20,18 +21,18 @@ CONTAINS
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL
     INTEGER :: i, j, k, switch
-    REAL(DOUBLE) :: Dt, nu_ij 
+    REAL(DOUBLE) :: Dt, nu_ij, E_meta, E_2P3, errmax
     REAL(DOUBLE) :: gammak, Dop, Omeg, Is, Sec, vm
     REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
     !**************************
-    switch = 0
+    switch = 0 ; errmax = 1.d-10
     N1 = real(Npop1) ; N2 = real(Npop2)
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
     pop(1)%T_relax = 1.d0/(meta(1)%Damb / (sys%Ra/2.405d0)**2)
     pop(2)%T_relax = 1.d0/(3.2d06*1.33322*meta(0)%Prs)
     pop(1)%tau_e   = 1d-06  ! (s)
-    pop(1)%Te      = 1d-04  ! meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
+    pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
     pop(1)%Tr      = 100.d0 ! (s)
 
     !**** Laser variables ***
@@ -107,8 +108,17 @@ CONTAINS
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
 
     !**** Calculate the polarization of the Helium gas ***
-    pop(1)%polarz = pop(1)%polarz + Dt * &
-         ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
+    IF (mod(iter,1000) == 0 ) THEN
+       E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
+       E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
+       IF (E_meta.LE. errmax .and. E_2P3.LE.errmax) THEN
+          pop(1)%polarz = pop(1)%polarz +  (pop(1)%Te/20.d0) * &
+               ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
+          write(*,*) "polarization updated"
+       END IF
+       meta(1)%NStart = meta(1)%Ni
+       meta(3)%NStart = meta(3)%Ni
+    END IF
 
   END Subroutine Sublev_coll
 
