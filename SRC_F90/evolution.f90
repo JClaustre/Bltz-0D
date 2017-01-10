@@ -261,9 +261,9 @@ CONTAINS
     write(99,"(A)") "-----------------"
     write(99,"(A,ES11.2)")  "* Time step (Δt) : ", Clock%Dt
     write(99,"(A,I10)")     "* Number of iterations : ", NumI
-    write(99,"(A,F6.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
-    write(99,"(A,3(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
-         int(Clock%Minutes), " Min ", int(Clock%Seconds), " sec" 
+    write(99,"(A,F7.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
+    write(99,"(A,2(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
+         int(Clock%Minutes), " Min "
     write(99,"(A)") ""
     write(99,"(A)") "NEUTRAL GAS PARAMETERS"
     write(99,"(A)") "--------------------"
@@ -347,7 +347,6 @@ CONTAINS
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*NumI) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
-    write(99,"(A)") " "
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Laser Parameters "
     IF (lasr%OnOff.EQ.0) THEN
@@ -356,8 +355,9 @@ CONTAINS
        write(99,"(A,2F7.2)") "Laser Intensity (W) and section (cm2) :", lasr%Is, lasr%sec*1d+04
        write(99,"(A,I3)") "Polarization (0=neutral, +1=right, +2=left) : ", lasr%plz
        write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
-       write(99,"(A,F6.1)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
+       write(99,"(A,9I3)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
     END IF
+    write(99,"(/,A)") "-------------------------------------------------------"
 
     DO i = 1, NumMeta                                                       !
        write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &

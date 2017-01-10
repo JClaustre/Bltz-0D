@@ -22,11 +22,11 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j, k, switch
     REAL(DOUBLE) :: Dt, nu_ij, E_meta, E_2P3, errmax
-    REAL(DOUBLE) :: gammak, Dop, Omeg, Is, Sec, vm
+    REAL(DOUBLE) :: gammak, Dop, Omeg, vm
     REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
     !**************************
-    switch = 0 ; errmax = 1.d-10
+    switch = 0 ; errmax = 9.0d-7
     N1 = real(Npop1) ; N2 = real(Npop2)
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
     pop(1)%T_relax = 1.d0/(meta(1)%Damb / (sys%Ra/2.405d0)**2)
@@ -108,14 +108,15 @@ CONTAINS
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
 
     !**** Calculate the polarization of the Helium gas ***
-    IF (mod(iter,1000) == 0 ) THEN
-       E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
+    IF (mod(iter,1000) == 0 .and. switch==1) THEN
+       !E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
        E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
-       IF (E_meta.LE. errmax .and. E_2P3.LE.errmax) THEN
-          pop(1)%polarz = pop(1)%polarz +  (pop(1)%Te/20.d0) * &
-               ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
-          write(*,*) "polarization updated"
-       END IF
+       !IF (E_2P3.LE. errmax) THEN
+       pop(1)%polarz = pop(1)%polarz +  (pop(1)%Te/20.d0) * &
+            ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
+       write(*,*) "polarization updated", pop(1)%polarz
+       !END IF
+       !write(*,*) "E_2P3", E_2P3, switch
        meta(1)%NStart = meta(1)%Ni
        meta(3)%NStart = meta(3)%Ni
     END IF
