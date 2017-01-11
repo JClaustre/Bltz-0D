@@ -356,7 +356,7 @@ CONTAINS
        write(99,"(A,2F7.2)") "Laser Intensity (W) and section (cm2) :", lasr%Is, lasr%sec*1d+04
        write(99,"(A,I3)") "Polarization (0=neutral, +1=right, +2=left) : ", lasr%plz
        write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
-       write(99,"(A,F6.1)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
+       write(99,"(A,I4)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
     END IF
 
     DO i = 1, NumMeta                                                       !
