@@ -114,7 +114,7 @@ CONTAINS
        !IF (E_2P3.LE. errmax) THEN
        pop(1)%polarz = pop(1)%polarz +  (pop(1)%Te/20.d0) * &
             ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
-       write(*,*) "polarization updated", pop(1)%polarz
+       !write(*,*) "polarization updated", pop(1)%polarz
        !END IF
        !write(*,*) "E_2P3", E_2P3, switch
        meta(1)%NStart = meta(1)%Ni

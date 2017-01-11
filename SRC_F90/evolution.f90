@@ -458,10 +458,11 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,F6.1,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
+            sys%E*1d-5,"(kV/cm) | polariz: ", pop(1)%polarz*100.d0,&
+            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -486,8 +487,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, elec%Dfree, Twnsd_a, nu_ib
+       write(98,"(11ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
