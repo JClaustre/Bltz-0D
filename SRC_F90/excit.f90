@@ -129,8 +129,8 @@ CONTAINS
              meta(i)%UpDens = meta(i)%UpDens + Clock%Dt*(Sd*meta(j)%Ni - Sx*meta(i)%Ni)
              meta(j)%UpDens = meta(j)%UpDens + Clock%Dt*(Sx*meta(i)%Ni - Sd*meta(j)%Ni)
 
-             if (Sd .GT. MaxR) MaxR = Sd
              IF (Sx .GT. MaxR) MaxR = Sx
+             IF (Sd .GT. MaxR) MaxR = Sd
 
           END IF
        END DO
@@ -426,6 +426,9 @@ CONTAINS
              !**** Energy conservation Diagnostic 
              diag(1)%EnProd = diag(1)%EnProd + Dt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + Dt * Sx*Ndens(i)* E_ij * Rmx
+
+             IF (Sd .GT. MaxR) MaxR = Sd
+             IF (Sx .GT. MaxR) MaxR = Sx
 
              !***************** Diagnostic for relative importance of reactions (m-3/s)
              IF ((Sx*Ni).GT.Ratx) THEN ! Excit

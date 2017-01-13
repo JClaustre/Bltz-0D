@@ -124,7 +124,7 @@ CONTAINS
           SubCycl = 1
           SubDt = Clock%Dt
        ELSE
-          SubDt = 1.0d-10
+          SubDt = 1.0d-11
           IF (Clock%Dt .GT. SubDt) SubCycl = ceiling(Clock%Dt / SubDt)
           IF (Clock%Dt .LE. SubDt) SubCycl = 1
           IF (Clock%Dt .LE. SubDt) SubDt = Clock%Dt

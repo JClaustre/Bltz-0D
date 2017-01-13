@@ -11,82 +11,113 @@ MODULE MOD_CHAUF
   IMPLICIT NONE
 
   INTEGER, PRIVATE :: Pwk = 0
-
+  REAL(DOUBLE), PRIVATE :: Einit = 0.d0
 CONTAINS
 
-  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+  SUBROUTINE E_PROFIL (Clock, sys, iter)
     !INTENT
+    INTEGER      , INTENT(IN)     :: iter
     TYPE(Time)   , INTENT(IN)     :: Clock
     TYPE(SysVar) , INTENT(INOUT)  :: sys
-    REAL(DOUBLE) , INTENT(IN)     :: Post_D, Cgen
-    TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
-    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)  :: U, F
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: Dx, Fn, nuc, frq
-    REAL(DOUBLE) :: power, Uc, Df, GenPwr
-    nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
-    GenPwr = 1.d-12 ! Time constant to start/end the generator.
-    
-    IF (Clock%SumDt .LT. Post_D) THEN
-       !**** Increase Power
-       sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
-       sys%Pcent = sys%Powr
-       !**** Power calculation
-       power = 0.d0
-       do i = 1, nx-1
-          nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-          Uc = qome * nuc / (nuc**2 + sys%Freq**2)
-          IF (i .LT. nx-1) THEN
-             Df = F(i+1) - F(i)
-          ELSE IF (i.EQ.nx-1) THEN
-             !**** linear extrapolation for f(nx)
-             Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
-             Df = Fn - F(i)
-          END IF
-          power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
-       END do
-       !**** New External Electric Field Calculation 
-       sys%E = dsqrt ( sys%Powr / (power * qe) )
-       !***************************************************
-    ELSE
-       !**** Decrease External Electric source ***
-       IF (Pwk == 0) sys%IPowr = sys%E
-       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
-       IF (sys%E.LT.1d-08) sys%E = 0.d0
-       sys%Pcent = sys%E
-       Pwk = Pwk+1
+    REAL(DOUBLE) :: xs, xmax, SumDt
+    REAL(DOUBLE) :: Dx, Dt, lp, vs
+    nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Clock%Dt
+    xmax = 3.0d-2 ! (m)
+    lp = 2.6d-04 ! (m)
+    vs = 1.0d+05 ! (m/s)
+
+    !**** Calcul of E(x,t) ***
+    xs =  (xmax-(vs*SumDt)) - 9.0d-03
+
+    IF (xs.LE.-lp) THEN !**** Final value of E ***
+       sys%E = Einit
+    ELSE IF (xs.GT.-lp .and.xs.LE.0.d0 .and. sys%E.GE. Einit) THEN !**** Decrease of E ***
+       sys%E = sys%Emax * (1.d0 + xs/lp) 
+    ELSE IF (xs.GT. 0.d0) THEN !**** increase of E ***
+       sys%E = sys%Emax / (1.d0 + xs/(2.d0*lp))
     END IF
 
-    !**** RF - electric field*********************
-    IF (sys%rf == 1) THEN
-       sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
-       frq = 0.d0
-    ELSE
-       frq = sys%Freq
-    END IF
-    !*********************************************
-    
-    !**** Diagnostic to calculate the absorbed power by the plasma ***
-    sys%Emoy = sys%Emoy + dabs(sys%E)
-    !**** Fix the power here function of Elec field ************************!
-    DO i = 1, sys%nx - 1                                                    !
-       nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-       Uc = qome * sys%E**2 / (nuc**2 + Frq**2)                             !
-       IF (i .LT. nx-1) THEN
-          Df = F(i+1) - F(i)
-       ELSE IF (i.EQ.nx-1) THEN
-          !**** linear extrapolation for f(nx) ***
-          Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
-          Df = Fn - F(i)
-       END IF
-       power = power - Uc * U(i)**(1.5d0) * Df * nuc * 0.6667d0             !
-    END DO                                                                  !
-    power = power * qe                                                      !
-    sys%Pwmoy = power
-    !***********************************************************************!
+    IF (iter == 1) Einit = sys%E
 
-  END SUBROUTINE POWER_CONTROL
+    sys%Pcent = sys%E
+    sys%IPowr = sys%Emax
+  END SUBROUTINE E_PROFIL
+
+!  SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+!    !INTENT
+!    TYPE(Time)   , INTENT(IN)     :: Clock
+!    TYPE(SysVar) , INTENT(INOUT)  :: sys
+!    REAL(DOUBLE) , INTENT(IN)     :: Post_D, Cgen
+!    TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
+!    REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)  :: U, F
+!    !LOCAL
+!    INTEGER      :: i, nx
+!    REAL(DOUBLE) :: Dx, Fn, nuc, frq
+!    REAL(DOUBLE) :: power, Uc, Df, GenPwr
+!    nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
+!    GenPwr = 1.d-12 ! Time constant to start/end the generator.
+!    
+!    IF (Clock%SumDt .LT. Post_D) THEN
+!       !**** Increase Power
+!       sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+!       sys%Pcent = sys%Powr
+!       !**** Power calculation
+!       power = 0.d0
+!       do i = 1, nx-1
+!          nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+!          Uc = qome * nuc / (nuc**2 + sys%Freq**2)
+!          IF (i .LT. nx-1) THEN
+!             Df = F(i+1) - F(i)
+!          ELSE IF (i.EQ.nx-1) THEN
+!             !**** linear extrapolation for f(nx)
+!             Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
+!             Df = Fn - F(i)
+!          END IF
+!          power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
+!       END do
+!       !**** New External Electric Field Calculation 
+!       sys%E = dsqrt ( sys%Powr / (power * qe) )
+!       !***************************************************
+!    ELSE
+!       !**** Decrease External Electric source ***
+!       IF (Pwk == 0) sys%IPowr = sys%E
+!       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
+!       IF (sys%E.LT.1d-08) sys%E = 0.d0
+!       sys%Pcent = sys%E
+!       Pwk = Pwk+1
+!    END IF
+!
+!    !**** RF - electric field*********************
+!    IF (sys%rf == 1) THEN
+!       sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
+!       frq = 0.d0
+!    ELSE
+!       frq = sys%Freq
+!    END IF
+!    !*********************************************
+!    
+!    !**** Diagnostic to calculate the absorbed power by the plasma ***
+!    sys%Emoy = sys%Emoy + dabs(sys%E)
+!    !**** Fix the power here function of Elec field ************************!
+!    DO i = 1, sys%nx - 1                                                    !
+!       nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+!       Uc = qome * sys%E**2 / (nuc**2 + Frq**2)                             !
+!       IF (i .LT. nx-1) THEN
+!          Df = F(i+1) - F(i)
+!       ELSE IF (i.EQ.nx-1) THEN
+!          !**** linear extrapolation for f(nx) ***
+!          Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
+!          Df = Fn - F(i)
+!       END IF
+!       power = power - Uc * U(i)**(1.5d0) * Df * nuc * 0.6667d0             !
+!    END DO                                                                  !
+!    power = power * qe                                                      !
+!    sys%Pwmoy = power
+!    !***********************************************************************!
+!
+!  END SUBROUTINE POWER_CONTROL
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   SUBROUTINE Heating (sys,meta, U,F)
@@ -194,7 +225,7 @@ CONTAINS
 
     !****************SYSTEME TRIDIAGONALE A RESOUDRE************************************
     do i=1,nx
-       XX = (U(i)-0.5d0*Dx)                                
+       XX = (U(i)-0.5d0*Dx)
        YY = (U(i)+0.5d0*Dx)
        ZZ = alpha1 * Clock%Dt / ( Dx*dsqrt(U(i)) )
        IF (i == 1 ) THEN
@@ -228,6 +259,8 @@ CONTAINS
     !**** rate electron-neutral
     diag(18)%Tx(1) = Ren * meta(0)%Ni
     !***************
+    IF (Ren.GT.MaxR) MaxR = Ren
+
   END SUBROUTINE Elastic
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 

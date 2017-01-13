@@ -47,11 +47,13 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-09
+    MxDt   = 1d-12
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-
+    !**** Maximum electric field allowed ***
+    sys%Emax = 1.5d6 ! (V/m)
+    
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
@@ -63,8 +65,8 @@ CONTAINS
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
-       !**** Increase Power exponantially function of time
-       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       !**** Evolution of Electric field as in Sretenovic et al *** 
+       CALL E_PROFIL (Clock, sys, l)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -75,6 +77,7 @@ CONTAINS
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
+
        !**** Ioniz Excimer *** 
        IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
        !**** Dissociative Recombination ***
@@ -93,12 +96,15 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
+       !write(*,"(3ES10.2)") 1/maxR, elec%Ni, Clock%Dt
+
        !**** De-excit excimer molecule (He2*) ***
        IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
+
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
 
        !*************************************
@@ -347,7 +353,6 @@ CONTAINS
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*NumI) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
-    write(99,"(A)") " "
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Laser Parameters "
     IF (lasr%OnOff.EQ.0) THEN
@@ -406,13 +411,13 @@ CONTAINS
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
-
+!    print*, elec%Dfree, elec%mobl, nu_ib
     !**** Check EEDF Positivty
-    DO i = 1, nx
-       IF (F(i).LT. 0.d0) THEN
-          F(i) = 0.d0 ; Switch = 10
-       END IF
-    END DO
+!    DO i = 1, nx
+!       IF (F(i).LT. 0.d0) THEN
+!          F(i) = 0.d0 ; Switch = 10
+!       END IF
+!    END DO
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta
@@ -435,13 +440,14 @@ CONTAINS
     END do
 
     !**** Update Time-step
-    IF ( 1.d0/MaxR.GE.1d-14 .and. iter.GT.1 ) THEN
+    IF ( 1.d0/MaxR.GE.1d-14 .and. iter.GE.1 ) THEN
        Clock%Dt = 1.0d0 / (MaxR*3.d0)
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
-    IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
-       print*,""; print*," NaN ! Pobleme in time-step??", elec%Ni, MaxR ; Stop 
+    IF (ISnan(MaxR) .or. isNaN(elec%Ni) .or. elec%Ni.LT.0d0) THEN 
+       print*,""; write(*,"(3(A,ES10.2))")" !*Error*! Ne= ",&
+            elec%Ni, "| rates (s-1)= ",1.d0/MaxR, "| Dt= ", Clock%Dt ; Stop 
     END IF
     MaxR = 0.d0
     !*************************************
@@ -486,7 +492,7 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-5, &
             elec%mobl, elec%Dfree, Twnsd_a, nu_ib
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
@@ -548,8 +554,6 @@ CONTAINS
     diag(15)%InM1=0.d0 ; diag(15)%OutM1=0.d0 
     diag(15)%InM2=0.d0 ; diag(15)%OutM2=0.d0
     !**************************************************************************!
-
-
 
     IF ( Clock%SumDt.GE.Res ) THEN
 

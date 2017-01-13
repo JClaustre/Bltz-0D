@@ -348,7 +348,7 @@ CONTAINS
     READ(51,*) ; READ(51,*)
     READ(51,*) (SecRead(i), i=1,Npts)
     !**************************************
-    !**** Interpolat Cross-Sect Momentum
+    !**** Interpolat Cross-Sect Momentum (dans meta(0) )
     DO i=1, sys%nx
        Du0=0.d0
        U0 = IdU(i,sys%Dx)
@@ -370,7 +370,7 @@ CONTAINS
     READ(51,*) ; READ(51,*)
     READ(51,*) (SecRead(i), i=1,Npts)
     CLOSE(51)
-    !**** Interpolat Cross-Sect Effective Momentum
+    !**** Interpolat Cross-Sect Effective Momentum (dans meta(1) )
     DO i=1, sys%nx
        Du0=0.d0
        U0 = IdU(i,sys%Dx)
@@ -612,15 +612,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.98d0                                         !
-       ion(1)%Ni = elec%Ni * 0.02d0                                         !
+       ion(2)%Ni = elec%Ni * 0.999999d0                                     !
+       ion(1)%Ni = elec%Ni * 0.000001d0                                     !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 6.0d+14     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 1.0d+14     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.EQ.1) meta(i)%Ni = 1.4d+15     ! Metastable 2S3             !
+          IF (i.EQ.1) meta(i)%Ni = 1.5d+15     ! Metastable 2S3             !
           IF (i.EQ.2) meta(i)%Ni = 1.6d+13     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 2.7d+14     ! Radiative state 2P3        !
+          IF (i.EQ.3) meta(i)%Ni = 3.0d+13     ! Radiative state 2P3        !
           IF (i.GE.4) meta(i)%Ni = 1.0d+06                                  !
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
