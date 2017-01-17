@@ -20,7 +20,7 @@ MODULE MOD_EVOL
   IMPLICIT NONE
 
   !**** Switch for excitation and ionization process ***
-  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 2 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
@@ -47,7 +47,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-12
+    MxDt   = 5d-11
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
@@ -67,6 +67,7 @@ CONTAINS
 
        !**** Evolution of Electric field as in Sretenovic et al *** 
        CALL E_PROFIL (Clock, sys, l)
+       !CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -104,7 +105,6 @@ CONTAINS
        CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
-
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
 
        !*************************************
@@ -413,11 +413,11 @@ CONTAINS
          /(2.d0*elec%Dfree*meta(0)%Ni)
 !    print*, elec%Dfree, elec%mobl, nu_ib
     !**** Check EEDF Positivty
-!    DO i = 1, nx
-!       IF (F(i).LT. 0.d0) THEN
-!          F(i) = 0.d0 ; Switch = 10
-!       END IF
-!    END DO
+    DO i = 1, nx
+       IF (F(i).LT. 0.d0) THEN
+          F(i) = 0.d0 ; Switch = 10
+       END IF
+    END DO
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta

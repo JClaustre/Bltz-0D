@@ -66,7 +66,7 @@ CONTAINS
        WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [input_he]'
        OPEN (UNIT=90,FILE='./datFile/input_he',STATUS='OLD')
     ELSE IF (Clock%Rstart == 1) THEN
-       WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [Rs_input_he]'
+       WRITE(*,"(2A)",advance="no") tabul, 'Restart Dschrge Condit : [Rs_input_he]'
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Rs_input_he',STATUS='OLD')
     END IF
     READ (90,*) sys%nx
@@ -536,7 +536,7 @@ CONTAINS
 
        !**** Maxwllian distribution function\
        IF (Clock%Rstart == 1) THEN
-          READ(90,"(I6, ES15.6)") j, F(i)
+          READ(90,"(I6, ES19.10)") j, F(i)
        ELSE IF (i.LT.sys%nx)THEN
           F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
        END IF
@@ -612,8 +612,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.999999d0                                     !
-       ion(1)%Ni = elec%Ni * 0.000001d0                                     !
+       ion(2)%Ni = elec%Ni * 0.90d0                                     !
+       ion(1)%Ni = elec%Ni * 0.10d0                                     !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 1.0d+14     ! Molecular Excimer          !
        END SELECT                                                           !
@@ -621,7 +621,7 @@ CONTAINS
           IF (i.EQ.1) meta(i)%Ni = 1.5d+15     ! Metastable 2S3             !
           IF (i.EQ.2) meta(i)%Ni = 1.6d+13     ! Metastable 2S1             !
           IF (i.EQ.3) meta(i)%Ni = 3.0d+13     ! Radiative state 2P3        !
-          IF (i.GE.4) meta(i)%Ni = 1.0d+06                                  !
+          IF (i.GE.4) meta(i)%Ni = 1.0d+10                                  !
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
        pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0     !
