@@ -24,7 +24,8 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-
+  REAL(DOUBLE), PRIVATE :: SumNe
+  REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -47,13 +48,15 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 5d-11
+    MxDt   = 1d-11
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !**** Maximum electric field allowed ***
-    sys%Emax = 1.5d6 ! (V/m)
-    
+    sys%Emax = 1.0d6 ! (V/m)
+    Ne_i = elec%Ni
+    SumNe = 0.d0
+
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
@@ -68,6 +71,8 @@ CONTAINS
        !**** Evolution of Electric field as in Sretenovic et al *** 
        CALL E_PROFIL (Clock, sys, l)
        !CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       if (sys%E.ge. 2.5d5.and.sys%E.lt.2.501d5) print*, clock%SumDt, sys%E*1d-5
+       if (sys%E.ge. 9.99d5.and.sys%E.lt.10d5) print*, clock%SumDt, sys%E*1d-5
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -390,7 +395,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 100
+    nx = sys%nx ; Switch = 0 ; mdlus = 10
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -418,6 +423,19 @@ CONTAINS
           F(i) = 0.d0 ; Switch = 10
        END IF
     END DO
+
+    IF (iter.EQ.1) THEN
+       OPEN(UNIT=992,File=TRIM(ADJUSTL(DirFile))//"Ne_check.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    ELSE
+       OPEN(UNIT=992,File=TRIM(ADJUSTL(DirFile))//"Ne_check.dat",POSITION="APPEND",&
+            ACTION="WRITE",STATUS="UNKNOWN")
+    END IF
+
+    IF(Twnsd_a.LT.0.d0.or.isnan(Twnsd_a)) Twnsd_a = 0.d0
+!    SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt)
+!    Ne_t = Ne_i * exp(SumNe)
+!    write(992,"(I8,4ES15.6)") iter, Ne_t*1d-6, sys%E*1d-5, Twnsd_a, elec%mobl
+!    CLOSE(992)
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta
@@ -467,7 +485,7 @@ CONTAINS
        write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
+            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a/meta(0)%Ni, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

@@ -13,6 +13,7 @@ MODULE MOD_CHAUF
   INTEGER, PRIVATE :: Pwk = 0
   REAL(DOUBLE), PRIVATE :: Einit = 0.d0
   REAL(DOUBLE), PRIVATE :: Dti = 0.d0
+
 CONTAINS
 
   SUBROUTINE E_PROFIL (Clock, sys, iter)
@@ -25,13 +26,14 @@ CONTAINS
     REAL(DOUBLE) :: xs, xmax, SumDt
     REAL(DOUBLE) :: Dx, lp, vs
     IF (iter == 2) Dti = Clock%Dt
-    IF (iter == 1) Einit = sys%E
+    IF (iter == 1.or.iter==0) Einit = sys%E
     nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Dti
 
-    xmax = 3.0d-2 ! (m)
-    lp = 2.6d-04 ! (m)
+    !lp = 2.6d-04 ! (m)
+    lp = 3.d-04 ! (m)
     vs = 1.0d+05 ! (m/s)
-    !print*, sys%E, elec%Ni
+    xmax = (2.d0*sys%Emax*lp/Einit) + 9.d-03 - 2.d0*lp ! (m)
+    !print*, sys%E, xmax
     !**** Calcul of E(x,t) ***
     xs =  (xmax-(vs*SumDt)) - 9.0d-03
 
@@ -45,6 +47,7 @@ CONTAINS
 
     sys%Pcent = sys%E
     sys%IPowr = sys%Emax
+
   END SUBROUTINE E_PROFIL
 
   SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
