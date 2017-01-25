@@ -30,12 +30,12 @@ CONTAINS
     nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Dti
 
     !lp = 2.6d-04 ! (m)
-    lp = 3.d-04 ! (m)
-    vs = 1.0d+05 ! (m/s)
-    xmax = (2.d0*sys%Emax*lp/Einit) + 9.d-03 - 2.d0*lp ! (m)
+    lp = 2.3d-04 ! (m)
+    vs = 3.0d+04 ! (m/s)
+    xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
     !print*, sys%E, xmax
     !**** Calcul of E(x,t) ***
-    xs =  (xmax-(vs*SumDt)) - 9.0d-03
+    xs =  (xmax-(vs*SumDt)) - 2.d-02
 
     IF (xs.LE.-lp) THEN !**** Final value of E ***
        sys%E = Einit

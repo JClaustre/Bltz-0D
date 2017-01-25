@@ -48,12 +48,12 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-11
+    MxDt   = 1d-12
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !**** Maximum electric field allowed ***
-    sys%Emax = 1.0d6 ! (V/m)
+    sys%Emax = 1.5d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
 
@@ -71,8 +71,8 @@ CONTAINS
        !**** Evolution of Electric field as in Sretenovic et al *** 
        CALL E_PROFIL (Clock, sys, l)
        !CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
-       if (sys%E.ge. 2.5d5.and.sys%E.lt.2.501d5) print*, clock%SumDt, sys%E*1d-5
-       if (sys%E.ge. 9.99d5.and.sys%E.lt.10d5) print*, clock%SumDt, sys%E*1d-5
+       !if (sys%E.ge. 2.5d5.and.sys%E.lt.2.501d5) print*, clock%SumDt, sys%E*1d-5
+       !if (sys%E.ge. 9.99d5.and.sys%E.lt.10d5) print*, clock%SumDt, sys%E*1d-5
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -128,7 +128,7 @@ CONTAINS
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
-
+    
     !**** Conservation test routine ***
     CALL Consv_Test(sys, U, F, Diag, consv)
     !**** Write final EEDF ***
@@ -395,7 +395,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 10
+    nx = sys%nx ; Switch = 0 ; mdlus = 20
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -410,13 +410,15 @@ CONTAINS
     elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
 
     !**** Calculation of the first Townsend coefficient. Coef found in
-    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
-    !**** kV/cm ***
-    !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+    !**** Sretenovic et al (2014) for streamer and for E in [3-25]
+    !**** kV/cm *** : !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+
+    !**** Net production frequency (s-1) *** 
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
+    !**** Reduced Townsend Coefficient (m2) ***
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
-!    print*, elec%Dfree, elec%mobl, nu_ib
+
     !**** Check EEDF Positivty
     DO i = 1, nx
        IF (F(i).LT. 0.d0) THEN
@@ -432,10 +434,10 @@ CONTAINS
     END IF
 
     IF(Twnsd_a.LT.0.d0.or.isnan(Twnsd_a)) Twnsd_a = 0.d0
-!    SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt)
-!    Ne_t = Ne_i * exp(SumNe)
-!    write(992,"(I8,4ES15.6)") iter, Ne_t*1d-6, sys%E*1d-5, Twnsd_a, elec%mobl
-!    CLOSE(992)
+    SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt*meta(0)%Ni)
+    Ne_t = Ne_i * exp(SumNe)
+    write(992,"(5ES15.6)") Clock%SumDt, Ne_t*1d-6, sys%E*1d-5, Twnsd_a, elec%mobl
+    CLOSE(992)
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta
@@ -485,7 +487,7 @@ CONTAINS
        write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a/meta(0)%Ni, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
+            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
