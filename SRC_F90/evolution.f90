@@ -25,7 +25,8 @@ MODULE MOD_EVOL
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
   REAL(DOUBLE), PRIVATE :: ETownsd = 2.5d6
-
+  REAL(DOUBLE), PRIVATE :: SumNe
+  REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -53,6 +54,8 @@ CONTAINS
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     sys%Emax = ETownsd ! (V/m)
+    Ne_i = elec%Ni
+    SumNe = 0.d0
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -80,6 +83,7 @@ CONTAINS
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
+
 !       !**** Ioniz Excimer *** 
 !       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
 !       !print*, "Ioniz 'n Co"
@@ -103,7 +107,6 @@ CONTAINS
 !       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
 !       !**** (L&S)-Exchange ***
 !       CALL l_change     (meta, K_ij)
-
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
 
@@ -123,7 +126,7 @@ CONTAINS
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
-
+    
     !**** Conservation test routine ***
     CALL Consv_Test(sys, U, F, Diag, consv)
     !**** Write final EEDF ***
@@ -353,7 +356,6 @@ CONTAINS
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*NumI) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
-    write(99,"(A)") " "
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Laser Parameters "
     IF (lasr%OnOff.EQ.0) THEN
@@ -362,7 +364,7 @@ CONTAINS
        write(99,"(A,2F7.2)") "Laser Intensity (W) and section (cm2) :", lasr%Is, lasr%sec*1d+04
        write(99,"(A,I3)") "Polarization (0=neutral, +1=right, +2=left) : ", lasr%plz
        write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
-       write(99,"(A,F6.1)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
+       write(99,"(A,I4)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
     END IF
     write(99,"(/,A)") "-------------------------------------------------------"
 
@@ -393,7 +395,6 @@ CONTAINS
     REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
     nx = sys%nx ; Switch = 0 ; mdlus = 100
-
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !**** CHECK PART *********************************
@@ -407,10 +408,12 @@ CONTAINS
     elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
 
     !**** Calculation of the first Townsend coefficient. Coef found in
-    !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
-    !**** kV/cm ***
-    !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+    !**** Sretenovic et al (2014) for streamer and for E in [3-25]
+    !**** kV/cm *** : !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+
+    !**** Net production frequency (s-1) *** 
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
+    !**** Reduced Townsend Coefficient (m2) ***
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
 
@@ -420,6 +423,19 @@ CONTAINS
           F(i) = 0.d0 ; Switch = 10
        END IF
     END DO
+
+    IF (iter.EQ.1) THEN
+       OPEN(UNIT=992,File=TRIM(ADJUSTL(DirFile))//"Ne_check.dat",ACTION="WRITE",STATUS="UNKNOWN")
+    ELSE
+       OPEN(UNIT=992,File=TRIM(ADJUSTL(DirFile))//"Ne_check.dat",POSITION="APPEND",&
+            ACTION="WRITE",STATUS="UNKNOWN")
+    END IF
+
+    IF(Twnsd_a.LT.0.d0.or.isnan(Twnsd_a)) Twnsd_a = 0.d0
+    SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt*meta(0)%Ni)
+    Ne_t = Ne_i * exp(SumNe)
+    write(992,"(5ES15.6)") Clock%SumDt, Ne_t*1d-6, sys%E*1d-5, Twnsd_a, elec%mobl
+    CLOSE(992)
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta
@@ -447,8 +463,9 @@ CONTAINS
        IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
     END IF
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
-    IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
-       print*,""; print*," NaN ! Pobleme in time-step??", elec%Ni, MaxR ; Stop 
+    IF (ISnan(MaxR) .or. isNaN(elec%Ni) .or. elec%Ni.LT.0d0) THEN 
+       print*,""; write(*,"(3(A,ES10.2))")" !*Error*! Ne= ",&
+            elec%Ni, "| rates (s-1)= ",1.d0/MaxR, "| Dt= ", Clock%Dt ; Stop 
     END IF
     MaxR = 0.d0
     !*************************************
@@ -489,7 +506,7 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-5, &
             elec%mobl, elec%Dfree, Twnsd_a, nu_ib
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)

@@ -66,7 +66,7 @@ CONTAINS
        WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [input_he]'
        OPEN (UNIT=90,FILE='./datFile/input_he',STATUS='OLD')
     ELSE IF (Clock%Rstart == 1) THEN
-       WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [Rs_input_he]'
+       WRITE(*,"(2A)",advance="no") tabul, 'Restart Dschrge Condit : [Rs_input_he]'
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Rs_input_he',STATUS='OLD')
     END IF
     READ (90,*) sys%nx
@@ -348,7 +348,7 @@ CONTAINS
     READ(51,*) ; READ(51,*)
     READ(51,*) (SecRead(i), i=1,Npts)
     !**************************************
-    !**** Interpolat Cross-Sect Momentum
+    !**** Interpolat Cross-Sect Momentum (dans meta(0) )
     DO i=1, sys%nx
        Du0=0.d0
        U0 = IdU(i,sys%Dx)
@@ -370,7 +370,7 @@ CONTAINS
     READ(51,*) ; READ(51,*)
     READ(51,*) (SecRead(i), i=1,Npts)
     CLOSE(51)
-    !**** Interpolat Cross-Sect Effective Momentum
+    !**** Interpolat Cross-Sect Effective Momentum (dans meta(1) )
     DO i=1, sys%nx
        Du0=0.d0
        U0 = IdU(i,sys%Dx)
@@ -536,7 +536,7 @@ CONTAINS
 
        !**** Maxwllian distribution function\
        IF (Clock%Rstart == 1) THEN
-          READ(90,"(I6, ES15.6)") j, F(i)
+          READ(90,"(I6, ES19.10)") j, F(i)
        ELSE IF (i.LT.sys%nx)THEN
           F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
        END IF
@@ -612,8 +612,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.98d0                                         !
-       ion(1)%Ni = elec%Ni * 0.02d0                                         !
+       ion(2)%Ni = elec%Ni * 0.90d0                                     !
+       ion(1)%Ni = elec%Ni * 0.10d0                                     !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 0.0d+14     ! Molecular Excimer          !
        END SELECT                                                           !

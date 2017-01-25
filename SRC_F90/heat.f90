@@ -11,6 +11,8 @@ MODULE MOD_CHAUF
   IMPLICIT NONE
 
   INTEGER, PRIVATE :: Pwk = 0
+  REAL(DOUBLE), PRIVATE :: Einit = 0.d0
+  REAL(DOUBLE), PRIVATE :: Dti = 0.d0
 
 CONTAINS
 
@@ -21,34 +23,31 @@ CONTAINS
     TYPE(SysVar) , INTENT(INOUT)  :: sys
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: x, xmax, SumDt
-    REAL(DOUBLE) :: Dx, Dt, lp, vs
-    nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Clock%Dt
-    xmax = 3.d-2 ! (m)
-    lp = 2.6d-04 ! (m)
-    vs = 1.0d+05 ! (m/s)
-    !**** Calcul of E(x,t) ***
-    x =  (xmax-(vs*SumDt)) - 9d-03
-    IF (x.LE.-lp) THEN
-       sys%E = sys%Emax / (1.d0 + (xmax- 9d-03)/(2.d0*lp))
-    ELSE IF (x.GT.-lp .and.x.LE.0.d0) THEN
-       sys%E = sys%Emax * (1.d0 + x/lp) 
-    ELSE IF (x.GT. 0.d0) THEN
-       sys%E = sys%Emax / (1.d0 + x/(2.d0*lp))
-    END IF
+    REAL(DOUBLE) :: xs, xmax, SumDt
+    REAL(DOUBLE) :: Dx, lp, vs
+    IF (iter == 2) Dti = Clock%Dt
+    IF (iter == 1.or.iter==0) Einit = sys%E
+    nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Dti
 
-    !**** Write E in file ***
-    IF (iter.EQ.1) THEN
-       OPEN(UNIT=91,File=TRIM(ADJUSTL(DirFile))//"E_time.dat",ACTION="WRITE",STATUS="UNKNOWN")
-    ELSE 
-       OPEN(UNIT=91,File=TRIM(ADJUSTL(DirFile))//"E_time.dat",POSITION="APPEND",&
-            ACTION="WRITE",STATUS="UNKNOWN")
+    !lp = 2.6d-04 ! (m)
+    lp = 2.3d-04 ! (m)
+    vs = 3.0d+04 ! (m/s)
+    xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
+    !print*, sys%E, xmax
+    !**** Calcul of E(x,t) ***
+    xs =  (xmax-(vs*SumDt)) - 2.d-02
+
+    IF (xs.LE.-lp) THEN !**** Final value of E ***
+       sys%E = Einit
+    ELSE IF (xs.GT.-lp .and.xs.LE.0.d0 .and. sys%E.GE. Einit) THEN !**** Decrease of E ***
+       sys%E = sys%Emax * (1.d0 + xs/lp) 
+    ELSE IF (xs.GT. 0.d0) THEN !**** increase of E ***
+       sys%E = sys%Emax / (1.d0 + xs/(2.d0*lp))
     END IF
-    write(91,"(2ES15.6)") Clock%SumDt*1d6, sys%E
-    CLOSE(91)
 
     sys%Pcent = sys%E
     sys%IPowr = sys%Emax
+
   END SUBROUTINE E_PROFIL
 
   SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
@@ -231,7 +230,7 @@ CONTAINS
 
     !****************SYSTEME TRIDIAGONALE A RESOUDRE************************************
     do i=1,nx
-       XX = (U(i)-0.5d0*Dx)                                
+       XX = (U(i)-0.5d0*Dx)
        YY = (U(i)+0.5d0*Dx)
        ZZ = alpha1 * Clock%Dt / ( Dx*dsqrt(U(i)) )
        IF (i == 1 ) THEN
@@ -266,6 +265,8 @@ CONTAINS
     !**** rate electron-neutral
     diag(18)%Tx(1) = Ren * meta(0)%Ni
     !***************
+    IF (Ren.GT.MaxR) MaxR = Ren
+
   END SUBROUTINE Elastic
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
