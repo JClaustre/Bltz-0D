@@ -306,12 +306,12 @@ CONTAINS
 !    ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
 !    meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
 !    meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
-    SELECT CASE (NumIon) 
-    CASE (3)   
-       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
-       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef
-       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
-    END SELECT
+!    SELECT CASE (NumIon) 
+!    CASE (3)   
+!       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
+!       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef
+!       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
+!    END SELECT
     !**** Electron diffusion ***
     Se = (Sa + Sm)
     !**** Calcul de la diffusion libre moyenne electronique + mobility ***

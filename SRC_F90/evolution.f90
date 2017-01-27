@@ -24,8 +24,10 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd = 2.d6
+  REAL(DOUBLE), PRIVATE :: ETownsd=105
+  INTEGER, PRIVATE :: start_a=1
   REAL(DOUBLE), PRIVATE :: SumNe
+  REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
   REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
@@ -53,7 +55,7 @@ CONTAINS
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = ETownsd ! (V/m)
+    sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
 
@@ -113,7 +115,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+!       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -380,7 +382,7 @@ CONTAINS
 
   SUBROUTINE CHECK_AND_WRITE(Clock, sys, meta, elec, ion, pop, F, diag, iter, MxDt)
     !**** INTENT
-    INTEGER      , INTENT(IN)    :: iter
+    INTEGER      , INTENT(INOUT) :: iter
     REAL(DOUBLE) , INTENT(INOUT) :: MxDt
     TYPE(SysVar) , INTENT(IN)    :: sys
     TYPE(TIME)   , INTENT(INOUT) :: Clock
@@ -414,8 +416,28 @@ CONTAINS
     !**** Net production frequency (s-1) *** 
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
     !**** Reduced Townsend Coefficient (m2) ***
+    a1 = a2
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
+    a2 = Twnsd_a
+    err_alpha = abs(1.d0- a1/a2)
+    IF (iter.GT.10000.and.Twnsd_a==0.d0) iter = Clock%MaxIter
+    IF (iter.GT.1000.and.err_alpha.lE.1d-13)THEN
+       write(*,"(2A,2ES10.2,I7,2F7.2,A)") tabul,"Stop criterion in Townsend coeff reached!: alpha= ",&
+            Twnsd_a, err_alpha, iter,(sys%E/meta(0)%Ni)*1d+21, meta(0)%Prs,"\n"
+       iter = Clock%MaxIter
+    END IF
+    IF (iter.EQ.Clock%MaxIter) THEN
+       IF (start_a.EQ.0) THEN
+          OPEN(UNIT=1002,File=TRIM(ADJUSTL(DirFile))//"alpha_T.dat",ACTION="WRITE",STATUS="UNKNOWN")
+       ELSE
+          OPEN(UNIT=1002,File=TRIM(ADJUSTL(DirFile))//"alpha_T.dat",POSITION="APPEND",ACTION="WRITE",&
+            STATUS="UNKNOWN")
+       END IF
+       write(1002,"(2F7.1,8ES15.6)") meta(0)%Prs, ETownsd, meta(0)%Ni, Clock%SumDt, Ne_t*1d-6, elec%Ni,&
+            sys%E*1d-5,Twnsd_a, elec%mobl, elec%Dfree
+       CLOSE(1002)
+    END IF
 
     !**** Check EEDF Positivty
     DO i = 1, nx
@@ -434,7 +456,8 @@ CONTAINS
     IF(Twnsd_a.LT.0.d0.or.isnan(Twnsd_a)) Twnsd_a = 0.d0
     SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt*meta(0)%Ni)
     Ne_t = Ne_i * exp(SumNe)
-    write(992,"(5ES15.6)") Clock%SumDt, Ne_t*1d-6, sys%E*1d-5, Twnsd_a, elec%mobl
+    write(992,"(9ES15.6)") Clock%SumDt, ETownsd, Ne_t*1d-6, elec%Ni, sys%E*1d-5, Twnsd_a, &
+         elec%mobl,elec%Dfree,meta(0)%Ni
     CLOSE(992)
 
     !**** Update densities (Ion + Excited)
