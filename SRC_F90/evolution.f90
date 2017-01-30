@@ -24,8 +24,8 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=15
-  INTEGER, PRIVATE :: start_a=1
+  REAL(DOUBLE), PRIVATE :: ETownsd=1
+  INTEGER, PRIVATE :: start_a=0
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
   REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
@@ -79,24 +79,24 @@ CONTAINS
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
-!       CALL FP      (sys, elec, F, U)
+       CALL FP      (sys, elec, F, U)
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
 
-!       !**** Ioniz Excimer *** 
-!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-!       !print*, "Ioniz 'n Co"
-!       !**** Dissociative Recombination ***
-!       CALL Recomb       (sys, meta, U, F, Diag)
-!       !**** 3 Body ionic conversion ***
-!       CALL Conv_3Body   (meta, ion)
-!       !**** Penning + Associative ioniz ***
-!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-!       !**** Radiative transfert ***
-!       CALL Radiat       (sys, meta, Fosc, Diag)
+       !**** Ioniz Excimer *** 
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+       !print*, "Ioniz 'n Co"
+       !**** Dissociative Recombination ***
+       CALL Recomb       (sys, meta, U, F, Diag)
+       !**** 3 Body ionic conversion ***
+       CALL Conv_3Body   (meta, ion)
+       !**** Penning + Associative ioniz ***
+       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+       !**** Radiative transfert ***
+       CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
@@ -105,17 +105,17 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-!       !**** De-excit excimer molecule (He2*) ***
-!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-!       !**** (L&S)-Exchange ***
-!       CALL l_change     (meta, K_ij)
+       !**** De-excit excimer molecule (He2*) ***
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+       !**** (L&S)-Exchange ***
+       CALL l_change     (meta, K_ij)
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
 
        !*************************************
        !**** LASER PUMPING
        !*************************************
-!       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)

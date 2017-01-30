@@ -74,7 +74,7 @@ MODULE MOD_PARAM
 
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/15KV/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Towsend/Alpha/fonda/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Towsend/Alpha/All/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
