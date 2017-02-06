@@ -24,8 +24,8 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=1
-  INTEGER, PRIVATE :: start_a=0
+  REAL(DOUBLE), PRIVATE :: ETownsd=40
+  INTEGER, PRIVATE :: start_a=1
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
   REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
@@ -86,17 +86,17 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
 
-       !**** Ioniz Excimer *** 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+!       !**** Ioniz Excimer *** 
+!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
        !print*, "Ioniz 'n Co"
        !**** Dissociative Recombination ***
        CALL Recomb       (sys, meta, U, F, Diag)
        !**** 3 Body ionic conversion ***
-       CALL Conv_3Body   (meta, ion)
+!       CALL Conv_3Body   (meta, ion)
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
        !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag)
+!       CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
@@ -106,7 +106,7 @@ CONTAINS
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
        !**** De-excit excimer molecule (He2*) ***
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
        !**** UpDate and write routine ***
@@ -115,7 +115,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+!       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -422,7 +422,8 @@ CONTAINS
     a2 = Twnsd_a
     err_alpha = abs(1.d0- a1/a2)
     IF (iter.GT.10000.and.Twnsd_a==0.d0) iter = Clock%MaxIter
-    IF (iter.GT.1000.and.err_alpha.lE.1d-13)THEN
+    IF (iter.GT.50000.and.(sys%E/meta(0)%Ni*1d+21).LE.8.d0) iter = Clock%MaxIter
+    IF (iter.GT.1000.and.err_alpha.lE.1d-12)THEN
        write(*,"(2A,2ES10.2,I7,2F7.2,A)") tabul,"Stop criterion in Townsend coeff reached!: alpha= ",&
             Twnsd_a, err_alpha, iter,(sys%E/meta(0)%Ni)*1d+21, meta(0)%Prs,"\n"
        iter = Clock%MaxIter
@@ -501,10 +502,10 @@ CONTAINS
        RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(16)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,I7,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
+            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21, iter, " (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

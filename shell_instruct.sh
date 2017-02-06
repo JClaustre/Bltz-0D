@@ -10,8 +10,9 @@ echo
 echo "Ready to Start ?";
 echo
 
-make clean
-make
+#make clean
+#make
+
 # **** Incrementation de la pression et pression initiale
 let "incr_pres = 100" ; let "pres = 7" ; let "pres_mx=760"
 # **** Champ Electrique max (Td)
@@ -29,7 +30,7 @@ sed -i "s/start_a=.*/start_a=0/" SRC_F90/evolution.f90
 sed -i "s/ETownsd=.*/ETownsd=$Emn/" SRC_F90/evolution.f90
 
 # **** Loop sur les valeurs de la pression 
-while [ $pres -le $pres_mx ] ; do
+while [ $pres -lt $pres_mx ] ; do
 
     echo "pression : $pres"
     let "a=0" ; let "pres2 = pres"

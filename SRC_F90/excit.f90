@@ -31,11 +31,12 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd
+    REAL(DOUBLE) :: Sx, Sd, Ratx, Ratd
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
     Dx = sys%Dx ; nx = sys%nx
     !********************
+    Ratx=0.d0 ; Ratd=0.d0
 
     !********************************************************
     DO i = 0, NumMeta-1
@@ -131,6 +132,18 @@ CONTAINS
 
              IF (Sx .GT. MaxR) MaxR = Sx
              IF (Sd .GT. MaxR) MaxR = Sd
+
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
+             IF ((Sx*meta(i)%Ni).GT.Ratx) THEN ! Excit
+                Ratx = Sx*meta(i)%Ni
+                diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+             END IF
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*meta(i)%Ni ! Sum over all contrib
+             IF ((Sd*meta(j)%Nj).GT.Ratd) THEN ! De-Excit
+                Ratd = Sd*meta(j)%Nj
+                diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+             END IF
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Nj
 
           END IF
        END DO

@@ -70,124 +70,124 @@ CONTAINS
        END IF
     END DO
 
-    !**** Penning process
-    Rate=0.d0 ; Diag(5)%Tx(:)=0.d0
-    diag(5)%OutM1 = 0.d0 ; diag(5)%OutM2 = 0.d0
-    !********************
-    DO i = 1, 3
-       DO j = 1, 3
-          
-          DO l = 1, 2
-             IF (l .EQ. 1) Penn  =  0.3d0* meta(i)%Ni*meta(j)%Ni * beta
-             IF (l .EQ. 2) Penn  =  0.7d0* meta(i)%Ni*meta(j)%Ni * beta
-             Eij = meta(j)%En + meta(i)%En - ion(l)%En ! Penning threshold
-             chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
-             IF (ichi == 0) ichi = 1
-             rchi = ( Eij - U(ichi) ) / Dx
-
-             DO k = 1, sys%nx
-                coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
-                coef2 = rchi / (sqrt(U(ichi+1))*Dx)
-                IF (k .NE. ichi  ) coef1 = 0.d0
-                IF (k .NE. ichi+1) coef2 = 0.d0
-                Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
-             END DO
-             ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
-             !**** Energy conservation Diagnostic
-             diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
-             !****************
-             diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
-             !***************** Diagnostic for relative importance of reactions (m-3/s)
-             IF (Penn.GT.Rate) THEN
-                Rate = Penn
-                Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
-             END IF
-             Diag(5)%Tx(1) = Diag(5)%Tx(1) + Penn
-
-          END DO
-          !**** Update population
-          Penn = meta(i)%Ni*meta(j)%Ni * beta
-          meta(i)%Updens = meta(i)%Updens - Clock%Dt * Penn
-          meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
-          ratx = Penn / meta(i)%Ni
-          IF (ratx .GT. MaxR) MaxR = ratx
-          !*************** Diagnostic for metastable and 2^3P rates (s-1)
-          if(i==1) THEN
-             diag(5)%OutM1 = diag(5)%OutM1 + Penn/meta(i)%Ni
-          END if
-          if(j==1) THEN
-             diag(5)%OutM1 = diag(5)%OutM1 + Penn/meta(j)%Ni
-          END if
-          !****************
-          if(i==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(i)%Ni
-          if(j==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(j)%Ni
-
-       END DO
-    END DO
-
-    ! Involving Dimer Penning processes 
-    SELECT CASE (NumIon)
-    CASE (3)
-       Rate = 0.d0 ; Diag(4)%Tx(:) = 0.d0
-       diag(4)%OutM1=0.d0 ; diag(4)%OutM2=0.d0
-       Nion = 3
-       ! #1 He* + He2* --> He+ + He + e
-       !               --> He2+ + He + e
-       ! #2 He2* + He2* --> He+ + He + e  (case with i==0)
-       !                --> He2+ + He + e
-       DO i = 0, 3
-          beta = 2.5d-09 * 1d-6
-          IF (i == 0) beta = 1.5d-09* 1d-6
-          If (i == 0) Ndens = ion(Nion)%Ni
-          IF (i .GT. 0) Ndens = meta(i)%Ni
-          DO l = 1, 2
-             IF (l .EQ. 1) Penn  =  0.15d0* Ndens*ion(Nion)%Ni * beta
-             IF (l .EQ. 2) Penn  =  0.85d0* Ndens*ion(Nion)%Ni * beta
-             Eij = ion(Nion)%En + meta(i)%En - ion(l)%En ! Penning threshold
-             IF (i == 0) Eij = 2d0*ion(Nion)%En - ion(l)%En 
-             chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
-             IF (ichi == 0) ichi = 1
-             rchi = ( Eij - U(ichi) ) / Dx
-
-             DO k = 1, sys%nx
-                coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
-                coef2 = rchi / (sqrt(U(ichi+1))*Dx)
-                IF (k .NE. ichi  ) coef1 = 0.d0
-                IF (k .NE. ichi+1) coef2 = 0.d0
-                Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
-             END DO
-             ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
-             !**** Energy conservation Diagnostic
-             diag(4)%EnProd = diag(4)%EnProd + Eij*Clock%Dt * Penn
-             diag(4)%SumTx = diag(4)%SumTx + Clock%Dt * Penn
-             !***************** Diagnostic for relative importance of reactions (m-3/s)
-             IF (Penn.GT.Rate) THEN
-                Rate = Penn             
-                Diag(4)%Tx(2) = real(i)
-             END IF
-             Diag(4)%Tx(1) = Diag(4)%Tx(1) + Penn
-
-             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
-             IF (i==1) THEN
-                !*************** Diagnostic for metastable and 2^3P rates (s-1)
-                diag(4)%OutM1    = diag(4)%OutM1 + Penn/meta(i)%Ni
-             END IF
-             IF (i==3) THEN
-                diag(4)%OutM2    = diag(4)%OutM2 + Penn/meta(i)%Ni
-             END IF
-             !****************
-          END DO
-          !**** Update population
-          Penn = Ndens * ion(Nion)%Ni * beta
-          IF (i.GT.0) meta(i)%Updens   = meta(i)%Updens   - Clock%Dt * Penn
-          If (i == 0) ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
-          ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
-          ratx = Penn / Ndens
-          IF (ratx .GT. MaxR) MaxR = ratx
-
-       END DO
-
-    END SELECT
+!    !**** Penning process
+!    Rate=0.d0 ; Diag(5)%Tx(:)=0.d0
+!    diag(5)%OutM1 = 0.d0 ; diag(5)%OutM2 = 0.d0
+!    !********************
+!    DO i = 1, 3
+!       DO j = 1, 3
+!          
+!          DO l = 1, 2
+!             IF (l .EQ. 1) Penn  =  0.3d0* meta(i)%Ni*meta(j)%Ni * beta
+!             IF (l .EQ. 2) Penn  =  0.7d0* meta(i)%Ni*meta(j)%Ni * beta
+!             Eij = meta(j)%En + meta(i)%En - ion(l)%En ! Penning threshold
+!             chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
+!             IF (ichi == 0) ichi = 1
+!             rchi = ( Eij - U(ichi) ) / Dx
+!
+!             DO k = 1, sys%nx
+!                coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
+!                coef2 = rchi / (sqrt(U(ichi+1))*Dx)
+!                IF (k .NE. ichi  ) coef1 = 0.d0
+!                IF (k .NE. ichi+1) coef2 = 0.d0
+!                Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
+!             END DO
+!             ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
+!             !**** Energy conservation Diagnostic
+!             diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
+!             !****************
+!             diag(5)%SumTx = diag(5)%SumTx + Clock%Dt * Penn
+!             !***************** Diagnostic for relative importance of reactions (m-3/s)
+!             IF (Penn.GT.Rate) THEN
+!                Rate = Penn
+!                Diag(5)%Tx(2) = real(i) ; Diag(5)%Tx(3) = real(j)
+!             END IF
+!             Diag(5)%Tx(1) = Diag(5)%Tx(1) + Penn
+!
+!          END DO
+!          !**** Update population
+!          Penn = meta(i)%Ni*meta(j)%Ni * beta
+!          meta(i)%Updens = meta(i)%Updens - Clock%Dt * Penn
+!          meta(j)%Updens = meta(j)%Updens - Clock%Dt * Penn
+!          ratx = Penn / meta(i)%Ni
+!          IF (ratx .GT. MaxR) MaxR = ratx
+!          !*************** Diagnostic for metastable and 2^3P rates (s-1)
+!          if(i==1) THEN
+!             diag(5)%OutM1 = diag(5)%OutM1 + Penn/meta(i)%Ni
+!          END if
+!          if(j==1) THEN
+!             diag(5)%OutM1 = diag(5)%OutM1 + Penn/meta(j)%Ni
+!          END if
+!          !****************
+!          if(i==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(i)%Ni
+!          if(j==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(j)%Ni
+!
+!       END DO
+!    END DO
+!
+!    ! Involving Dimer Penning processes 
+!    SELECT CASE (NumIon)
+!    CASE (3)
+!       Rate = 0.d0 ; Diag(4)%Tx(:) = 0.d0
+!       diag(4)%OutM1=0.d0 ; diag(4)%OutM2=0.d0
+!       Nion = 3
+!       ! #1 He* + He2* --> He+ + He + e
+!       !               --> He2+ + He + e
+!       ! #2 He2* + He2* --> He+ + He + e  (case with i==0)
+!       !                --> He2+ + He + e
+!       DO i = 0, 3
+!          beta = 2.5d-09 * 1d-6
+!          IF (i == 0) beta = 1.5d-09* 1d-6
+!          If (i == 0) Ndens = ion(Nion)%Ni
+!          IF (i .GT. 0) Ndens = meta(i)%Ni
+!          DO l = 1, 2
+!             IF (l .EQ. 1) Penn  =  0.15d0* Ndens*ion(Nion)%Ni * beta
+!             IF (l .EQ. 2) Penn  =  0.85d0* Ndens*ion(Nion)%Ni * beta
+!             Eij = ion(Nion)%En + meta(i)%En - ion(l)%En ! Penning threshold
+!             IF (i == 0) Eij = 2d0*ion(Nion)%En - ion(l)%En 
+!             chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
+!             IF (ichi == 0) ichi = 1
+!             rchi = ( Eij - U(ichi) ) / Dx
+!
+!             DO k = 1, sys%nx
+!                coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
+!                coef2 = rchi / (sqrt(U(ichi+1))*Dx)
+!                IF (k .NE. ichi  ) coef1 = 0.d0
+!                IF (k .NE. ichi+1) coef2 = 0.d0
+!                Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
+!             END DO
+!             ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
+!             !**** Energy conservation Diagnostic
+!             diag(4)%EnProd = diag(4)%EnProd + Eij*Clock%Dt * Penn
+!             diag(4)%SumTx = diag(4)%SumTx + Clock%Dt * Penn
+!             !***************** Diagnostic for relative importance of reactions (m-3/s)
+!             IF (Penn.GT.Rate) THEN
+!                Rate = Penn             
+!                Diag(4)%Tx(2) = real(i)
+!             END IF
+!             Diag(4)%Tx(1) = Diag(4)%Tx(1) + Penn
+!
+!             !*************** Diagnostic for metastable and 2^3P rates (cm-3 s-1)
+!             IF (i==1) THEN
+!                !*************** Diagnostic for metastable and 2^3P rates (s-1)
+!                diag(4)%OutM1    = diag(4)%OutM1 + Penn/meta(i)%Ni
+!             END IF
+!             IF (i==3) THEN
+!                diag(4)%OutM2    = diag(4)%OutM2 + Penn/meta(i)%Ni
+!             END IF
+!             !****************
+!          END DO
+!          !**** Update population
+!          Penn = Ndens * ion(Nion)%Ni * beta
+!          IF (i.GT.0) meta(i)%Updens   = meta(i)%Updens   - Clock%Dt * Penn
+!          If (i == 0) ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
+!          ion(Nion)%Updens = ion(Nion)%Updens - Clock%Dt * Penn
+!          ratx = Penn / Ndens
+!          IF (ratx .GT. MaxR) MaxR = ratx
+!
+!       END DO
+!
+!    END SELECT
 
   END SUBROUTINE Penn_Assoc
   !***********************************************************************
