@@ -139,11 +139,11 @@ CONTAINS
                 diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
              END IF
              diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*meta(i)%Ni ! Sum over all contrib
-             IF ((Sd*meta(j)%Nj).GT.Ratd) THEN ! De-Excit
-                Ratd = Sd*meta(j)%Nj
+             IF ((Sd*meta(j)%Ni).GT.Ratd) THEN ! De-Excit
+                Ratd = Sd*meta(j)%Ni
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
-             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Nj
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
 
           END IF
        END DO
