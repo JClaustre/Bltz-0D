@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=40
+  REAL(DOUBLE), PRIVATE :: ETownsd=25
   INTEGER, PRIVATE :: start_a=1
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
