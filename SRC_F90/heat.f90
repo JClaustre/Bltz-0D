@@ -29,9 +29,13 @@ CONTAINS
     IF (iter == 1.or.iter==0) Einit = sys%E
     nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Dti
 
+    !**** Naidis simu 27 kV/cm
     !lp = 2.6d-04 ! (m)
+    !vs = 8.0d+04 ! (m/s)
+    !**** JP Boeuf simu 10 kV/cm
     lp = 2.3d-04 ! (m)
     vs = 3.0d+04 ! (m/s)
+
     xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
     !print*, sys%E, xmax
     !**** Calcul of E(x,t) ***

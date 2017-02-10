@@ -24,6 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
+  REAL(DOUBLE), PRIVATE :: ETownsd=25
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
 CONTAINS
@@ -53,7 +54,8 @@ CONTAINS
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !**** Maximum electric field allowed ***
-    sys%Emax = 1.5d6 ! (V/m)
+    !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    sys%Emax = 1.0d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
 
@@ -434,9 +436,10 @@ CONTAINS
     END IF
 
     IF(Twnsd_a.LT.0.d0.or.isnan(Twnsd_a)) Twnsd_a = 0.d0
-    SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt*meta(0)%Ni)
+    SumNe = SumNe + (sys%E * Twnsd_a * elec%mobl * Clock%Dt*meta(0)%Ni - (Twnsd_a*meta(0)%Ni)**2 * elec%Dfree * Clock%Dt)
     Ne_t = Ne_i * exp(SumNe)
-    write(992,"(5ES15.6)") Clock%SumDt, Ne_t*1d-6, sys%E*1d-5, Twnsd_a, elec%mobl
+    write(992,"(9ES15.6)") Clock%SumDt, ETownsd, Ne_t*1d-6, elec%Ni, sys%E*1d-5, Twnsd_a, &
+         elec%mobl,elec%Dfree,meta(0)%Ni
     CLOSE(992)
 
     !**** Update densities (Ion + Excited)
