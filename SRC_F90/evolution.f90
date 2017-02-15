@@ -24,8 +24,8 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=25
-  INTEGER, PRIVATE :: start_a=1
+  REAL(DOUBLE), PRIVATE :: ETownsd=19.99
+  INTEGER, PRIVATE :: start_a=0
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
   REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
@@ -88,16 +88,15 @@ CONTAINS
 
 !       !**** Ioniz Excimer *** 
 !       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-       !print*, "Ioniz 'n Co"
-       !**** Dissociative Recombination ***
-       CALL Recomb       (sys, meta, U, F, Diag)
-       !**** 3 Body ionic conversion ***
+!       !**** Dissociative Recombination ***
+!       CALL Recomb       (sys, meta, U, F, Diag)
+!       !**** 3 Body ionic conversion ***
 !       CALL Conv_3Body   (meta, ion)
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
-       !**** Radiative transfert ***
+!       !**** Radiative transfert ***
 !       CALL Radiat       (sys, meta, Fosc, Diag)
-       !**** Diffusion ***
+!       !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
@@ -105,16 +104,16 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-       !**** De-excit excimer molecule (He2*) ***
+!       !**** De-excit excimer molecule (He2*) ***
 !       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** (L&S)-Exchange ***
-       CALL l_change     (meta, K_ij)
+!       CALL l_change     (meta, K_ij)
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
-
-       !*************************************
-       !**** LASER PUMPING
-       !*************************************
+!
+!       !*************************************
+!       !**** LASER PUMPING
+!       !*************************************
 !       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***

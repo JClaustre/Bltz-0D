@@ -349,14 +349,14 @@ CONTAINS
        F(i) = F(i) * elec%Ni
 !       IF (i.EQ.iVg) F(i) = F(i) - Clock%Dt * F(i) * De * ((i+1)*sys%Dx-Vg) / sys%Dx / Coef
 !       IF (i.GT.iVg) F(i) = F(i) - Clock%Dt * F(i) * De / Coef
-!       En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
+       En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
     ratx = De/ Coef ! Rate of change of the EEDF (s-1)
     !**** electron density ***
-!    elec%Ni = 0.d0
-!    DO i = 1, sys%Nx
-!       elec%Ni = elec%Ni + F(i) * sqrt(U(i)) * sys%Dx
-!    END DO
+    elec%Ni = 0.d0
+    DO i = 1, sys%Nx
+       elec%Ni = elec%Ni + F(i) * sqrt(U(i)) * sys%Dx
+    END DO
     IF (ratx .GT. maxR) maxR = ratx
 
     !**** Energy conservation Diagnostic ***
