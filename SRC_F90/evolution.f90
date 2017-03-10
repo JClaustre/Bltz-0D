@@ -47,7 +47,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-09
+    MxDt   = 2d-10
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF

@@ -615,13 +615,13 @@ CONTAINS
        ion(2)%Ni = elec%Ni * 0.98d0                                         !
        ion(1)%Ni = elec%Ni * 0.02d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 6.0d+14     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 6.0d+17     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
-          IF (i.EQ.1) meta(i)%Ni = 1.4d+15     ! Metastable 2S3             !
-          IF (i.EQ.2) meta(i)%Ni = 1.6d+13     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 2.7d+14     ! Radiative state 2P3        !
-          IF (i.GE.4) meta(i)%Ni = 1.0d+06                                  !
+          IF (i.EQ.1) meta(i)%Ni = 3.0d+17     ! Metastable 2S3             !
+          IF (i.EQ.2) meta(i)%Ni = 6.5d+16     ! Metastable 2S1             !
+          IF (i.EQ.3) meta(i)%Ni = 2.4d+17     ! Radiative state 2P3        !
+          IF (i.GE.4) meta(i)%Ni = 1.0d+14                                  !
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
        pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0     !
