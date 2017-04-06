@@ -31,10 +31,11 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd
+    REAL(DOUBLE) :: Sx, Sd, Ratx, Ratd
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
     Dx = sys%Dx ; nx = sys%nx
+    Ratx=0.d0 ; Ratd=0.d0
     !********************
 
     !********************************************************
@@ -132,6 +133,18 @@ CONTAINS
              if (Sd .GT. MaxR) MaxR = Sd
              IF (Sx .GT. MaxR) MaxR = Sx
 
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
+             IF ((Sx*meta(i)%Ni).GT.Ratx) THEN ! Excit
+                Ratx = Sx*meta(i)%Ni
+                diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+             END IF
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*meta(i)%Ni ! Sum over all contrib
+             IF ((Sd*meta(j)%Ni).GT.Ratd) THEN ! De-Excit
+                Ratd = Sd*meta(j)%Ni
+                diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+             END IF
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
+
           END IF
        END DO
     END DO
@@ -162,14 +175,14 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
-    SubRt = 2.d-10 ! give a maximum value of collision rate
+    SubRt = 6.d-10 ! give a maximum value of collision rate
     nx = sys%nx ; Dx = sys%Dx
     !********************
     Rate=0.d0; Rate2=0.d0
     diag(1)%Tx(:)=0.d0 ; diag(10)%Tx(:)=0.d0 
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
-
+    
     !********************************************************
     DO i = 0, NumMeta-1
        coef1 = Ndens(i) * gama
@@ -276,9 +289,6 @@ CONTAINS
              END DO
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
-
-             if (Sd .GT. MaxR) MaxR = Sd
-             IF (Sx .GT. MaxR) MaxR = Sx
 
              IF ((Sx*Ndens(i)).GT.Rate) THEN
                 Rate = Sx*Ndens(i)

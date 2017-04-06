@@ -20,7 +20,7 @@ MODULE MOD_EVOL
   IMPLICIT NONE
 
   !**** Switch for excitation and ionization process ***
-  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 2 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
@@ -43,9 +43,9 @@ CONTAINS
     !**** Keep Power-init in memory ***
     sys%IPowr = sys%Powr 
     !**** Time factor for external source ***
-    Cgen   = 1d-02 
+    Cgen   = 1.0d-02
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 1.3d-1
+    Post_D = 2.d-3
     !**** Maximum time-step allowed (sec)***
     MxDt   = 2d-10
     IF (Clock%Rstart.EQ.1)THEN
@@ -104,7 +104,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+       !CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -385,7 +385,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 100
+    nx = sys%nx ; Switch = 0 ; mdlus = 1
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

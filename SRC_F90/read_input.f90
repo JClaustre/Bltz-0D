@@ -536,7 +536,7 @@ CONTAINS
 
        !**** Maxwllian distribution function\
        IF (Clock%Rstart == 1) THEN
-          READ(90,"(I6, ES15.6)") j, F(i)
+          READ(90,"(I6, ES19.10)") j, F(i)
        ELSE IF (i.LT.sys%nx)THEN
           F(i) = ( 2.d0*elec%Ni / sqrt(pi*elec%Tp**3) ) * exp( -(U(i)/elec%Tp))
        END IF
@@ -615,7 +615,7 @@ CONTAINS
        ion(2)%Ni = elec%Ni * 0.98d0                                         !
        ion(1)%Ni = elec%Ni * 0.02d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 6.0d+17     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 6.0d+16     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta                                                    !
           IF (i.EQ.1) meta(i)%Ni = 3.0d+17     ! Metastable 2S3             !
