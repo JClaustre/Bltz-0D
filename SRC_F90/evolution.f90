@@ -47,10 +47,11 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-3
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-10
+    MxDt   = 2d-12
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
+    sys%Emax = 20.d0 * 1d-21 * meta(0)%Ni ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -60,11 +61,13 @@ CONTAINS
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
 
+       IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
+
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+!       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -76,16 +79,16 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz Excimer *** 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-       !**** Dissociative Recombination ***
-       CALL Recomb       (sys, meta, U, F, Diag)
-       !**** 3 Body ionic conversion ***
-       CALL Conv_3Body   (meta, ion)
-       !**** Penning + Associative ioniz ***
-       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-       !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag)
-       !**** Diffusion ***
+!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+!       !**** Dissociative Recombination ***
+!       CALL Recomb       (sys, meta, U, F, Diag)
+!       !**** 3 Body ionic conversion ***
+!       CALL Conv_3Body   (meta, ion)
+!       !**** Penning + Associative ioniz ***
+!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+!       !**** Radiative transfert ***
+!       CALL Radiat       (sys, meta, Fosc, Diag)
+!       !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
@@ -93,10 +96,10 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-       !**** De-excit excimer molecule (He2*) ***
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-       !**** (L&S)-Exchange ***
-       CALL l_change     (meta, K_ij)
+!       !**** De-excit excimer molecule (He2*) ***
+!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+!       !**** (L&S)-Exchange ***
+!       CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)

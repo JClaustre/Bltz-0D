@@ -22,7 +22,7 @@ MODULE MOD_PARAM
      INTEGER :: nx, P0, rf! node number and max-node number
      REAL(DOUBLE) :: Emx, Dx ! grid step
      REAL(DOUBLE) :: Ra, L, volume
-     REAL(DOUBLE) :: E, Emoy, Freq, Powr, IPowr, Pcent, Pwmoy
+     REAL(DOUBLE) :: E, Emoy, Emax, Freq, Powr, IPowr, Pcent, Pwmoy
   END type SysVar
   !-----------------------------------------------------------
   TYPE, PUBLIC::Species
@@ -73,7 +73,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir_2/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
