@@ -301,17 +301,17 @@ CONTAINS
     Sm = Damb * ion(2)%Ni / Coef
     Smeta1 = meta(1)%Damb * meta(1)%Ni / Coef
     Smeta2 = meta(2)%Damb * meta(2)%Ni / Coef
-!    !**** particle balance ***
-!    ion(1)%Updens  = ion(1)%Updens  - Clock%Dt * Sa
-!    ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
-!    meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
-!    meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
-!    SELECT CASE (NumIon) 
-!    CASE (3)   
-!       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
-!       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef
-!       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
-!    END SELECT
+    !**** particle balance ***
+    ion(1)%Updens  = ion(1)%Updens  - Clock%Dt * Sa
+    ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
+    meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
+    meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
+    SELECT CASE (NumIon) 
+    CASE (3)   
+       ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
+       Smeta3 = ion(NumIon)%Damb  * ion(NumIon)%Ni  / Coef
+       ion(NumIon)%Updens  = ion(NumIon)%Updens  - Clock%Dt * Smeta3
+    END SELECT
     !**** Electron diffusion ***
     Se = (Sa + Sm)
     !**** Calcul de la diffusion libre moyenne electronique ***
@@ -347,8 +347,8 @@ CONTAINS
 
     DO i = 1, sys%Nx
        F(i) = F(i) * elec%Ni
-!       IF (i.EQ.iVg) F(i) = F(i) - Clock%Dt * F(i) * De * ((i+1)*sys%Dx-Vg) / sys%Dx / Coef
-!       IF (i.GT.iVg) F(i) = F(i) - Clock%Dt * F(i) * De / Coef
+       IF (i.EQ.iVg) F(i) = F(i) - Clock%Dt * F(i) * De * ((i+1)*sys%Dx-Vg) / sys%Dx / Coef
+       IF (i.GT.iVg) F(i) = F(i) - Clock%Dt * F(i) * De / Coef
        En2 = En2 + F(i)*U(i)**(1.5d0)*sys%Dx
     END DO
     ratx = De/ Coef ! Rate of change of the EEDF (s-1)

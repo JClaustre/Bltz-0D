@@ -60,7 +60,9 @@ CONTAINS
 
     !**** RF - electric field*********************
     IF (sys%rf == 1) THEN
-       sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
+       IF (sys%Freq.NE.0.d0) THEN
+          sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
+       END IF
        frq = 0.d0
     ELSE
        frq = sys%Freq

@@ -73,7 +73,8 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+  !CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/760Torr/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/plz_nacher/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

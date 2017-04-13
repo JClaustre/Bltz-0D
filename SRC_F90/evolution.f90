@@ -45,13 +45,12 @@ CONTAINS
     !**** Time factor for external source ***
     Cgen   = 1.0d-02
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 2.d-3
+    Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-12
+    MxDt   = 4d-09
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = 20.d0 * 1d-21 * meta(0)%Ni ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -61,13 +60,11 @@ CONTAINS
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
 
-       IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
-
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
 
        !**** Increase Power exponantially function of time
-!       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
+       CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
 
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
@@ -79,16 +76,16 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
        !**** Ioniz Excimer *** 
-!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-!       !**** Dissociative Recombination ***
-!       CALL Recomb       (sys, meta, U, F, Diag)
-!       !**** 3 Body ionic conversion ***
-!       CALL Conv_3Body   (meta, ion)
-!       !**** Penning + Associative ioniz ***
-!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-!       !**** Radiative transfert ***
-!       CALL Radiat       (sys, meta, Fosc, Diag)
-!       !**** Diffusion ***
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+       !**** Dissociative Recombination ***
+       CALL Recomb       (sys, meta, U, F, Diag)
+       !**** 3 Body ionic conversion ***
+       CALL Conv_3Body   (meta, ion)
+       !**** Penning + Associative ioniz ***
+       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+       !**** Radiative transfert ***
+       CALL Radiat       (sys, meta, Fosc, Diag)
+       !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
@@ -96,10 +93,10 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-!       !**** De-excit excimer molecule (He2*) ***
-!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-!       !**** (L&S)-Exchange ***
-!       CALL l_change     (meta, K_ij)
+       !**** De-excit excimer molecule (He2*) ***
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+       !**** (L&S)-Exchange ***
+       CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
@@ -107,7 +104,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       !CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+       CALL Sublev_coll(Clock,meta,pop,Tij,lasr,l)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -264,9 +261,9 @@ CONTAINS
     write(99,"(A)") "-----------------"
     write(99,"(A,ES11.2)")  "* Time step (Δt) : ", Clock%Dt
     write(99,"(A,I10)")     "* Number of iterations : ", NumI
-    write(99,"(A,F6.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
-    write(99,"(A,3(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
-         int(Clock%Minutes), " Min ", int(Clock%Seconds), " sec" 
+    write(99,"(A,F7.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
+    write(99,"(A,2(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
+         int(Clock%Minutes), " Min "
     write(99,"(A)") ""
     write(99,"(A)") "NEUTRAL GAS PARAMETERS"
     write(99,"(A)") "--------------------"
@@ -350,7 +347,6 @@ CONTAINS
     write(99,"(A,2ES15.4)")"* Loss elec total (Pwr | Prtcl) : ", (qe/(ne*Dt*NumI) ) * &
          (Diag(11)%EnLoss+Diag(8)%EnLoss+Diag(2)%EnLoss+Diag(1)%EnLoss+Diag(9)%EnLoss), &
          (Diag(8)%SumTx+Diag(9)%SumTx+Diag(15)%SumTx)
-    write(99,"(A)") " "
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A)") "### Laser Parameters "
     IF (lasr%OnOff.EQ.0) THEN
@@ -359,8 +355,9 @@ CONTAINS
        write(99,"(A,2F7.2)") "Laser Intensity (W) and section (cm2) :", lasr%Is, lasr%sec*1d+04
        write(99,"(A,I3)") "Polarization (0=neutral, +1=right, +2=left) : ", lasr%plz
        write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
-       write(99,"(A,I4)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
+       write(99,"(A,9I3)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
     END IF
+    write(99,"(/,A)") "-------------------------------------------------------"
 
     DO i = 1, NumMeta                                                       !
        write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &
@@ -388,7 +385,7 @@ CONTAINS
     INTEGER :: i, nx, Mnul, Switch, mdlus
     REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
     CHARACTER(LEN=250)::fileName
-    nx = sys%nx ; Switch = 0 ; mdlus = 1
+    nx = sys%nx ; Switch = 0 ; mdlus = 100
 
     !**** CHECK PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -461,10 +458,11 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
+            "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
+            "| polariz: ", pop(1)%polarz*100.d0," | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
+            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -489,8 +487,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, elec%Dfree, Twnsd_a, nu_ib
+       write(98,"(11ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
@@ -551,8 +549,6 @@ CONTAINS
     diag(15)%InM1=0.d0 ; diag(15)%OutM1=0.d0 
     diag(15)%InM2=0.d0 ; diag(15)%OutM2=0.d0
     !**************************************************************************!
-
-
 
     IF ( Clock%SumDt.GE.Res ) THEN
 
