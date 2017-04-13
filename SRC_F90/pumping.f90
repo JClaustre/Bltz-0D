@@ -88,13 +88,13 @@ CONTAINS
        !**** calculation of the third term in polarization's equation ***
        pol = pol + lasr%lamb(i) * pop(1)%Ni(i) / (3.d0*meta(1)%Ni)
        !**** Update A_i sublevels due to relaxation from collisions ***
-       Updens(1,i) = Updens(1,i) + Dt * ( meta(1)%Ni/N1 - pop(1)%Ni(i) ) / pop(1)%T_relax
+       !Updens(1,i) = Updens(1,i) + Dt * ( meta(1)%Ni/N1 - pop(1)%Ni(i) ) / pop(1)%T_relax
        !**** Update of the densities and the total densities of 2S3 and 2P3 ***
        pop(1)%Ni(i) = pop(1)%Ni(i) + Updens(1,i)
     END DO
     DO j = 1, Npop2
        !**** Update B_j sublevels due to relaxation from collisions ***
-       Updens(2,j) = Updens(2,j) + Dt * (meta(3)%Ni/N2 - pop(2)%Ni(j) ) / pop(2)%T_relax
+       !Updens(2,j) = Updens(2,j) + Dt * (meta(3)%Ni/N2 - pop(2)%Ni(j) ) / pop(2)%T_relax
        !**** Update of the densities and the total densities of 2S3 and 2P3 ***
        pop(2)%Ni(j) = pop(2)%Ni(j) + Updens(2,j)
     END DO
@@ -112,7 +112,7 @@ CONTAINS
        !E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
        E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
        !IF (E_2P3.LE. errmax) THEN
-       pop(1)%polarz = pop(1)%polarz +  (pop(1)%Te/20.d0) * &
+       pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * &
             ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
        !write(*,*) "polarization updated", pop(1)%polarz
        !END IF
