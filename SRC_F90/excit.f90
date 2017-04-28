@@ -39,7 +39,7 @@ CONTAINS
     Ratx=0.d0 ; Ratd=0.d0
 
     !********************************************************
-    DO i = 0, NumMeta-1
+    DO i = 0, 0!NumMeta-1
        coef1 = meta(i)%Ni * gama
        !********************************************************
        DO j = i+1, NumMeta
@@ -132,7 +132,7 @@ CONTAINS
 
              IF (Sx .GT. MaxR) MaxR = Sx
              IF (Sd .GT. MaxR) MaxR = Sd
-
+             
              !***************** Diagnostic for relative importance of reactions (m-3/s)
              IF ((Sx*meta(i)%Ni).GT.Ratx) THEN ! Excit
                 Ratx = Sx*meta(i)%Ni
@@ -148,6 +148,7 @@ CONTAINS
           END IF
        END DO
     END DO
+
   END SUBROUTINE Exc_Begin
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

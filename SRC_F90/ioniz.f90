@@ -117,14 +117,14 @@ CONTAINS
     cas = 0
     cnst = dsqrt(2.d0/Dx**3.d0)
 
-    DO i = 0, NumMeta
+    DO i = 0, 0!NumMeta
        coef1 = gama * meta(i)%Ni
        !**** SubCycling for the direct ionization ***
        IF (i .NE. 0) THEN
           SubCycl = 1
           SubDt = Clock%Dt
        ELSE
-          SubDt = 1.0d-12
+          SubDt = 1.0d-10
           IF (Clock%Dt .GT. SubDt) SubCycl = ceiling(Clock%Dt / SubDt)
           IF (Clock%Dt .LE. SubDt) SubCycl = 1
           IF (Clock%Dt .LE. SubDt) SubDt = Clock%Dt
@@ -172,6 +172,7 @@ CONTAINS
           ratx = Src * Dx * gama
           IF (ratx .GT. maxR) maxR = ratx
           diag(2)%SumTx = diag(2)%SumTx + SubDt * Src * coef1 * Dx
+          !print*, (ratx), maxR, subDt, SubCycl
 
           !**** Diagnostic for relative importance of reactions (m-3/s)***
           IF ((ratx*meta(i)%Ni).GT.Rate) THEN
@@ -179,7 +180,7 @@ CONTAINS
              diag(2)%Tx(2)= real(i)
           END IF
           diag(2)%Tx(1) = diag(2)%Tx(1) + ratx*meta(i)%Ni
-
+ 
           !**** Diagnostic for metastable and 2^3P rates (s-1) ***
           IF (i==1) THEN ! 2^3S --> He+
              diag(2)%OutM1 = ratx
@@ -190,6 +191,7 @@ CONTAINS
           !***************
        END DO
     END DO
+  
   END SUBROUTINE Ioniz_100
   !***********************************************************************
 

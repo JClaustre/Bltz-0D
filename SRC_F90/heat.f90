@@ -133,7 +133,7 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: Dx, part,alpha0, nucm,nucp
+    REAL(DOUBLE) :: Dx, part,partf, alpha0, nucm,nucp
     REAL(DOUBLE) :: YY,ZZ,XX, En1, En2, frq
     REAL(DOUBLE), DIMENSION(sys%nx) :: f0,AC1,BC1,CC1
     En1 = 0.d0 ; En2 = 0.d0
@@ -142,7 +142,7 @@ CONTAINS
     !****** PARAMETRES COLLISIONS ELASTIQUES*************
     alpha0 = gama*gama
     !***************** CALCUL DES QUANTITES INITIALES**************************
-    part= 0.d0
+    part= 0.d0 ; partf = 0.d0
     do i=1, nx
        part = part + F(i)*dsqrt(U(i))*Dx    ! nombre de particules initiale
        En1  = En1  + F(i)*U(i)**(1.5d0)*Dx    
@@ -186,13 +186,19 @@ CONTAINS
     !*****SOLUTION DU SYSTEME TRIDIAGONALE f1 AU TEMPS k+1-************************
     CALL TRIDAG (AC1,BC1,CC1,f0,F,nx)
     F(nx) = 0.d0
+
     do i=1,nx
        F(i)= F(i) * part
+       partf = partf + F(i)*dsqrt(U(i))*Dx
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
 
     !**** Diagnostic 
     diag(10)%EnProd = diag(10)%EnProd + dabs(En2 - En1)
+    ! *** If Emax is not enough or other... make sure Ne=[Na+Nm] *  
+    ion(1)%Ni = partf * ion(1)%Ni / part
+    ion(2)%Ni = partf - ion(1)%Ni
+
     !***************
   END SUBROUTINE Heating
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

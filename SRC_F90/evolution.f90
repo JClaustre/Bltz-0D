@@ -24,19 +24,20 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=19.99
-  INTEGER, PRIVATE :: start_a=0
+  REAL(DOUBLE), PRIVATE :: ETownsd=134.925
+  INTEGER, PRIVATE :: start_a=1
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
   REAL(DOUBLE), PRIVATE :: Ne_t = 0.d0, Ne_i=0.d0
+
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
     ! LOCAL ******************************************************************!
     INTEGER :: k, l                                                           !
     INTEGER :: t1, t2, clock_rate                                             !
-    REAL(DOUBLE) :: count1, count2, MxDt                                      !
-    REAL(DOUBLE) :: Cgen, Post_D                                              !
+    REAL(DOUBLE) :: count1, count2                                            !
+    REAL(DOUBLE) :: Cgen, Post_D, MxDt                                        !
     count1=0.d0 ; count2=0.d0                                                 !
     Res = Clock%SumDt + Clock%TRstart                                         !
     !*************************************************************************!
@@ -51,7 +52,8 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-12
+    MxDt = 2e-14
+    !***************************************
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
@@ -393,7 +395,7 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:)        , INTENT(INOUT) :: F
     !**** LOCAL
     INTEGER :: i, nx, Mnul, Switch, mdlus
-    REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
+    REAL(DOUBLE) :: RateSum = 0.d0, nu_ib, prog
     CHARACTER(LEN=250)::fileName
     nx = sys%nx ; Switch = 0 ; mdlus = 100
     !**** CHECK PART *********************************
@@ -413,21 +415,25 @@ CONTAINS
     !**** kV/cm *** : !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
 
     !**** Net production frequency (s-1) *** 
-    nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
+    nu_ib = (1.d0 - (elec%NStart/elec%Ni))/Clock%Dt
     !**** Reduced Townsend Coefficient (m2) ***
     a1 = a2
-    Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
+    Twnsd_a = (elec%mobl*sys%E-dsqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
     a2 = Twnsd_a
     err_alpha = abs(1.d0- a1/a2)
-    IF (iter.GT.10000.and.Twnsd_a==0.d0) iter = Clock%MaxIter
-    IF (iter.GT.50000.and.(sys%E/meta(0)%Ni*1d+21).LE.8.d0) iter = Clock%MaxIter
-    IF (iter.GT.1000.and.err_alpha.lE.1d-12)THEN
+    IF (iter.GT.2000.and.Twnsd_a==0.d0) THEN
+       iter = Clock%MaxIter
+    ELSEIF (iter.GT.250000) THEN
+       iter = Clock%MaxIter
+    END IF
+
+    IF (iter.GT.1000.and.err_alpha.lE.1d-11)THEN
        write(*,"(2A,2ES10.2,I7,2F7.2,A)") tabul,"Stop criterion in Townsend coeff reached!: alpha= ",&
             Twnsd_a, err_alpha, iter,(sys%E/meta(0)%Ni)*1d+21, meta(0)%Prs,"\n"
        iter = Clock%MaxIter
     END IF
-    IF (iter.EQ.Clock%MaxIter) THEN
+    IF (iter.EQ.Clock%MaxIter.or.iter.EQ.Clock%NumIter) THEN
        IF (start_a.EQ.0) THEN
           OPEN(UNIT=1002,File=TRIM(ADJUSTL(DirFile))//"alpha_T.dat",ACTION="WRITE",STATUS="UNKNOWN")
        ELSE
@@ -440,11 +446,11 @@ CONTAINS
     END IF
 
     !**** Check EEDF Positivty
-    DO i = 1, nx
-       IF (F(i).LT. 0.d0) THEN
-          F(i) = 0.d0 ; Switch = 10
-       END IF
-    END DO
+!    DO i = 1, nx
+!       IF (F(i).LT. 0.d0) THEN
+!          F(i) = 0.d0 ; Switch = 10
+!       END IF
+!    END DO
 
     IF (iter.EQ.1) THEN
        OPEN(UNIT=992,File=TRIM(ADJUSTL(DirFile))//"Ne_check.dat",ACTION="WRITE",STATUS="UNKNOWN")
@@ -480,18 +486,6 @@ CONTAINS
        END IF
     END do
 
-    !**** Update Time-step
-    IF ( 1.d0/MaxR.GE.1d-14 .and. iter.GT.1 ) THEN
-       Clock%Dt = 1.0d0 / (MaxR*3.d0)
-       IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
-    END IF
-    !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
-    IF (ISnan(MaxR) .or. isNaN(elec%Ni) .or. elec%Ni.LT.0d0) THEN 
-       print*,""; write(*,"(3(A,ES10.2))")" !*Error*! Ne= ",&
-            elec%Ni, "| rates (s-1)= ",1.d0/MaxR, "| Dt= ", Clock%Dt ; Stop 
-    END IF
-    MaxR = 0.d0
-    !*************************************
 
     !**** WRITE PART *********************************
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -501,10 +495,10 @@ CONTAINS
        RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(16)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,I7,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,3ES10.2,A,ES10.2,A,F5.1,I12,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21, iter, " (Td)\r"!
+            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)),err_alpha,&
+            (1.d0/maxR),"(s) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21, iter, " (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -608,6 +602,20 @@ CONTAINS
        Res = Res + Clock%TRstart 
     END IF
 
+
+    !**** Update Time-step
+    IF ( 1.d0/MaxR.GE.1d-14 .and. iter.GT.1 ) THEN
+       Clock%Dt = 1.0d0 / (MaxR*3.d0)
+       IF (Clock%Dt .GT. MxDt) Clock%Dt = MxDt ! Maximum Time-Step allowed
+    END IF
+    !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
+    IF (ISnan(MaxR) .or. isNaN(elec%Ni) .or. elec%Ni.LT.0d0) THEN 
+       print*,""; write(*,"(3(A,ES10.2))")" !*Error*! Ne= ",&
+            elec%Ni, "| rates (s-1)= ",1.d0/MaxR, "| Dt= ", Clock%Dt ; Stop 
+    END IF
+    !*************************************
+
+    MaxR = 0.d0
   END SUBROUTINE CHECK_AND_WRITE
 
 
