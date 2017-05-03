@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=134.925
+  REAL(DOUBLE), PRIVATE :: ETownsd=9.10278
   INTEGER, PRIVATE :: start_a=1
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
@@ -52,7 +52,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt = 2e-14
+    MxDt = 6.64464e-12
     !***************************************
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
@@ -88,12 +88,12 @@ CONTAINS
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
 
-!       !**** Ioniz Excimer *** 
-!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-!       !**** Dissociative Recombination ***
-!       CALL Recomb       (sys, meta, U, F, Diag)
-!       !**** 3 Body ionic conversion ***
-!       CALL Conv_3Body   (meta, ion)
+       !**** Ioniz Excimer *** 
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+       !**** Dissociative Recombination ***
+       CALL Recomb       (sys, meta, U, F, Diag)
+       !**** 3 Body ionic conversion ***
+       CALL Conv_3Body   (meta, ion)
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
 !       !**** Radiative transfert ***
@@ -106,10 +106,10 @@ CONTAINS
        CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
-!       !**** De-excit excimer molecule (He2*) ***
-!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+       !**** De-excit excimer molecule (He2*) ***
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
        !**** (L&S)-Exchange ***
-!       CALL l_change     (meta, K_ij)
+       CALL l_change     (meta, K_ij)
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
 !
