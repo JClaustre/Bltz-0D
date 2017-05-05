@@ -23,7 +23,7 @@ CONTAINS
     TYPE(SysVar) , INTENT(INOUT)  :: sys
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: xs, xmax, SumDt
+    REAL(DOUBLE) :: xs, xmax, tmax, tc, SumDt
     REAL(DOUBLE) :: Dx, lp, vs
     IF (iter == 2) Dti = Clock%Dt
     IF (iter == 1.or.iter==0) Einit = sys%E
@@ -33,12 +33,22 @@ CONTAINS
     !lp = 2.6d-04 ! (m)
     !vs = 8.0d+04 ! (m/s)
     !**** JP Boeuf simu 10 kV/cm
-    lp = 2.3d-04 ! (m)
-    vs = 3.0d+04 ! (m/s)
+    !lp = 2.3d-04 ! (m)
+    !vs = 3.0d+04 ! (m/s)
+    !**** F Vidal  simu 15 kV/cm Sans AI
+    !lp = 6.32d-04 ! (m)
+    !vs = 9.02d+04 ! (m/s)
+    !**** F Vidal  simu 15 kV/cm  AI
+    lp = 3.51d-04 ! (m)
+    vs = 5.11d+04 ! (m/s)
 
-    xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
+    !xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
+    tmax = 0.05d-6 ! (s)
+    tc = vs*Dti
+    xmax = vs * tmax + 2.d-02! (m)
     !print*, sys%E, xmax
     !**** Calcul of E(x,t) ***
+    !xs =  (xmax-(tc/clock%Dt*SumDt)) - 2.d-02
     xs =  (xmax-(vs*SumDt)) - 2.d-02
 
     IF (xs.LE.-lp) THEN !**** Final value of E ***
