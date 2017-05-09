@@ -117,14 +117,14 @@ CONTAINS
     cas = 0
     cnst = dsqrt(2.d0/Dx**3.d0)
 
-    DO i = 0, NumMeta
+    DO i = 0, 0!NumMeta
        coef1 = gama * meta(i)%Ni
        !**** SubCycling for the direct ionization ***
        IF (i .NE. 0) THEN
           SubCycl = 1
           SubDt = Clock%Dt
        ELSE
-          SubDt = 1.0d-12
+          SubDt = 1.0d-11
           IF (Clock%Dt .GT. SubDt) SubCycl = ceiling(Clock%Dt / SubDt)
           IF (Clock%Dt .LE. SubDt) SubCycl = 1
           IF (Clock%Dt .LE. SubDt) SubDt = Clock%Dt

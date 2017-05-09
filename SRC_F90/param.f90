@@ -119,6 +119,7 @@ MODULE MOD_PARAM
   REAL(DOUBLE) :: LnC                       ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
   REAL(DOUBLE) :: Vg                        ! Calculate sheath potential for diffusion routine
   REAL(DOUBLE) :: Twnsd_a                   ! First Townsend coefficient
+  REAL(DOUBLE), DIMENSION(10000)              :: Ehead ! E field at the streamer's head
 CONTAINS
 
   ! **********************************************************

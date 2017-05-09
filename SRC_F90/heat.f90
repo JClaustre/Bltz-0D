@@ -22,13 +22,13 @@ CONTAINS
     TYPE(Time)   , INTENT(IN)     :: Clock
     TYPE(SysVar) , INTENT(INOUT)  :: sys
     !LOCAL
-    INTEGER      :: i, nx
-    REAL(DOUBLE) :: xs, xmax, tmax, tc, SumDt
-    REAL(DOUBLE) :: Dx, lp, vs
+    INTEGER      :: i, j, nx, nh
+    REAL(DOUBLE) :: xs, xmax, tmax, tc, SumDt, SumDtp, Dth
+    REAL(DOUBLE) :: Dx, lp, vs, U0, Du0
     IF (iter == 2) Dti = Clock%Dt
     IF (iter == 1.or.iter==0) Einit = sys%E
-    nx = sys%nx ; Dx = sys%Dx ; SumDt = iter*Dti
-
+    nx = sys%nx ; Dx = sys%Dx ; nh = size(Ehead)
+    Dth = 1d-10
     !**** Naidis simu 27 kV/cm
     !lp = 2.6d-04 ! (m)
     !vs = 8.0d+04 ! (m/s)
@@ -37,28 +37,61 @@ CONTAINS
     !vs = 3.0d+04 ! (m/s)
     !**** F Vidal  simu 15 kV/cm Sans AI
     !lp = 6.32d-04 ! (m)
-    !vs = 9.02d+04 ! (m/s)
+    !vs = 7.12d+04 ! (m/s)
     !**** F Vidal  simu 15 kV/cm  AI
-    lp = 3.51d-04 ! (m)
-    vs = 5.11d+04 ! (m/s)
+    !lp = 3.51d-04 ! (m)
+    !vs = 5.11d+04 ! (m/s)
+   
+    !**** F Vidal  simu 10.2 kV/cm  AI
+    !lp = 8.54d-04 ! (m)
+    !vs = 4.73d+04 ! (m/s)
+    !**** F Vidal  simu 12 kV/cm  Sans AI
+    !lp = 1.20d-03 ! (m)
+    !vs = 6.76d+04 ! (m/s)
+    !**** F Vidal  simu 15.9 kV/cm  Sans AI
+    lp = 5.42d-04 ! (m)
+    vs = 7.21d+04 ! (m/s)
+    !**** F Vidal  simu 7.7 kV/cm  AI
+    !lp = 1.89d-03 ! (m)
+    !vs = 4.43d+04 ! (m/s)
 
-    !xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
-    tmax = 0.05d-6 ! (s)
-    tc = vs*Dti
-    xmax = vs * tmax + 2.d-02! (m)
-    !print*, sys%E, xmax
     !**** Calcul of E(x,t) ***
-    !xs =  (xmax-(tc/clock%Dt*SumDt)) - 2.d-02
-    xs =  (xmax-(vs*SumDt)) - 2.d-02
-
-    IF (xs.LE.-lp) THEN !**** Final value of E ***
-       sys%E = Einit
-    ELSE IF (xs.GT.-lp .and.xs.LE.0.d0 .and. sys%E.GE. Einit) THEN !**** Decrease of E ***
-       sys%E = sys%Emax * (1.d0 + xs/lp) 
-    ELSE IF (xs.GT. 0.d0) THEN !**** increase of E ***
-       sys%E = sys%Emax / (1.d0 + xs/(2.d0*lp))
+    IF (iter == 0) THEN
+       !#########################################################
+       !xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
+       tmax = 0.1d-6 ! (s)
+       xmax = vs * tmax + 2.d-02! (m)
+       
+       OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"Ehead.dat",ACTION="WRITE",STATUS="UNKNOWN")
+       DO i =1, nh
+          SumDt = i*Dth
+          xs =  (xmax-(vs*SumDt)) - 2.d-02
+          IF (xs.LE.-lp) THEN !**** Final value of E ***
+             Ehead(i) = Einit
+          ELSE IF (xs.GT.-lp .and.xs.LE.0.d0) THEN! .and. Ehead(i).GE.Einit) THEN !**** Decrease of E ***
+             Ehead(i) = sys%Emax * (1.d0 + xs/lp) 
+          ELSE IF (xs.GT. 0.d0) THEN !**** increase of E ***
+             Ehead(i) = sys%Emax / (1.d0 + xs/(2.d0*lp))
+          END IF
+          write(99,"(ES15.6,F15.3)") SumDt, Ehead(i)*1d-5
+       END DO
+       CLOSE(99)
+       !#########################################################
+    ELSE
+       !**** interpolation dans le temps
+       Du0=0.d0
+       U0 = Clock%SumDt
+       DO j = 1, nh-1
+          SumDt = j*Dth ; SumDtp = (j+1)*Dth
+          IF ( U0 == SumDt ) sys%E = Ehead(j)
+          IF ( U0 .gt. SumDt .and. U0 .lt. SumDtp) Then
+             Du0 = SumDtp - SumDt
+             sys%E = ((SumDtp - U0)*Ehead(j) )/Du0 &
+                  + ((U0 - SumDt)*Ehead(j+1) )/Du0
+          END IF
+       END DO
     END IF
-
+        
     sys%Pcent = sys%E
     sys%IPowr = sys%Emax
 
