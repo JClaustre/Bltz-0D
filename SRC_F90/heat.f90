@@ -43,14 +43,15 @@ CONTAINS
     !vs = 5.11d+04 ! (m/s)
    
     !**** F Vidal  simu 10.2 kV/cm  AI
-    !lp = 8.54d-04 ! (m)
-    !vs = 4.73d+04 ! (m/s)
+    lp = 8.54d-04 ! (m)
+    vs = 4.74d+04 ! (m/s)
+    !**** F Vidal  simu 15.9 kV/cm  Sans AI
+    !lp = 5.42d-04 ! (m)
+    !vs = 7.21d+04 ! (m/s)
+
     !**** F Vidal  simu 12 kV/cm  Sans AI
     !lp = 1.20d-03 ! (m)
     !vs = 6.76d+04 ! (m/s)
-    !**** F Vidal  simu 15.9 kV/cm  Sans AI
-    lp = 5.42d-04 ! (m)
-    vs = 7.21d+04 ! (m/s)
     !**** F Vidal  simu 7.7 kV/cm  AI
     !lp = 1.89d-03 ! (m)
     !vs = 4.43d+04 ! (m/s)
