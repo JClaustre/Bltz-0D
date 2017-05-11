@@ -16,7 +16,7 @@ make clean ; make
 # **** I use "awk" to compute float values
 initP=`awk "BEGIN{ print 3 }" `; maxP=`awk "BEGIN{ print 7500 }" ` ; NsimuP=`awk "BEGIN{ print 11 }" `
 initE=`awk "BEGIN{ print 5 }" `; maxE=`awk "BEGIN{ print 100 }" `  ; NsimuE=`awk "BEGIN{ print 11 }" `
-initT=`awk "BEGIN{ print 8e-11 }" `; maxT=`awk "BEGIN{ print 2e-14 }" `
+initT=`awk "BEGIN{ print 2e-10 }" `; maxT=`awk "BEGIN{ print 5e-15 }" `
 # **** r is the geometric ratio (raison geometrique in Fr)
 rE=`awk "BEGIN{ print ($maxE/$initE)^(1/($NsimuE-1)) }" `
 rP=`awk "BEGIN{ print ($maxP/$initP)^(1/($NsimuP-1)) }" `
