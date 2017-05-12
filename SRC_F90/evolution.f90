@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=134.925
+  REAL(DOUBLE), PRIVATE :: ETownsd=12.2822
   INTEGER, PRIVATE :: start_a=1
   REAL(DOUBLE), PRIVATE :: SumNe
   REAL(DOUBLE), PRIVATE :: a1, a2, err_alpha = 0.d0
@@ -52,7 +52,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt = 4.00002e-14
+    MxDt = 8.32549e-12
     !***************************************
     IF (Clock%Rstart.EQ.1) THEN
        if (Clock%Dt.GT.MxDt) Clock%Dt = MxDt

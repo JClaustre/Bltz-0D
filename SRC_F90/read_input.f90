@@ -422,7 +422,7 @@ CONTAINS
     !**************************************
     !**** Associative process
     !**** He(n,l,s)+He --> He2+ + e
-    CALL Init_Asso(Sn, 1)
+    CALL Init_Asso(Sn, 0)
     !**************************************
     !**** l-change atomic process
     !**** He(n,l,s)+He <--> He(n,l',s)+He
