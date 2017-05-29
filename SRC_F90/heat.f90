@@ -42,12 +42,14 @@ CONTAINS
     !lp = 3.51d-04 ! (m)
     !vs = 5.11d+04 ! (m/s)
    
-    !**** F Vidal  simu 10.2 kV/cm  AI
-    lp = 8.54d-04 ! (m)
-    vs = 4.74d+04 ! (m/s)
-    !**** F Vidal  simu 15.9 kV/cm  Sans AI
-    !lp = 5.42d-04 ! (m)
-    !vs = 7.21d+04 ! (m/s)
+    !**** F Vidal  simu 10.5 kV/cm  AI
+    lp = 8.36d-04 ! (m)
+    vs = 4.88d+04 ! (m/s)
+    !lp = 4.69d-04 ! (m)
+    !vs = 6.48d+04 ! (m/s)
+    !**** F Vidal  simu 14.2 kV/cm  Sans AI
+    !lp = 6.93d-04 ! (m)
+    !vs = 6.57d+04 ! (m/s)
 
     !**** F Vidal  simu 12 kV/cm  Sans AI
     !lp = 1.20d-03 ! (m)
@@ -60,7 +62,7 @@ CONTAINS
     IF (iter == 0) THEN
        !#########################################################
        !xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
-       tmax = 0.1d-6 ! (s)
+       tmax = 0.9d-6 ! (s)
        xmax = vs * tmax + 2.d-02! (m)
        
        OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"Ehead.dat",ACTION="WRITE",STATUS="UNKNOWN")
@@ -79,25 +81,29 @@ CONTAINS
        CLOSE(99)
        !#########################################################
     ELSE
-       !**** interpolation dans le temps
-       Du0=0.d0
-       U0 = Clock%SumDt
-       DO j = 1, nh-1
-          SumDt = j*Dth ; SumDtp = (j+1)*Dth
-          IF ( U0 == SumDt ) sys%E = Ehead(j)
-          IF ( U0 .gt. SumDt .and. U0 .lt. SumDtp) Then
-             Du0 = SumDtp - SumDt
-             sys%E = ((SumDtp - U0)*Ehead(j) )/Du0 &
-                  + ((U0 - SumDt)*Ehead(j+1) )/Du0
-          END IF
-       END DO
+       IF (Clock%SumDt.GE.nh*Dth) THEN
+          sys%E = Einit
+       ELSE
+          !**** interpolation dans le temps
+          Du0=0.d0
+          U0 = Clock%SumDt
+          DO j = 1, nh-1
+             SumDt = j*Dth ; SumDtp = (j+1)*Dth
+             IF ( U0 == SumDt ) sys%E = Ehead(j)
+             IF ( U0 .gt. SumDt .and. U0 .lt. SumDtp) Then
+                Du0 = SumDtp - SumDt
+                sys%E = ((SumDtp - U0)*Ehead(j) )/Du0 &
+                     + ((U0 - SumDt)*Ehead(j+1) )/Du0
+             END IF
+          END DO
+       END IF
     END IF
         
     sys%Pcent = sys%E
     sys%IPowr = sys%Emax
-
+    
   END SUBROUTINE E_PROFIL
-
+  
   SUBROUTINE POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
     !INTENT
     TYPE(Time)   , INTENT(IN)     :: Clock
@@ -181,7 +187,7 @@ CONTAINS
     TYPE(Species), DIMENSION(0:), INTENT(IN)  :: meta
     !LOCAL
     INTEGER      :: i, nx
-    REAL(DOUBLE) :: Dx, part,alpha0, nucm,nucp
+    REAL(DOUBLE) :: Dx, part,partf,alpha0, nucm,nucp
     REAL(DOUBLE) :: YY,ZZ,XX, En1, En2, frq
     REAL(DOUBLE), DIMENSION(sys%nx) :: f0,AC1,BC1,CC1
     En1 = 0.d0 ; En2 = 0.d0
@@ -190,7 +196,7 @@ CONTAINS
     !****** PARAMETRES COLLISIONS ELASTIQUES*************
     alpha0 = gama*gama
     !***************** CALCUL DES QUANTITES INITIALES**************************
-    part= 0.d0
+    part= 0.d0 ; partf = 0.d0
     do i=1, nx
        part = part + F(i)*dsqrt(U(i))*Dx    ! nombre de particules initiale
        En1  = En1  + F(i)*U(i)**(1.5d0)*Dx    
@@ -236,11 +242,15 @@ CONTAINS
     F(nx) = 0.d0
     do i=1,nx
        F(i)= F(i) * part
+       partf = partf + F(i)*dsqrt(U(i))*Dx
        En2 = En2  + F(i)*U(i)**(1.5d0)*Dx
     end do
 
     !**** Diagnostic 
     diag(10)%EnProd = diag(10)%EnProd + dabs(En2 - En1)
+    ! *** If Emax is not enough or other... make sure Ne=[Na+Nm] *  
+    ion(1)%Ni = partf * ion(1)%Ni / part
+    ion(2)%Ni = partf - ion(1)%Ni
     !***************
   END SUBROUTINE Heating
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
