@@ -422,7 +422,7 @@ CONTAINS
     !**************************************
     !**** Associative process
     !**** He(n,l,s)+He --> He2+ + e
-    CALL Init_Asso(Sn, 1)
+    CALL Init_Asso(Sn, 0)
     !**************************************
     !**** l-change atomic process
     !**** He(n,l,s)+He <--> He(n,l',s)+He
@@ -612,15 +612,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.90d0                                         !
-       ion(1)%Ni = elec%Ni * 0.10d0                                         !
+       ion(2)%Ni = elec%Ni * 0.60d0                                         !
+       ion(1)%Ni = elec%Ni * 0.40d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 5.0d+17     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 5.0d+15     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta 
-          IF (i.EQ.1) meta(i)%Ni = 1.5d+18     ! Metastable 2S3             !
-          IF (i.EQ.2) meta(i)%Ni = 2.0d+14     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 2.5d+16     ! Radiative state 2P3        !
+          IF (i.EQ.1) meta(i)%Ni = 1.5d+15     ! Metastable 2S3             !
+          IF (i.EQ.2) meta(i)%Ni = 2.0d+15     ! Metastable 2S1             !
+          IF (i.EQ.3) meta(i)%Ni = 2.5d+15     ! Radiative state 2P3        !
           IF (i.GE.4) meta(i)%Ni = 1.05+08       
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
