@@ -1,6 +1,6 @@
 5000		  Number of grid points 
 0          	  Restart simulation ( 0  - no restart | 1 - restart )
-0.0000000	  E (V/cm)	Electric field
+1.000E+01	  E (V/cm)	Electric field
 4.000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 0.000E+00   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
 760.00000 	  prs (Torr)	Pressure
@@ -10,10 +10,10 @@
 4.000E+01	  L  (cm)       Tube Length
 1.000E+00	  ne (cm-3)	Initial electron density
 1.055E-02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-1.100E+00  	  Simulation Time (mic-sec)  
+1.000E+00  	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
 8.000E+02	  Emax (Energy grid max (eV) ) 
-0.010E+00	  save data's every XXX micro-sec (Restart files + EEDF)
+0.100E+00	  save data's every XXX micro-sec (Restart files + EEDF)
 *************************************************************************
 0		  Activate the laser (1) or don't use laser pumping (0)
 1083		  lenght wave of the laser (nm)

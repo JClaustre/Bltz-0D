@@ -43,13 +43,13 @@ CONTAINS
     !vs = 5.11d+04 ! (m/s)
    
     !**** F Vidal  simu 10.5 kV/cm  AI
-    lp = 8.36d-04 ! (m)
-    vs = 4.88d+04 ! (m/s)
+    !lp = 8.36d-04 ! (m)
+    !vs = 4.88d+04 ! (m/s)
     !lp = 4.69d-04 ! (m)
     !vs = 6.48d+04 ! (m/s)
     !**** F Vidal  simu 14.2 kV/cm  Sans AI
-    !lp = 6.93d-04 ! (m)
-    !vs = 6.57d+04 ! (m/s)
+    lp = 6.93d-04 ! (m)
+    vs = 6.57d+04 ! (m/s)
 
     !**** F Vidal  simu 12 kV/cm  Sans AI
     !lp = 1.20d-03 ! (m)
@@ -62,7 +62,7 @@ CONTAINS
     IF (iter == 0) THEN
        !#########################################################
        !xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
-       tmax = 0.9d-6 ! (s)
+       tmax = 0.1d-6 ! (s)
        xmax = vs * tmax + 2.d-02! (m)
        
        OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"Ehead.dat",ACTION="WRITE",STATUS="UNKNOWN")

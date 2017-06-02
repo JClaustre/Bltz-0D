@@ -31,12 +31,17 @@ CONTAINS
     REAL(DOUBLE) :: Dx, coef, coef1, coef2
     REAL(DOUBLE) :: C_Exc, C_Dxc, prod, loss
     REAL(DOUBLE) :: chi, rchi, E_ij
-    REAL(DOUBLE) :: Sx, Sd, Ratx, Ratd
+    REAL(DOUBLE) :: Sx, Sd, Ratx, Ratd, EnI, EnF
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
     Dx = sys%Dx ; nx = sys%nx
     !********************
     Ratx=0.d0 ; Ratd=0.d0
+
+    EnI = 0.d0 ; EnF = 0.d0
+    do i=1, nx
+       EnI  = EnI  + Fi(i)*U(i)**(1.5d0)*Dx    
+    end do
 
     !********************************************************
     DO i = 0, NumMeta-1
@@ -148,6 +153,12 @@ CONTAINS
           END IF
        END DO
     END DO
+
+    do i=1, nx
+       EnF  = EnF  + Fi(i)*U(i)**(1.5d0)*Dx    
+    end do
+
+    diag(1)%EnProd = 1.0d0 - abs(EnF/EnI)
   END SUBROUTINE Exc_Begin
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -331,7 +342,7 @@ CONTAINS
     !SubCYCLING VARIABLES
     REAL(DOUBLE) :: Dt
     !Implicit Density VARIABLES
-    REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd
+    REAL(DOUBLE) :: Ni, Nj, Nexpl, Rmx, Rmd, EnI, EnF
     !********************
     nx = sys%nx ; Dx = sys%Dx ; Dt = Clock%Dt
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
@@ -341,6 +352,10 @@ CONTAINS
     diag(1)%InM1=0.d0 ; diag(1)%OutM1=0.d0
     diag(1)%InM2=0.d0 ; diag(1)%OutM2=0.d0
     !********************************************************
+    EnI = 0.d0 ; EnF = 0.d0
+    do i=1, nx
+       EnI  = EnI  + Fi(i)*U(i)**(1.5d0)*Dx    
+    end do
 
     DO i = 0, NumMeta-1
        coef1 = Ndens(i) * gama
@@ -485,6 +500,12 @@ CONTAINS
        END DO
     END DO
     !********************
+    do i=1, nx
+       EnF  = EnF  + Fi(i)*U(i)**(1.5d0)*Dx    
+    end do
+
+    diag(1)%EnProd = 1.0d0 - abs(EnF/EnI)
+
   END SUBROUTINE Exc_Impli
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

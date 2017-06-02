@@ -20,7 +20,7 @@ MODULE MOD_EVOL
   IMPLICIT NONE
 
   !**** Switch for excitation and ionization process ***
-  INTEGER :: XcDx = 2 ! 1 == equil | 0 == implic
+  INTEGER :: XcDx = 0 ! 1 == equil | 0 == implic
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
@@ -49,14 +49,14 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 5d-12
+    MxDt   = 1d-12
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !**** Maximum electric field allowed ***
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-!    sys%Emax = 1.59d6 ! (V/m)
-    sys%Emax = 1.05d6 ! (V/m)
+    sys%Emax = 1.42d6 ! (V/m)
+!    sys%Emax = 0.75d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
     CALL E_PROFIL (Clock, sys, l)
@@ -119,7 +119,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-!       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -489,9 +489,9 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,2ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,2(A,ES10.2),ES10.2,A,ES10.2,A,F5.1,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
+            "% [Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni))," Ei/Ef", diag(1)%EnProd, &
             sys%E*1d-5,"(kV/cm) | alpha: ", Twnsd_a, " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"!
 
        !**** WRITE IN EVOL.DAT *************************!
