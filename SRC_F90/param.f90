@@ -68,11 +68,11 @@ MODULE MOD_PARAM
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
-  INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
+  INTEGER, PARAMETER :: NumMeta = 25 ! 1S1 --> 7P1
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir_2/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/15kV_Vidal_SansIA/"
 
   TYPE(Time)    :: Clock
