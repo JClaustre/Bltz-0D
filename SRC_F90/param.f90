@@ -74,7 +74,7 @@ MODULE MOD_PARAM
 
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir_2/"
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/500Torr/HF_mode/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/20Torr/HF_mode/"
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/plz_760/"
 
   TYPE(Time)    :: Clock

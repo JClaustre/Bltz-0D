@@ -63,9 +63,11 @@ CONTAINS
     !**********************************************************************
     Write(*,"(2A)") tabul, "Starting Initialization "
     IF (Clock%Rstart == 0) THEN
+       WRITE(*,"(3A)") tabul, 'Directory used : ', DirFile
        WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [input_he]'
        OPEN (UNIT=90,FILE='./datFile/input_he',STATUS='OLD')
     ELSE IF (Clock%Rstart == 1) THEN
+       WRITE(*,"(3A)") tabul, 'Directory used : ', DirFile
        WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [Rs_input_he]'
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Rs_input_he',STATUS='OLD')
     END IF
