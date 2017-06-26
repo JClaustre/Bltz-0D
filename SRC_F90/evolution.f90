@@ -49,13 +49,13 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 1.3d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-12
+    MxDt   = 1d-12
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !**** Maximum electric field allowed ***
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    sys%Emax = 1.42d6 ! (V/m)
+    sys%Emax = 1.12d6 ! (V/m)
 !    sys%Emax = 0.75d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
@@ -81,25 +81,25 @@ CONTAINS
        !**** Heat + Elas + Fk-Planck ***
        CALL Heating (sys,meta, U, F)
        CALL Elastic (sys,meta, U, F)
-       CALL FP      (sys, elec, F, U)
+!       CALL FP      (sys, elec, F, U)
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
        CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
        END SELECT
 
-       !**** Ioniz Excimer *** 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
-       !**** Dissociative Recombination ***
-       CALL Recomb       (sys, meta, U, F, Diag)
-       !**** 3 Body ionic conversion ***
-       CALL Conv_3Body   (meta, ion)
-       !**** Penning + Associative ioniz ***
-       CALL Penn_Assoc   (sys, meta, U, F, Diag)
-       !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag)
-       !**** Diffusion ***
-       CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
+!       !**** Ioniz Excimer *** 
+!       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+!       !**** Dissociative Recombination ***
+!       CALL Recomb       (sys, meta, U, F, Diag)
+!       !**** 3 Body ionic conversion ***
+!       CALL Conv_3Body   (meta, ion)
+!       !**** Penning + Associative ioniz ***
+!       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+!       !**** Radiative transfert ***
+!       CALL Radiat       (sys, meta, Fosc, Diag)
+!       !**** Diffusion ***
+!       CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
@@ -108,10 +108,10 @@ CONTAINS
        END SELECT
        !write(*,"(3ES10.2)") 1/maxR, elec%Ni, Clock%Dt
 
-       !**** De-excit excimer molecule (He2*) ***
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
-       !**** (L&S)-Exchange ***
-       CALL l_change     (meta, K_ij)
+!       !**** De-excit excimer molecule (He2*) ***
+!       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+!       !**** (L&S)-Exchange ***
+!       CALL l_change     (meta, K_ij)
 
        !**** UpDate and write routine ***
        CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
@@ -119,7 +119,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+!       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
