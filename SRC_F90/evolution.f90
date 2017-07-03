@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-
+  REAL(DOUBLE), PRIVATE :: ETownsd=67.4
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -47,10 +47,11 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 5d-10
+    MxDt   = 1d-10
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
+    sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -62,6 +63,8 @@ CONTAINS
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
+       
+       !IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
 
        !**** Increase Power exponantially function of time
        CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
@@ -87,6 +90,8 @@ CONTAINS
        CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz_Norm (sys,meta,ion,elec,F,U,diag)
+       !CALL Diffuz(sys,meta,ion,elec,F,U,diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
@@ -488,7 +493,7 @@ CONTAINS
        END SELECT
        CLOSE(99)
        write(98,"(11ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz, Vg
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)

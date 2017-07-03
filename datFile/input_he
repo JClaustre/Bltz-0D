@@ -2,14 +2,14 @@
 0         	  Restart simulation ( 0  - no restart | 1 - restart )
 1.505E+01	  E (V/cm)	Electric field
 4.000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
-1.360E+07   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
+1.360E+07   1	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
 2.000E+01	  prs (Torr)	Pressure
 3.000E+02  600	  Tp (K)	Temperature + Tp at tube boundary
 1.200E+00	  Tpe (eV)	Electronic Temperature
 0.100E+00	  Ra (cm)	Cylinder Radius
 2.200E+01	  L  (cm)       Tube Length
-4.800E+09	  ne (cm-3)	Initial electron density
-3.027E+00   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
+7.400E+09	  ne (cm-3)	Initial electron density
+5.370E+00   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
 1.010E+02   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
 2.000E+02	  Emax (Energy grid max (eV) ) 
