@@ -678,6 +678,8 @@ CONTAINS
                            + ((U - EnRead(j))*SecRead(j+1) )/Du )
                    END IF
                 END DO
+                ! (cf Santos et al p5. Adjustment of cross sections)
+                IF (l.NE.0) meta(l)%SecExc(i,k) = meta(l)%SecExc(i,k) * 0.31d0 
              END DO
              meta(l)%SecExc(i,sys%nx) = 0.d0
           END IF
