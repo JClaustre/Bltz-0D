@@ -55,7 +55,7 @@ CONTAINS
     END IF
     !**** Maximum electric field allowed ***
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    sys%Emax = 1.05d6 ! (V/m)
+    sys%Emax = 1.42d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
     CALL E_PROFIL (Clock, sys, l)
@@ -116,7 +116,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-!       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+       !       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -129,13 +129,13 @@ CONTAINS
     END DO                                                                        !
     !****End of MAIN LOOP ********************************************************!
     Clock%NumIter = l
-    
+
     !**** Conservation test routine ***
     CALL Consv_Test(sys, U, F, Diag, consv)
     !**** Write final EEDF ***
     CALL Write_Out1D( F, "F_final.dat")
     write(*,"(2A,F6.2,A)") tabul,"--> Simulation Time : ", real(Clock%SumDt/1.0d-6), " μs"
-    
+
   END SUBROUTINE EVOLUTION
   
   SUBROUTINE Consv_Test(sys, U, Fi, Diag, consv)
