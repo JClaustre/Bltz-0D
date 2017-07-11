@@ -96,9 +96,9 @@ CONTAINS
        CALL Conv_3Body   (meta, ion)
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
-!       !**** Radiative transfert ***
-!       CALL Radiat       (sys, meta, Fosc, Diag)
-!       !**** Diffusion ***
+       !**** Radiative transfert ***
+       CALL Radiat       (sys, meta, Fosc, Diag)
+       !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)

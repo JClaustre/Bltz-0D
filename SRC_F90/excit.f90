@@ -650,6 +650,9 @@ CONTAINS
        END DO
     END DO
 
+    !CALL Write_Out1D( meta(1)%SecExc(3,:), "G-Meta_alves.dat" )
+
+
     !**** Read and Interpolate cross-Section from tables for 1S-2S3-2S1 
     !**** (ref: Santos J.Phys.D:Appl.Phys 47 2014)
     OPEN(UNIT=51,FILE='./datFile/excit_he.cs',ACTION="READ",STATUS="OLD")
@@ -679,18 +682,19 @@ CONTAINS
                    END IF
                 END DO
                 ! (cf Santos et al p5. Adjustment of cross sections)
-                IF (l.NE.0) meta(l)%SecExc(i,k) = meta(l)%SecExc(i,k) * 0.31d0 
+                !IF (l.NE.0) meta(l)%SecExc(i,k) = meta(l)%SecExc(i,k) * 0.31d0 
              END DO
              meta(l)%SecExc(i,sys%nx) = 0.d0
           END IF
           !**************************************
           READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
+          !IF (l==1 .and. i==3) CALL Write_Out1D( meta(l)%SecExc(i,:), "G-Meta_santos.dat")
        END Do
     END DO
 
     CLOSE(51)
     !**************************************
-
+    
     !**********************************************
     !**** De-excitation cross-Section using *******
     !**** Klein-Rosseland Relation ****************
