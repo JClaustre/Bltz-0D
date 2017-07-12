@@ -107,7 +107,7 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
-    GenPwr = 1.d-12 ! Time constant to start/end the generator.
+    GenPwr = 1.d-6 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power
@@ -141,7 +141,9 @@ CONTAINS
 
     !**** RF - electric field*********************
     IF (sys%rf == 1) THEN
-       sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
+       IF (sys%Freq.NE.0.d0) THEN
+          sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
+       END IF
        frq = 0.d0
     ELSE
        frq = sys%Freq
@@ -166,7 +168,6 @@ CONTAINS
     power = power * qe                                                      !
     sys%Pwmoy = power
     !***********************************************************************!
-
   END SUBROUTINE POWER_CONTROL
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

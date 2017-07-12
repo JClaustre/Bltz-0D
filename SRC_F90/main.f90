@@ -23,7 +23,6 @@ PROGRAM MAIN
   CALL SYSTEM_CLOCK (t2, clock_rate)
   CALL PrinTime (t1,t2,clock_rate)
   CALL OutPutMD (sys, meta, ion, elec, diag, consv)
-
   CALL DelocArray()
   write(*,"(2A)") tabul, "***** Goodbye ! *****"
 

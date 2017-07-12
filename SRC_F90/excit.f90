@@ -35,6 +35,7 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
     Dx = sys%Dx ; nx = sys%nx
+    Ratx=0.d0 ; Ratd=0.d0
     !********************
     Ratx=0.d0 ; Ratd=0.d0
 
@@ -150,6 +151,18 @@ CONTAINS
              END IF
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
 
+             !***************** Diagnostic for relative importance of reactions (m-3/s)
+             IF ((Sx*meta(i)%Ni).GT.Ratx) THEN ! Excit
+                Ratx = Sx*meta(i)%Ni
+                diag(1)%Tx(2) = real(i) ; diag(1)%Tx(3) = real(j)
+             END IF
+             diag(1)%Tx(1) = diag(1)%Tx(1) + Sx*meta(i)%Ni ! Sum over all contrib
+             IF ((Sd*meta(j)%Ni).GT.Ratd) THEN ! De-Excit
+                Ratd = Sd*meta(j)%Ni
+                diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
+             END IF
+             diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
+
           END IF
        END DO
     END DO
@@ -186,14 +199,14 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(0:NumMeta) :: Ndens
     !********************
     SubDt = Clock%Dt
-    SubRt = 2.d-10 ! give a maximum value of collision rate
+    SubRt = 6.d-10 ! give a maximum value of collision rate
     nx = sys%nx ; Dx = sys%Dx
     !********************
     Rate=0.d0; Rate2=0.d0
     diag(1)%Tx(:)=0.d0 ; diag(10)%Tx(:)=0.d0 
     !********************
     Ndens(0:NumMeta) = meta(0:NumMeta)%Ni
-
+    
     !********************************************************
     DO i = 0, NumMeta-1
        coef1 = Ndens(i) * gama
@@ -300,9 +313,6 @@ CONTAINS
              END DO
              diag(1)%EnProd = diag(1)%EnProd + SubDt * Sd*Ndens(j)* E_ij * Rmd
              diag(1)%EnLoss = diag(1)%EnLoss + SubDt * Sx*Ndens(i)* E_ij * Rmx
-
-             if (Sd .GT. MaxR) MaxR = Sd
-             IF (Sx .GT. MaxR) MaxR = Sx
 
              IF ((Sx*Ndens(i)).GT.Rate) THEN
                 Rate = Sx*Ndens(i)
@@ -580,6 +590,10 @@ CONTAINS
     REAL(DOUBLE) :: rchi, Eij, Dx, Du, coef, U
     REAL(DOUBLE) :: Rp, G, alpha, pi_alpha2
     REAL(DOUBLE), DIMENSION(200) :: SecRead, EnRead
+    CHARACTER(*), parameter :: excit1 = "EXCITATION"
+    CHARACTER(*), parameter :: excit2 = "-----------------------------"
+    CHARACTER(len=40) :: Readexc
+    INTEGER      :: io, ioio, numl
 
     Dx = sys%Dx ; pi_alpha2 = 0.879735d0 * 1d-20
     !**********************************************
@@ -670,44 +684,96 @@ CONTAINS
        END DO
     END DO
 
-    !**** Read and Interpolate cross-Section from tables for 1S-2S3-2S1 
-    !**** (ref: Santos J.Phys.D:Appl.Phys 47 2014)
-    OPEN(UNIT=51,FILE='./datFile/excit_he.cs',ACTION="READ",STATUS="OLD")
+    !**** Read and Interpolate cross-Section from LXCat for 1S->excited states (x42) 
+    !**** (ref: IST-Lisbon database, www.lxcat.net, retrieved on July 11, 2017)
+    numl = 0 ; k = 0
+    OPEN(UNIT=15,FILE='./datFile/lxcat_excit_2017.cs',ACTION="READ",STATUS="OLD")
     !**** To skip comments
-    do i = 1, 8
-       READ(51,*)
-    END do
-
-    DO l = 0, 2
-       Do i = l+1, 18
-          SecRead = 0.d0 ; EnRead = 0.d0
-          READ(51,*) Npts
-          READ(51,*)(EnRead(k), k=1,Npts)
-          READ(51,*) ; READ(51,*)
-          READ(51,*)(SecRead(k), k=1,Npts)
-          !**** Interpolat Cross-Sect Excit from excited state (He(l) --> He(i))
-          IF (i.LE.NumMeta) THEN
+    do 
+       READ(15,*,IOSTAT=io) readexc
+       IF (readexc == excit1) Then
+          numl = numl+1
+          ! Skip comments after EXCITATION
+          do
+             read(15,*) readexc
+             IF (readexc == excit2) exit 
+          end do
+          !--------------------------------
+          ! Read Cross-Section and corresponding energy
+          l = 0
+          do 
+             l = l+1
+             read(15,*,IOSTAT=ioio) EnRead(l), SecRead(l)
+             ! If end of c-section ("------") (io>0 --> something wrong!)
+             IF (ioio>0) EXIT
+          end do
+          !--------------------------------
+          ! Interpolation Of Cross-Section
+          IF (numl.LE.NumMeta) THEN
              DO k=1, sys%nx
                 Du=0.d0
                 U = IdU(k,Dx)
-                DO j = 1, Npts-1
-                   IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
+                DO j = 1, l-2
+                   IF ( U == EnRead(j) ) meta(0)%SecExc(numl,k) = SecRead(j)
                    IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
                       Du = EnRead(j+1) - EnRead(j)
-                      meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
-                           + ((U - EnRead(j))*SecRead(j+1) )/Du )
+                      meta(0)%SecExc(numl,k) =  ((EnRead(j+1) - U)*SecRead(j) )/Du &
+                           + ((U - EnRead(j))*SecRead(j+1) )/Du
                    END IF
                 END DO
              END DO
-             meta(l)%SecExc(i,sys%nx) = 0.d0
           END IF
-          !**************************************
-          READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
-       END Do
-    END DO
+          ! Modification factor Santos - Original
+          IF (numl==1.or.numl==2) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 0.31d0
+          IF (numl==3.or.numl==7.or.numl==13) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 0.6d0
+          IF (numl==4.or.numl==10.or.numl==18) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 1.66d0
+          !--------------------------------
+       END IF
+       ! End of File (io = -1)
+       IF (io < 0) EXIT
+       !--------------------------------
+      
+    END do
+    CLOSE(15)
 
-    CLOSE(51)
-    !**************************************
+!    !**** Read and Interpolate cross-Section from tables for 1S-2S3-2S1 
+!    !**** (ref: Santos J.Phys.D:Appl.Phys 47 2014)
+!    OPEN(UNIT=51,FILE='./datFile/excit_he.cs',ACTION="READ",STATUS="OLD")
+!    !**** To skip comments
+!    do i = 1, 8
+!       READ(51,*)
+!    END do
+!
+!    DO l = 0, 2
+!       Do i = l+1, 18
+!          SecRead = 0.d0 ; EnRead = 0.d0
+!          READ(51,*) Npts
+!          READ(51,*)(EnRead(k), k=1,Npts)
+!          READ(51,*) ; READ(51,*)
+!          READ(51,*)(SecRead(k), k=1,Npts)
+!          !**** Interpolat Cross-Sect Excit from excited state (He(l) --> He(i))
+!          IF (i.LE.NumMeta) THEN
+!             DO k=1, sys%nx
+!                Du=0.d0
+!                U = IdU(k,Dx)
+!                DO j = 1, Npts-1
+!                   IF ( U == EnRead(j) ) meta(l)%SecExc(i,k) = 1d-20 * SecRead(j)
+!                   IF ( U .gt. EnRead(j) .and. U .lt. EnRead(j+1)) Then
+!                      Du = EnRead(j+1) - EnRead(j)
+!                      meta(l)%SecExc(i,k) =  1d-20 * ( ((EnRead(j+1) - U)*SecRead(j) )/Du &
+!                           + ((U - EnRead(j))*SecRead(j+1) )/Du )
+!                   END IF
+!                END DO
+!             END DO
+!             meta(l)%SecExc(i,sys%nx) = 0.d0
+!          END IF
+!          !**************************************
+!          READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
+!       END Do
+!    END DO
+!
+!    CLOSE(51)
+!    !**************************************
 
     !**********************************************
     !**** De-excitation cross-Section using *******

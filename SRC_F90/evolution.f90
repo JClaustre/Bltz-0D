@@ -45,9 +45,9 @@ CONTAINS
     !**** Keep Power-init in memory ***
     sys%IPowr = sys%Powr 
     !**** Time factor for external source ***
-    Cgen   = 1d-02 
+    Cgen   = 1.0d-02
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
-    Post_D = 1.3d-1
+    Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
     MxDt   = 1d-12
     IF (Clock%Rstart.EQ.1)THEN
@@ -70,6 +70,8 @@ CONTAINS
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
+       
+       !IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
 
        !**** Evolution of Electric field as in Sretenovic et al *** 
        CALL E_PROFIL (Clock, sys, l)
@@ -97,6 +99,8 @@ CONTAINS
        CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
+       !CALL Diffuz_Norm (sys,meta,ion,elec,F,U,diag)
+       !CALL Diffuz(sys,meta,ion,elec,F,U,diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
@@ -116,7 +120,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       !       CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
+       !CALL Sublev_coll(Clock,meta,pop,Tij,lasr)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -273,9 +277,9 @@ CONTAINS
     write(99,"(A)") "-----------------"
     write(99,"(A,ES11.2)")  "* Time step (Δt) : ", Clock%Dt
     write(99,"(A,I10)")     "* Number of iterations : ", NumI
-    write(99,"(A,F6.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
-    write(99,"(A,3(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
-         int(Clock%Minutes), " Min ", int(Clock%Seconds), " sec" 
+    write(99,"(A,F7.2)")    "* Time Simulation (μs): ", Clock%SimuTime*1.d6
+    write(99,"(A,2(I3,A))") "* Elapsed Time in CPU : ", int(Clock%Hours),"H ", &
+         int(Clock%Minutes), " Min "
     write(99,"(A)") ""
     write(99,"(A)") "NEUTRAL GAS PARAMETERS"
     write(99,"(A)") "--------------------"
@@ -367,8 +371,9 @@ CONTAINS
        write(99,"(A,2F7.2)") "Laser Intensity (W) and section (cm2) :", lasr%Is, lasr%sec*1d+04
        write(99,"(A,I3)") "Polarization (0=neutral, +1=right, +2=left) : ", lasr%plz
        write(99,"(A,F6.1)") "Wave lenght of the laser (nm) : ", lasr%Lwave * 1d+09
-       write(99,"(A,I4)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
+       write(99,"(A,9I3)") " Transitions used : ", (lasr%Ck(i), i=1,lasr%Ntr)
     END IF
+    write(99,"(/,A)") "-------------------------------------------------------"
 
     DO i = 1, NumMeta                                                       !
        write(99,"(I3,A,F10.4,ES15.4,F8.2,A)") i, meta(i)%Name, meta(i)%En, &
@@ -514,8 +519,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(10ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-5, &
-            elec%mobl, elec%Dfree, Twnsd_a, nu_ib
+       write(98,"(11ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz, Vg
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
