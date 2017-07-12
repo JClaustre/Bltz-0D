@@ -49,13 +49,13 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-12
+    MxDt   = 5d-12
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !**** Maximum electric field allowed ***
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    sys%Emax = 1.42d6 ! (V/m)
+    sys%Emax = 1.05d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
     CALL E_PROFIL (Clock, sys, l)
