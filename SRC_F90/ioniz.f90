@@ -346,7 +346,7 @@ CONTAINS
              END IF
           END DO
        END DO
-       meta(l)%SecIon(1,sys%nx) = 0.d0
+       meta(l)%SecIon(0,sys%nx) = 0.d0
        !**************************************
        READ(51,*) ; READ(51,*) ; READ(51,*); READ(51,*)
     END DO

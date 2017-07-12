@@ -209,6 +209,21 @@ CONTAINS
     CLOSE(0999)
   END SUBROUTINE Write_Out1D
   !***********************************************************
+  SUBROUTINE Write_Out1D_bis( array, array2, FileName )
+    !INTENT
+    REAL(DOUBLE), DIMENSION(:), INTENT(IN) :: array, array2
+    CHARACTER(*), INTENT(IN) :: FileName
+    !LOCAL
+    INTEGER :: i
+
+    OPEN(UNIT=0999,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(FileName)),&
+         ACTION="WRITE",STATUS="UNKNOWN")
+    DO i = lbound(array,1), ubound(array,1)
+       write(0999,*) array(i), array2(i)
+    END DO
+    CLOSE(0999)
+  END SUBROUTINE Write_Out1D_bis
+  !***********************************************************
   !                    SUBROUTINE Write_Out2D
   !***********************************************************
   SUBROUTINE Write_Out2D( array, FileName )
