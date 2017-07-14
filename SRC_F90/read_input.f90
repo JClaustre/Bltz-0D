@@ -63,10 +63,12 @@ CONTAINS
     !**********************************************************************
     Write(*,"(2A)") tabul, "Starting Initialization "
     IF (Clock%Rstart == 0) THEN
+       WRITE(*,"(3A)") tabul, 'Directory used : ', DirFile
        WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [input_he]'
        OPEN (UNIT=90,FILE='./datFile/input_he',STATUS='OLD')
     ELSE IF (Clock%Rstart == 1) THEN
-       WRITE(*,"(2A)",advance="no") tabul, 'Restart Dschrge Condit : [Rs_input_he]'
+       WRITE(*,"(3A)") tabul, 'Directory used : ', DirFile
+       WRITE(*,"(2A)",advance="no") tabul, 'Reading Dschrge Condit : [Rs_input_he]'
        OPEN (UNIT=90,FILE=TRIM(ADJUSTL(DirFile))//'Rstart/Rs_input_he',STATUS='OLD')
     END IF
     READ (90,*) sys%nx
@@ -612,8 +614,8 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.90d0                                     !
-       ion(1)%Ni = elec%Ni * 0.10d0                                     !
+       ion(2)%Ni = elec%Ni * 0.90d0                                         !
+       ion(1)%Ni = elec%Ni * 0.10d0                                         !
        SELECT CASE (NumIon)                                                 !
        CASE (3) ; ion(NumIon)%Ni = 0.0d+14     ! Molecular Excimer          !
        END SELECT                                                           !
