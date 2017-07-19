@@ -35,7 +35,7 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
     Dx = sys%Dx ; nx = sys%nx
-    Ratx=0.d0 ; Ratd=0.d0
+    Ratx=0.d0 ; Ratd=0.d0 ; pop(1)%Tr = 0.d0
     !********************
 
     !********************************************************
@@ -144,6 +144,8 @@ CONTAINS
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
+             !**** Calculation of the relaxation rate for MEOP
+             pop(1)%Tr = pop(1)%Tr + 1.d0 / (Sx * meta(i)%Ni/meta(0)%Ni)
 
           END IF
        END DO

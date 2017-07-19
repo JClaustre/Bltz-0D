@@ -99,10 +99,17 @@ CONTAINS
     !LOCAL
     INTEGER      :: i, nx
     REAL(DOUBLE) :: Dx, part,partf,alpha0, nucm,nucp
-    REAL(DOUBLE) :: YY,ZZ,XX, En1, En2, frq
+    REAL(DOUBLE) :: YY,ZZ,XX, En1, En2, frq, Frac_mol
     REAL(DOUBLE), DIMENSION(sys%nx) :: f0,AC1,BC1,CC1
     En1 = 0.d0 ; En2 = 0.d0
     nx = sys%nx ; Dx = sys%Dx
+
+    !**** Calculation of the Total momentum cross secrtion.
+    meta(2)%SecMtm = meta(1)%SecMtm
+    Do i = 1, NumMeta
+       Frac_mol = ( meta(i)%Ni / meta(0)%Ni )
+       meta(2)%SecMtm(:) = meta(2)%SecMtm(:) + meta(0)%SecExc(i,:) * Frac_mol
+    END Do
 
     !****** PARAMETRES COLLISIONS ELASTIQUES*************
     alpha0 = gama*gama

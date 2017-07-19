@@ -72,9 +72,9 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+  !CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/post-Dischrg/760_Torr/0.01_microS/"
-  !CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/20Torr/RF_mode/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/500Torr/Laser_Influence_Plasma/"
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/plz_760/"
 
   TYPE(Time)    :: Clock
@@ -148,8 +148,9 @@ CONTAINS
     END SELECT
     
     ALLOCATE ( Meta(0)%SecTot(nx) ) ; Meta(0)%SecTot(:) = 0.d0
-    ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0 ! Elastic momentum transfer
-    ALLOCATE ( Meta(1)%SecMtM(nx) ) ; Meta(1)%SecMtM(:) = 0.d0 ! Effective momentum transfer
+    ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0 ! Elastic momentum transfer C-S
+    ALLOCATE ( Meta(1)%SecMtM(nx) ) ; Meta(1)%SecMtM(:) = 0.d0 ! Effective momentum transfer C-S
+    ALLOCATE ( Meta(2)%SecMtM(nx) ) ; Meta(2)%SecMtM(:) = 0.d0 ! Total momentum transfer C-S
     ALLOCATE ( Meta(0)%SecRec(nx) ) ; Meta(0)%SecRec(:) = 0.d0
     ALLOCATE ( Meta(0)%Nuel(nx)  ) ; Meta(0)%Nuel(:)   = 0.d0
 
@@ -174,7 +175,7 @@ CONTAINS
        DEALLOCATE ( ion(NumIon)%SecIon, ion(NumIon)%SecExc )
     END SELECT
 
-    DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(1)%SecMtM, Meta(0)%SecRec )
+    DEALLOCATE ( Meta(0)%SecTot, Meta(0)%SecMtM, Meta(1)%SecMtM, Meta(2)%SecMtM, Meta(0)%SecRec )
     DEALLOCATE ( F, U, Meta(0)%Nuel )
     DEALLOCATE ( pop(1)%Ni, pop(2)%Ni )
   END SUBROUTINE DelocArray

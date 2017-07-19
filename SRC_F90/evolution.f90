@@ -388,8 +388,10 @@ CONTAINS
     REAL(DOUBLE) , DIMENSION(:)        , INTENT(INOUT) :: F
     !**** LOCAL
     INTEGER :: i, nx, Mnul, Switch, mdlus
-    REAL(DOUBLE) :: RateSum = 0.d0, nu_ib
+    REAL(DOUBLE) :: RateSum = 0.d0, nu_ib, v_drift
+    REAL(DOUBLE) :: D_F, J_e
     CHARACTER(LEN=250)::fileName
+    REAL(DOUBLE) , DIMENSION(sys%nx) :: F_ani
     nx = sys%nx ; Switch = 0 ; mdlus = 100
 
     !**** CHECK PART *********************************
@@ -398,19 +400,23 @@ CONTAINS
 
     !**** UpDate Electron (Density + Temperature)
     elec%Ni = 0.d0 ; elec%Tp = 0.d0
-    DO i = 1, sys%nx 
+    DO i = 1, nx 
        elec%Ni = elec%Ni + ( F(i) * U(i)**0.5d0 * sys%Dx )
        elec%Tp = elec%Tp + ( F(i) * U(i)**1.5d0 * sys%Dx )
     END DO
     elec%Tp = elec%Tp * 0.6667d0 / elec%Ni
 
     !**** Calculation of the first Townsend coefficient. Coef found in
+    
     !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
     !**** kV/cm ***
     !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+    
+    !**** Townsend Coef. (reduced) calculated from Hagelaar et al (PSST 14 pp-722 (2005))
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
+    v_drift = - nu_ib / (Twnsd_a * meta(0)%Ni)
 
     !**** Check EEDF Positivty
     DO i = 1, nx
@@ -418,6 +424,17 @@ CONTAINS
           F(i) = 0.d0 ; Switch = 10
        END IF
     END DO
+
+    !**** Anisotropy calculation (See Hagelaar "PSST 14 (2005)")
+    Do i = 1, nx-1
+       D_F = (F(i+1)-F(i)) / sys%Dx
+       F_ani = ( sys%E * D_F / meta(0)%Ni + Twnsd_a * F(i) ) / meta(2)%SecMtm(i)
+    END Do
+    ! extrapolation for D_F(nx)
+    F_ani(nx) = F_ani(nx-2) + (F_ani(nx-1)-F_ani(nx-2))/(sys%Dx)
+
+    !**** Current density (q m-2 s-1)
+    J_e = elec%Ni * v_drift * qe
 
     !**** Update densities (Ion + Excited)
     do i = 1, NumMeta
@@ -463,11 +480,11 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,F5.1,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,F5.1,A,ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
             "| polariz: ", pop(1)%polarz*100.d0," | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td)\r"
+            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td) ", J_e, "(A m2)\r"
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
@@ -492,8 +509,8 @@ CONTAINS
                (meta(i)%Ni*1d-06,i=1,NumMeta)
        END SELECT
        CLOSE(99)
-       write(98,"(11ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
-            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz, Vg
+       write(98,"(13ES15.6E3)") Clock%SumDt*1e6, elec%Tp, meta(0)%Tp*qok,sys%Pwmoy*1d-6, sys%E*1d-2, &
+            elec%mobl, elec%Dfree, Twnsd_a, nu_ib, pop(1)%polarz, Vg, v_drift, J_e
        write(97,"(25ES15.6E3)") Clock%SumDt*1e6, (pop(1)%Ni(i)*1d-6, i=1,6), (pop(2)%Ni(i)*1d-6, i=1,18)
        CLOSE(98)
        CLOSE(97)
@@ -564,7 +581,7 @@ CONTAINS
        write(fileName,"('F_evol_',I3.3,'.dat')") int(Res/Clock%TRstart)
        OPEN(UNIT=90,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(fileName)),ACTION="WRITE",STATUS="UNKNOWN")
        DO i = 1, nx
-          write(90,"(3ES15.6E3)") real(i)*sys%Dx, F(i), Clock%SumDt*1d06
+          write(90,"(5ES15.6E3)") real(i)*sys%Dx, F(i), F_ani(i), F(i)/F_ani(i), Clock%SumDt*1d06
        END DO 
        CLOSE(90)
        CALL Write_Out1D( OneD%Tg, "Tg.dat")
