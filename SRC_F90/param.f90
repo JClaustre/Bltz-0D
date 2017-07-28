@@ -129,7 +129,7 @@ CONTAINS
     IdU = (dble(i) - 0.5d0) * Dx
   END FUNCTION IdU
   ! **********************************************************
-
+  
   SUBROUTINE AllocArray(nx)
     INTEGER :: i
     INTEGER, INTENT(IN) :: nx
