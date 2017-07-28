@@ -35,7 +35,7 @@ CONTAINS
     REAL(DOUBLE), DIMENSION(sys%nx) :: Fo
     !********************
     Dx = sys%Dx ; nx = sys%nx
-    Ratx=0.d0 ; Ratd=0.d0
+    Ratx=0.d0 ; Ratd=0.d0 ; pop(1)%Tr = 0.d0
     !********************
     Ratx=0.d0 ; Ratd=0.d0
 
@@ -162,6 +162,8 @@ CONTAINS
                 diag(10)%Tx(2) = real(i) ; diag(10)%Tx(3) = real(j)
              END IF
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
+             !**** Calculation of the relaxation rate for MEOP
+             pop(1)%Tr = pop(1)%Tr + 1.d0 / (Sx * meta(i)%Ni/meta(0)%Ni)
 
           END IF
        END DO
@@ -594,6 +596,9 @@ CONTAINS
     CHARACTER(*), parameter :: excit2 = "-----------------------------"
     CHARACTER(len=40) :: Readexc
     INTEGER      :: io, ioio, numl
+    INTEGER :: Switch_CS ! If (Switch -> 1) then Alves
+                         ! Else Biagi
+    Switch_CS = 1
 
     Dx = sys%Dx ; pi_alpha2 = 0.879735d0 * 1d-20
     !**********************************************
@@ -686,8 +691,13 @@ CONTAINS
 
     !**** Read and Interpolate cross-Section from LXCat for 1S->excited states (x42) 
     !**** (ref: IST-Lisbon database, www.lxcat.net, retrieved on July 11, 2017)
+    !**** (ref: Biagi database, www.lxcat.net, retrieved on July 14, 2017)
     numl = 0 ; k = 0
-    OPEN(UNIT=15,FILE='./datFile/lxcat_excit_2017.cs',ACTION="READ",STATUS="OLD")
+    IF (Switch_CS == 1) THEN
+       OPEN(UNIT=15,FILE='./datFile/lxcat_excit_Alves.cs',ACTION="READ",STATUS="OLD")
+    ELSE
+       OPEN(UNIT=15,FILE='./datFile/lxcat_excit_Biagi.cs',ACTION="READ",STATUS="OLD")
+    END IF
     !**** To skip comments
     do 
        READ(15,*,IOSTAT=io) readexc
@@ -724,9 +734,11 @@ CONTAINS
              END DO
           END IF
           ! Modification factor Santos - Original
-          IF (numl==1.or.numl==2) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 0.31d0
-          IF (numl==3.or.numl==7.or.numl==13) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 0.6d0
-          IF (numl==4.or.numl==10.or.numl==18) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 1.66d0
+          IF (Switch_CS == 1) THEN
+             IF (numl==1.or.numl==2) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 0.31d0
+             IF (numl==3.or.numl==7.or.numl==13) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 0.6d0
+             IF (numl==4.or.numl==10.or.numl==18) meta(0)%SecExc(numl,:) = meta(0)%SecExc(numl,:) / 1.66d0
+          END IF
           !--------------------------------
        END IF
        ! End of File (io = -1)
