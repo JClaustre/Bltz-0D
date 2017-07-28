@@ -52,6 +52,7 @@ CONTAINS
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    lasr%Is = 0.19307
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -64,8 +65,6 @@ CONTAINS
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
        
-       !IF (l.LE. 10) sys%E = sys%Emax * real(l)/10.d0
-
        !**** Increase Power exponantially function of time
        CALL POWER_CONTROL (Clock, sys, meta, U, F, Post_D, Cgen)
 
@@ -90,8 +89,6 @@ CONTAINS
        CALL Radiat       (sys, meta, Fosc, Diag)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
-       !CALL Diffuz_Norm (sys,meta,ion,elec,F,U,diag)
-       !CALL Diffuz(sys,meta,ion,elec,F,U,diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
