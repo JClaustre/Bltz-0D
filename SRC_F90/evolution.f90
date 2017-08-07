@@ -55,7 +55,7 @@ CONTAINS
     END IF
     !**** Maximum electric field allowed ***
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    sys%Emax = 1.05d6 ! (V/m)
+    sys%Emax = 1.2d6 ! (V/m)
     Ne_i = elec%Ni
     SumNe = 0.d0
     CALL E_PROFIL (Clock, sys, l)

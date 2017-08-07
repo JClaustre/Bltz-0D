@@ -15,7 +15,7 @@
 4.000E+02	  Emax (Energy grid max (eV) ) 
 0.020E+00	  save data's every XXX micro-sec (Restart files + EEDF)
 *************************************************************************
-1		  Activate the laser (1) or don't use laser pumping (0)
+0		  Activate the laser (1) or don't use laser pumping (0)
 1083		  lenght wave of the laser (nm)
 1		  Polarization of the Laser (0=pi ; 1=sigma+ ; 2=sigma-)
 1.000E+01	  Laser intensity (W)
