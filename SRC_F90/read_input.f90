@@ -614,15 +614,15 @@ CONTAINS
 
     !**** Init Densities (Ions + excited states) (m-3) *********************!
     IF (Clock%Rstart == 0) THEN                                             !
-       ion(2)%Ni = elec%Ni * 0.99d0                                         !
-       ion(1)%Ni = elec%Ni * 0.01d0                                         !
+       ion(2)%Ni = elec%Ni * 0.30d0                                         !
+       ion(1)%Ni = elec%Ni * 0.70d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 1.2d+14     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 3.0d+11     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta 
-          IF (i.EQ.1) meta(i)%Ni = 4.0d+14     ! Metastable 2S3             !
-          IF (i.EQ.2) meta(i)%Ni = 1.0d+13     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 5.0d+13     ! Radiative state 2P3        !
+          IF (i.EQ.1) meta(i)%Ni = 3.0d+16     ! Metastable 2S3             !
+          IF (i.EQ.2) meta(i)%Ni = 2.0d+16     ! Metastable 2S1             !
+          IF (i.EQ.3) meta(i)%Ni = 5.0d+12     ! Radiative state 2P3        !
           IF (i.GE.4) meta(i)%Ni = 1.00+00       
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !

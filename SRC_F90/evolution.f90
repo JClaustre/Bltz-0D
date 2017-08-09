@@ -47,12 +47,12 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-10
+    MxDt   = 1d-09
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
-    sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    lasr%Is = 0.19307
+    !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    !lasr%Is = 0.19307
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
