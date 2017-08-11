@@ -1,5 +1,5 @@
-6000		  Number of grid points 
-0         	  Restart simulation ( 0  - no restart | 1 - restart )
+5000		  Number of grid points 
+1         	  Restart simulation ( 0  - no restart | 1 - restart )
 1.505E+01	  E (V/cm)	Electric field
 4.000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 0.000E+00   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
@@ -10,16 +10,16 @@
 5.000E+00	  L  (cm)       Tube Length
 2.100E+08	  ne (cm-3)	Initial electron density
 1.000E-03   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-5.010E+02   	  Simulation Time (mic-sec)  
+1.510E+03   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
 2.000E+02	  Emax (Energy grid max (eV) ) 
 1.000E+02	  save data's every XXX micro-sec (Restart files + EEDF)
 *************************************************************************
-0		  Activate the laser (1) or don't use laser pumping (0)
+1		  Activate the laser (1) or don't use laser pumping (0)
 1083		  lenght wave of the laser (nm)
 1		  Polarization of the Laser (0=pi ; 1=sigma+ ; 2=sigma-)
 5.000E-02	  Laser intensity (W)
 1.800E+01	  Surface or laser section (cm2)
-4.000E+00	  Starting time to use Laser (micro-sec)
+5.000E+02	  Starting time to use Laser (micro-sec)
 1		  Numbers of transitions to use with the laser
 9		  Write the transitions to use (from 1 to 9) (use the same line: ex: 1 5 7 9)

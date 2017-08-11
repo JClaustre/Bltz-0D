@@ -74,6 +74,7 @@ CONTAINS
              IF (i.EQ.3 .and. j==1) THEN !**** 2P3 --> 2S3 
                 diag(15)%OutM2 = diag(15)%OutM2 + emitF
                 diag(15)%InM1  = diag(15)%InM1 + emitF
+                pop(2)%tau_rad = emitF
              ELSE IF (i.EQ.3.and.j.NE.1) THEN !**** 2P3 --> N0
                 diag(3)%OutM2 = diag(3)%OutM2 + emitF
              END IF

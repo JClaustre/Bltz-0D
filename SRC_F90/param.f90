@@ -38,7 +38,7 @@ MODULE MOD_PARAM
   TYPE, PUBLIC::Excited
      CHARACTER(len=4) :: Name
      REAL(DOUBLE)     :: Dn_o, Ntot
-     REAL(DOUBLE)     :: T_relax, Te, Tr, tau_e
+     REAL(DOUBLE)     :: T_relax, Te, Tr, tau_e, tau_rad
      REAL(DOUBLE)     :: polarz
      REAL(DOUBLE), DIMENSION(:), POINTER :: Ni
   END type Excited
@@ -72,7 +72,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/Steady_S/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/500_Torr/"
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/500Torr/Laser_Influence_Plasma/simu_2/"
 
   TYPE(Time)    :: Clock

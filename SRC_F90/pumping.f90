@@ -51,10 +51,10 @@ CONTAINS
 
     DO j = 1, Npop2
        !**** Update B_j sublevels due to radiative transitions (2P3 -> 2S3) ***
-       Updens(2,j) = Updens(2,j) - Dt * meta(3)%Aij(1) * pop(2)%Ni(j)
+       Updens(2,j) = Updens(2,j) - Dt * pop(2)%tau_rad * pop(2)%Ni(j)
        Do i = 1, Npop1
           !**** Update A_i sublevels due to radiative transitions (2P3 -> 2S3) ***
-          Updens(1,i) = Updens(1,i) + Dt * meta(3)%Aij(1) * ( pop(2)%Ni(j)*Tij(j,i,1) )
+          Updens(1,i) = Updens(1,i) + Dt * pop(2)%tau_rad * ( pop(2)%Ni(j)*Tij(j,i,1) )
           !**** Update A_i and B_j sublevels due to laser absorption ***
           IF (switch.EQ.1) THEN ! If laser activated (1)
              DO k = 1, lasr%Ntr
@@ -79,22 +79,29 @@ CONTAINS
     !**** Dn total after one loop in Boltz collisions ***
     pop(1)%Dn_o = meta(1)%Ni - pop(1)%Ntot
     pop(2)%Dn_o = meta(3)%Ni - pop(2)%Ntot
-    !**** Update of sublevels densities due to Boltz collisions ***
-    Updens(1,1:Npop1) = Updens(1,1:Npop1) + pop(1)%Dn_o / N1
-    Updens(2,1:Npop2) = Updens(2,1:Npop2) + pop(2)%Dn_o / N2
 
     pol = 0.d0
     DO i = 1, Npop1
+       !**** Update of sublevels densities due to Boltz collisions *************
+       !**** If Delta_n > 0 then mean allocations on sublevels Ai **************
+       !**** IF Delta_n < 0 then density prorata depending on each sublevels ***
+       IF (pop(1)%Dn_o.GE.0.d0) THEN
+          Updens(1,i) = Updens(1,i) + pop(1)%Dn_o / N1
+       ELSE
+          Updens(1,i) = Updens(1,i) + pop(1)%Dn_o * (pop(1)%Ni(i)/pop(1)%Ntot)
+       END IF
        !**** calculation of the third term in polarization's equation ***
        pol = pol + lasr%lamb(i) * pop(1)%Ni(i) / (3.d0*meta(1)%Ni)
-       !**** Update A_i sublevels due to relaxation from collisions ***
-       !Updens(1,i) = Updens(1,i) + Dt * ( meta(1)%Ni/N1 - pop(1)%Ni(i) ) / pop(1)%T_relax
        !**** Update of the densities and the total densities of 2S3 and 2P3 ***
        pop(1)%Ni(i) = pop(1)%Ni(i) + Updens(1,i)
     END DO
     DO j = 1, Npop2
-       !**** Update B_j sublevels due to relaxation from collisions ***
-       !Updens(2,j) = Updens(2,j) + Dt * (meta(3)%Ni/N2 - pop(2)%Ni(j) ) / pop(2)%T_relax
+       !**** Update of sublevels densities due to Boltz collisions for Bj sublevels ***
+       IF (pop(2)%Dn_o.GE.0.d0) THEN
+          Updens(2,j) = Updens(2,j) + pop(2)%Dn_o / N2
+       ELSE
+          Updens(2,j) = Updens(2,j) + pop(2)%Dn_o * (pop(2)%Ni(j)/pop(2)%Ntot)
+       END IF
        !**** Update of the densities and the total densities of 2S3 and 2P3 ***
        pop(2)%Ni(j) = pop(2)%Ni(j) + Updens(2,j)
     END DO
@@ -112,11 +119,9 @@ CONTAINS
        !E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
        E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
        !IF (E_2P3.LE. errmax) THEN
-       pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * &
-            ((-pop(1)%polarz + pol)/pop(1)%Te )!- pop(1)%polarz/pop(1)%Tr)
-       !write(*,*) "polarization updated", pop(1)%polarz
+       pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te )!&
+            !- pop(1)%polarz/pop(1)%Tr)
        !END IF
-       !write(*,*) "E_2P3", E_2P3, switch
        meta(1)%NStart = meta(1)%Ni
        meta(3)%NStart = meta(3)%Ni
     END IF
