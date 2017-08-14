@@ -278,6 +278,7 @@ CONTAINS
     write(99,"(A,ES15.6)") "* Electron   Density (cm-3) : ", elec%Ni*1d-6
     write(99,"(A,ES15.6)") "* Ion [He+]  Density (cm-3) : ", ion(1)%Ni*1d-6
     write(99,"(A,ES15.6)") "* Ion [He2+] Density (cm-3) : ", ion(2)%Ni*1d-6
+    write(99,"(A,ES15.6)") "* exc [He2*] Density (cm-3) : ", ion(3)%Ni*1d-6
     write(99,"(/,A)") "-------------------------------------------------------"
     write(99,"(A,ES15.6)") "* Error partcl : ", ABS(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni))
     write(99,"(A,ES15.6)") "* Error energy : ", ABS(1.d0-elec%En/consv(2))
