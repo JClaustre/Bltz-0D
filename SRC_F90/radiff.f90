@@ -14,9 +14,10 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Radiative transfer ***
-  SUBROUTINE Radiat (sys, meta, Fosc, diag)
+  SUBROUTINE Radiat (sys, meta, Fosc, diag, iter)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
+    INTEGER, INTENT(IN) :: iter
     Type(Diagnos), DIMENSION(:)    , INTENT(INOUT) :: diag
     TYPE(Species), DIMENSION(0:)   , INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
@@ -26,7 +27,11 @@ CONTAINS
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
     Rate=0.d0 ; diag(3)%Tx(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
-    
+
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=99,FILE=TRIM(ADJUSTL(DirFile))//'spectra.dat',ACTION="WRITE",STATUS="UNKNOWN")
+    END IF
+
     DO i = 3, NumMeta
        DO j = 0, i-1
           IF (meta(i)%Aij(j).NE.0.d0) THEN
@@ -50,6 +55,12 @@ CONTAINS
                 EscapF = 1.d0
              END IF
              emitF = meta(i)%Aij(j) * EscapF
+
+             !**** Write in File Emission spectra *** 
+             IF (mod(iter,2000)==0) THEN
+                write(99,"(2ES15.4,2A)") meta(i)%ondemit(j), emitF*meta(i)%Ni*1d-6, meta(i)%Name, meta(j)%Name
+             END IF
+             !***************************************
              IF (i.NE.3.or.j.NE.1) THEN
                 meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                 meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
@@ -87,6 +98,10 @@ CONTAINS
 
        END DO
     END DO
+
+    IF (mod(iter,2000)==0) THEN
+       CLOSE(99)
+    END IF
 
   END SUBROUTINE Radiat
 

@@ -52,7 +52,6 @@ CONTAINS
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    !lasr%Is = 0.19307
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -86,7 +85,7 @@ CONTAINS
        !**** Penning + Associative ioniz ***
        CALL Penn_Assoc   (sys, meta, U, F, Diag)
        !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag)
+       CALL Radiat       (sys, meta, Fosc, Diag, l)
        !**** Diffusion ***
        CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
        !**** Excit + De-excit ***
@@ -477,7 +476,7 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,F5.1,A,ES10.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,ES10.2,A,ES10.2,A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
             "| polariz: ", pop(1)%polarz*100.d0," | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&

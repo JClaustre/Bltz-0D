@@ -30,7 +30,7 @@ MODULE MOD_PARAM
      REAL(DOUBLE)      :: Ni, Tp, Prs, En, Deg, Damb
      REAL(DOUBLE)      :: Dfree, mobl, Updens, J, NStart
      CHARACTER(len=10) :: Name
-     REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, Nuel, Nuei
+     REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, ondemit, Nuel, Nuei
      REAL(DOUBLE), DIMENSION(:), POINTER :: SecRec, SecTot, SecMtM, SecEI
      REAL(DOUBLE), DIMENSION(:,:), POINTER :: SecIon, SecExc
   END type Species
@@ -72,8 +72,8 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/500_Torr/"
-  !CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/500Torr/Laser_Influence_Plasma/simu_2/"
+  !CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/Steady_S/steady_10/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/500Torr/Laser_Influence_Plasma/simu_3/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
@@ -137,6 +137,7 @@ CONTAINS
        ALLOCATE ( Meta(i)%SecIon(2 ,nx) ) ; Meta(i)%SecIon(:,:) = 0.d0
        ALLOCATE ( Meta(i)%SecExc(0:NumMeta,nx) ) ; Meta(i)%SecExc(:,:) = 0.d0
        ALLOCATE ( Meta(i)%Aij(0:NumMeta) ) ; Meta(i)%Aij(:) = 0.d0
+       ALLOCATE ( Meta(i)%ondemit(0:NumMeta) ) ; Meta(i)%ondemit(:) = 0.d0
     END DO
 
     SELECT CASE (NumIon)
@@ -166,7 +167,7 @@ CONTAINS
     INTEGER :: i
     
     DO i = 0, NumMeta
-       DEALLOCATE ( Meta(i)%SecIon, Meta(i)%SecExc, Meta(i)%Aij )
+       DEALLOCATE ( Meta(i)%SecIon, Meta(i)%SecExc, Meta(i)%Aij, Meta(i)%ondemit )
     END DO
     SELECT CASE (NumIon)
     CASE (3) 

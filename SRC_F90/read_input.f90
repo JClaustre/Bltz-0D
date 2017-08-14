@@ -412,12 +412,14 @@ CONTAINS
        END IF
     END DO
     !**************************************
+
     !**** Einstein transition probab : Aij
     DO i = 3, NumMeta
        DO j = 0, i-1
           Eij = meta(i)%En-meta(j)%En
           meta(i)%Aij(j) = 4.339d7 * Eij**2 * Fosc(j,i) * &
                meta(j)%Deg / meta(i)%Deg
+          meta(i)%ondemit(j) = Hp * Vcel / (Eij*qe) ! (lambda = h * c / (Ef-Ei)  en metre)
        END DO
     END DO
 
@@ -617,13 +619,13 @@ CONTAINS
        ion(2)%Ni = elec%Ni * 0.30d0                                         !
        ion(1)%Ni = elec%Ni * 0.70d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 3.0d+11     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 5.4d+11     ! Molecular Excimer          !
        END SELECT                                                           !
        DO i = 1, NumMeta 
-          IF (i.EQ.1) meta(i)%Ni = 3.0d+16     ! Metastable 2S3             !
-          IF (i.EQ.2) meta(i)%Ni = 2.0d+16     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 5.0d+12     ! Radiative state 2P3        !
-          IF (i.GE.4) meta(i)%Ni = 1.00+00       
+          IF (i.EQ.1) meta(i)%Ni = 5.5d+16     ! Metastable 2S3             !
+          IF (i.EQ.2) meta(i)%Ni = 2.4d+16     ! Metastable 2S1             !
+          IF (i.EQ.3) meta(i)%Ni = 7.0d+12     ! Radiative state 2P3        !
+          IF (i.GE.4) meta(i)%Ni = 1.00+04       
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
        pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0     !
