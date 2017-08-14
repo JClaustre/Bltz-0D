@@ -30,7 +30,7 @@ MODULE MOD_PARAM
      REAL(DOUBLE)      :: Ni, Tp, Prs, En, Deg, Damb
      REAL(DOUBLE)      :: Dfree, mobl, Updens, J, NStart
      CHARACTER(len=10) :: Name
-     REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, Nuel, Nuei
+     REAL(DOUBLE), DIMENSION(:), POINTER :: Aij, ondemit, Nuel, Nuei
      REAL(DOUBLE), DIMENSION(:), POINTER :: SecRec, SecTot, SecMtM, SecEI
      REAL(DOUBLE), DIMENSION(:,:), POINTER :: SecIon, SecExc
   END type Species
@@ -38,7 +38,7 @@ MODULE MOD_PARAM
   TYPE, PUBLIC::Excited
      CHARACTER(len=4) :: Name
      REAL(DOUBLE)     :: Dn_o, Ntot
-     REAL(DOUBLE)     :: T_relax, Te, Tr, tau_e
+     REAL(DOUBLE)     :: T_relax, Te, Tr, tau_e, tau_rad
      REAL(DOUBLE)     :: polarz
      REAL(DOUBLE), DIMENSION(:), POINTER :: Ni
   END type Excited
@@ -138,6 +138,7 @@ CONTAINS
        ALLOCATE ( Meta(i)%SecIon(2 ,nx) ) ; Meta(i)%SecIon(:,:) = 0.d0
        ALLOCATE ( Meta(i)%SecExc(0:NumMeta,nx) ) ; Meta(i)%SecExc(:,:) = 0.d0
        ALLOCATE ( Meta(i)%Aij(0:NumMeta) ) ; Meta(i)%Aij(:) = 0.d0
+       ALLOCATE ( Meta(i)%ondemit(0:NumMeta) ) ; Meta(i)%ondemit(:) = 0.d0
     END DO
 
     SELECT CASE (NumIon)
@@ -167,7 +168,7 @@ CONTAINS
     INTEGER :: i
     
     DO i = 0, NumMeta
-       DEALLOCATE ( Meta(i)%SecIon, Meta(i)%SecExc, Meta(i)%Aij )
+       DEALLOCATE ( Meta(i)%SecIon, Meta(i)%SecExc, Meta(i)%Aij, Meta(i)%ondemit )
     END DO
     SELECT CASE (NumIon)
     CASE (3) 

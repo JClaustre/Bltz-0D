@@ -412,12 +412,14 @@ CONTAINS
        END IF
     END DO
     !**************************************
+
     !**** Einstein transition probab : Aij
     DO i = 3, NumMeta
        DO j = 0, i-1
           Eij = meta(i)%En-meta(j)%En
           meta(i)%Aij(j) = 4.339d7 * Eij**2 * Fosc(j,i) * &
                meta(j)%Deg / meta(i)%Deg
+          meta(i)%ondemit(j) = Hp * Vcel / (Eij*qe) ! (lambda = h * c / (Ef-Ei)  en metre)
        END DO
     END DO
 
