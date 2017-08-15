@@ -9,8 +9,8 @@
 0.100E+00	  Ra (cm)	Cylinder Radius
 2.200E+01	  L  (cm)       Tube Length
 9.000E+09	  ne (cm-3)	Initial electron density
-2.000E+01   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-2.010E+02   	  Simulation Time (mic-sec)  
+6.664E+00   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
+1.010E+02   	  Simulation Time (mic-sec)  
 1.000E-12	  Dt ( Time-Step (sec) )
 2.000E+02	  Emax (Energy grid max (eV) ) 
 5.000E+01	  save data's every XXX micro-sec (Restart files + EEDF)
