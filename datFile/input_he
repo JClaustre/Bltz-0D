@@ -7,7 +7,7 @@
 3.000E+02  600	  Tp (K)	Temperature + Tp at tube boundary
 2.500E+00	  Tpe (eV)	Electronic Temperature
 0.170E+00	  Ra (cm)	Cylinder Radius
-4.000E+01	  L  (cm)       Tube Length
+4.000E+00	  L  (cm)       Tube Length
 1.000E+00	  ne (cm-3)	Initial electron density
 1.055E-02   0	  P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
 1.000E+00  	  Simulation Time (mic-sec)  

@@ -35,19 +35,13 @@ CONTAINS
     !**** JP Boeuf simu 10 kV/cm
     !lp = 2.3d-04 ! (m)
     !vs = 3.0d+04 ! (m/s)
-    !**** F Vidal  simu 15 kV/cm Sans AI
-    !lp = 6.32d-04 ! (m)
-    !vs = 7.12d+04 ! (m/s)
-    !**** F Vidal  simu 15 kV/cm  AI
-    !lp = 3.51d-04 ! (m)
-    !vs = 5.11d+04 ! (m/s)
-   
+
     !**** F Vidal  simu 12 kV/cm  AI / BIAGI (ne=1e12 cm-3)
-    lp = 9.58d-04 ! (m)
-    vs = 5.68d+04 ! (m/s)
-    !**** F Vidal  simu 14.2 kV/cm  Sans AI (ne=1e12 cm-3)
-    !lp = 6.93d-04 ! (m)
-    !vs = 6.57d+04 ! (m/s)
+    !lp = 9.58d-04 ! (m)
+    !vs = 5.68d+04 ! (m/s)
+    !**** F Vidal  simu 23.4 kV/cm Sans AI / BIAGI (ne=1e12 cm-3)
+    lp = 3.05d-04 ! (m)
+    vs = 1.02d+05 ! (m/s)
 
     !**** Calcul of E(x,t) ***
     IF (iter == 0) THEN

@@ -598,7 +598,7 @@ CONTAINS
     INTEGER      :: io, ioio, numl
     INTEGER :: Switch_CS ! If (Switch -> 1) then Alves
                          ! Else Biagi
-    Switch_CS = 1
+    Switch_CS = 0
 
     Dx = sys%Dx ; pi_alpha2 = 0.879735d0 * 1d-20
     !**********************************************
