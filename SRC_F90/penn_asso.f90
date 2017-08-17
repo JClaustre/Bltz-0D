@@ -34,41 +34,41 @@ CONTAINS
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
 
-!    !**** Associative process
-!    DO i = 5, Nmeta
-!       Eij = meta(i)%En - ion(2)%En ! associative threshold
-!       IF (Eij > 0.d0) THEN
-!          chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
-!          IF (ichi == 0) ichi = 1
-!          rchi = ( Eij - U(ichi) ) / Dx
-!          asso = meta(0)%Ni*meta(i)%Ni * Sn(i)
-!          
-!          DO k = 1, sys%nx
-!             coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
-!             coef2 = rchi / (sqrt(U(ichi+1))*Dx)
-!             IF (k .NE. ichi  ) coef1 = 0.d0
-!             IF (k .NE. ichi+1) coef2 = 0.d0
-!             Fi(k) = Fi(k) + Clock%Dt * (asso * (coef1 + coef2))
-!          END DO
-!          !**** Particle balance (explicit --> meta)
-!          meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
-!          meta(0)%Updens = meta(0)%Updens - Clock%Dt * asso
-!          ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
-!          !**** Energy conservation Diagnostic
-!          Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
-!          !***************
-!          Diag(6)%SumTx = Diag(6)%SumTx + Clock%Dt * asso
-!
-!          ratx = Sn(i)*meta(0)%Ni
-!          IF (ratx .GT. MaxR) MaxR = ratx
-!          !***************** Diagnostic for relative importance of reactions (m-3/s)
-!          IF (asso.GT.Rate) THEN
-!             Rate = asso
-!             Diag(6)%Tx(2) = real(i)
-!          END IF
-!          Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
-!       END IF
-!    END DO
+    !**** Associative process
+    DO i = 5, Nmeta
+       Eij = meta(i)%En - ion(2)%En ! associative threshold
+       IF (Eij > 0.d0) THEN
+          chi = Eij/Dx + 0.5d0 ; ichi = int(chi)
+          IF (ichi == 0) ichi = 1
+          rchi = ( Eij - U(ichi) ) / Dx
+          asso = meta(0)%Ni*meta(i)%Ni * Sn(i)
+          
+          DO k = 1, sys%nx
+             coef1 = (1.d0 - rchi) / (sqrt(U(ichi))*Dx)
+             coef2 = rchi / (sqrt(U(ichi+1))*Dx)
+             IF (k .NE. ichi  ) coef1 = 0.d0
+             IF (k .NE. ichi+1) coef2 = 0.d0
+             Fi(k) = Fi(k) + Clock%Dt * (asso * (coef1 + coef2))
+          END DO
+          !**** Particle balance (explicit --> meta)
+          meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
+          meta(0)%Updens = meta(0)%Updens - Clock%Dt * asso
+          ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
+          !**** Energy conservation Diagnostic
+          Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
+          !***************
+          Diag(6)%SumTx = Diag(6)%SumTx + Clock%Dt * asso
+
+          ratx = Sn(i)*meta(0)%Ni
+          IF (ratx .GT. MaxR) MaxR = ratx
+          !***************** Diagnostic for relative importance of reactions (m-3/s)
+          IF (asso.GT.Rate) THEN
+             Rate = asso
+             Diag(6)%Tx(2) = real(i)
+          END IF
+          Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
+       END IF
+    END DO
 
     !**** Penning process
     Rate=0.d0 ; Diag(5)%Tx(:)=0.d0

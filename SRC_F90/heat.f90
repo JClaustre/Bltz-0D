@@ -37,11 +37,11 @@ CONTAINS
     !vs = 3.0d+04 ! (m/s)
 
     !**** F Vidal  simu 12 kV/cm  AI / BIAGI (ne=1e12 cm-3)
-    !lp = 9.58d-04 ! (m)
-    !vs = 5.68d+04 ! (m/s)
+    lp = 9.58d-04 ! (m)
+    vs = 5.68d+04 ! (m/s)
     !**** F Vidal  simu 23.4 kV/cm Sans AI / BIAGI (ne=1e12 cm-3)
-    lp = 3.05d-04 ! (m)
-    vs = 1.02d+05 ! (m/s)
+    !lp = 3.05d-04 ! (m)
+    !vs = 1.02d+05 ! (m/s)
 
     !**** Calcul of E(x,t) ***
     IF (iter == 0) THEN

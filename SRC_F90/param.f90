@@ -73,7 +73,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir_2/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/Biagi_sans_IA/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Streamers/Biagi_avec_IA/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
