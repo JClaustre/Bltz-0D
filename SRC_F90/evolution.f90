@@ -116,7 +116,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij,lasr,l)
+       !CALL Sublev_coll(Clock,meta,pop,Tij,lasr,l)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)

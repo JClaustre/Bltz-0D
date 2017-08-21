@@ -36,7 +36,7 @@ CONTAINS
     !lp = 2.3d-04 ! (m)
     !vs = 3.0d+04 ! (m/s)
 
-    !**** F Vidal  simu 12 kV/cm  AI / BIAGI (ne=1e12 cm-3)
+    !**** F Vidal  simu 12 kV/cm  Avec AI / BIAGI (ne=1e12 cm-3)
     lp = 9.58d-04 ! (m)
     vs = 5.68d+04 ! (m/s)
     !**** F Vidal  simu 23.4 kV/cm Sans AI / BIAGI (ne=1e12 cm-3)
@@ -47,7 +47,7 @@ CONTAINS
     IF (iter == 0) THEN
        !#########################################################
        !xmax = (2.d0*sys%Emax*lp/Einit) + 2.d-02 - 2.d0*lp ! (m)
-       tmax = 0.5d-6 ! (s)
+       tmax = 0.2d-6 ! (s)
        xmax = vs * tmax + 2.d-02! (m)
        
        OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"Ehead.dat",ACTION="WRITE",STATUS="UNKNOWN")
