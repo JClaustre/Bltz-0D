@@ -52,6 +52,9 @@ CONTAINS
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    
+    ! propuit toutote hsLV 
+    d;smS:dvjk ;d  "ADfl" 
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
