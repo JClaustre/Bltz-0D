@@ -55,6 +55,7 @@ CONTAINS
     
     ! propuit toutote hsLV 
     d;smS:dvjk ;d  "ADfl" 
+    "C'est super genial de la mort"
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
