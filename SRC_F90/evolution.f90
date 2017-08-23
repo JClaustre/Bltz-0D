@@ -53,10 +53,6 @@ CONTAINS
     END IF
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
     
-    ! propuit toutote hsLV 
-    d;smS:dvjk ;d  "ADfl" 
-    "C'est super genial de la mort"
-
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
