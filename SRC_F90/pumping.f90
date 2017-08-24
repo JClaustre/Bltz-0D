@@ -29,21 +29,21 @@ CONTAINS
     switch = 0 ; errmax = 9.0d-7
     N1 = real(Npop1) ; N2 = real(Npop2)
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
-    pop(1)%T_relax = 1.d0/(meta(1)%Damb / (sys%Ra/2.405d0)**2)
-    pop(2)%T_relax = 1.d0/(3.2d06*1.33322*meta(0)%Prs)
-    pop(1)%tau_e   = 1d-06  ! (s)
-    pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s)
+    pop(1)%T_relax = 1.d0/ (meta(1)%Damb / (sys%Ra/2.405d0)**2)
+    pop(2)%T_relax = 1.d0/ (3.2d06*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
+    pop(1)%tau_e   = 1.d0/ (3.75d6*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
+    pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s) (cf. Nacher 1985)
     pop(1)%Tr      = 100.d0 ! (s)
 
     !**** Laser variables ***
     ! mean velocity of the metastables
-    vm   = sqrt(2.d0*kb*meta(0)%Tp*qok/mhe) 
+    vm   = sqrt(2.d0*kb*meta(0)%Tp*qok/mhe3) 
     ! Laser frequency (1083 nm)
     Omeg = ppi*Vcel / lasr%Lwave
     ! Doppler Width due to metastable velocity distribution
     Dop  = Omeg * Vm / (ppi*Vcel)
     ! Laser coefficient 
-    gammak = sqrt(pi) * fineS * fosc(1,3) * lasr%Is / (me*Omeg*Dop*lasr%Sec)
+    gammak = sqrt(pi) * fineS * 0.5391 * lasr%Is / (me*Omeg*Dop*lasr%Sec)
     !************************
     IF (lasr%OnOff.EQ.1 .and. Clock%SumDt.GT.lasr%Stime) THEN
        switch = 1
@@ -63,7 +63,7 @@ CONTAINS
                       nu_ij = Tij(j,i,1) * gammak
                       Updens(1,i) = Updens(1,i) + Dt * nu_ij * ( pop(2)%Ni(j) - pop(1)%Ni(i) )
                       Updens(2,j) = Updens(2,j) + Dt * nu_ij * ( pop(1)%Ni(i) - pop(2)%Ni(j) )
-                      IF (nu_ij.GT.MaxR) MaxR = nu_ij
+                      IF (nu_ij.GT.MaxR) MaxR = nu_ij ! Variation of the time step (max of s-1)
                    END IF
                 END IF
              END DO    

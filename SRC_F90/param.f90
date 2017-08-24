@@ -73,7 +73,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
   !CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/Steady_S/steady_10/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/20Torr/HF_mode/Power_reg/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Test/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
@@ -85,15 +85,16 @@ MODULE MOD_PARAM
   TYPE(Species), DIMENSION(0:NumMeta) :: meta ! (0) --> fundamental state
   TYPE(Excited), DIMENSION(2) :: pop
 
-  REAL(DOUBLE), PARAMETER :: kb  = 1.3807d-23 ! Boltzmann constant (m2 kg s-2 K-1)
-  REAL(DOUBLE), PARAMETER :: qe  = 1.602d-19  ! Elementary charge (C)
-  REAL(DOUBLE), PARAMETER :: koq = kb/qe      ! conversion to eV
-  REAL(DOUBLE), PARAMETER :: qok = qe/kb      ! conversion to K
-  REAL(DOUBLE), PARAMETER :: me  = 9.109d-31  ! Electron mass (kg)
+  REAL(DOUBLE), PARAMETER :: kb  = 1.3807d-23    ! Boltzmann constant (m2 kg s-2 K-1)
+  REAL(DOUBLE), PARAMETER :: qe  = 1.602d-19     ! Elementary charge (C)
+  REAL(DOUBLE), PARAMETER :: koq = kb/qe         ! conversion to eV
+  REAL(DOUBLE), PARAMETER :: qok = qe/kb         ! conversion to K
+  REAL(DOUBLE), PARAMETER :: me  = 9.109d-31     ! Electron mass (kg)
   REAL(DOUBLE), PARAMETER :: qome= qe/me
-  REAL(DOUBLE), PARAMETER :: mi  = 1.672d-27  ! Proton mass (kg)
-  REAL(DOUBLE), PARAMETER :: mhe = 4.002*mi   ! Helium mass (kg)
-  REAL(DOUBLE), PARAMETER :: eps = 8.8542d-12 ! Permittivity of free space (F.m-1)
+  REAL(DOUBLE), PARAMETER :: mi  = 1.660539d-27  ! Atomic Mass Unit (kg)
+  REAL(DOUBLE), PARAMETER :: mhe = 4.032980*mi   ! Helium mass of isotope 4He(kg)
+  REAL(DOUBLE), PARAMETER :: mhe3= 3.024315*mi   ! Helium mass of isotope 3He(kg)
+  REAL(DOUBLE), PARAMETER :: eps = 8.8542d-12    ! Permittivity of free space (F.m-1)
   REAL(DOUBLE), PARAMETER :: Pi  = 4*ATAN(1.d0)
   REAL(DOUBLE), PARAMETER :: PPi = 2.d0*Pi 
   REAL(DOUBLE), PARAMETER :: gama= dsqrt(2.d0*qome)

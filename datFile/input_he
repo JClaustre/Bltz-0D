@@ -3,7 +3,7 @@
 1.505E+01	  E (V/cm)	Electric field
 4.000E+18   0	  Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
 1.356E+07   0	  f (Hz)	Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
-2.000E+01	  prs (Torr)	Pressure
+1.837E+00	  prs (Torr)	Pressure
 3.000E+02  600	  Tp (K)	Temperature + Tp at tube boundary
 1.200E+00	  Tpe (eV)	Electronic Temperature
 0.100E+00	  Ra (cm)	Cylinder Radius
