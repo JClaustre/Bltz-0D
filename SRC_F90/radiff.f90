@@ -22,13 +22,15 @@ CONTAINS
     TYPE(Species), DIMENSION(0:)   , INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
     !**** LOCAL ***
-    INTEGER :: i, j
+    INTEGER :: i, j, modulo
     REAL(DOUBLE) :: Eij, damp, EscapF, emitF
     REAL(DOUBLE) :: Kor, Gcol, Gdop, Gcd, Rate
     Rate=0.d0 ; diag(3)%Tx(:)=0.d0
     diag(3)%InM2 =0.d0 ; diag(3)%OutM2 =0.d0 ; diag(3)%InM1 =0.d0
+    modulo = 2000
 
-    IF (mod(iter,2000)==0) THEN
+    !**** Open File to write Spectra every 2000 iterations
+    IF (mod(iter,modulo)==0) THEN
        OPEN(UNIT=99,FILE=TRIM(ADJUSTL(DirFile))//'spectra.dat',ACTION="WRITE",STATUS="UNKNOWN")
     END IF
 
@@ -57,7 +59,7 @@ CONTAINS
              emitF = meta(i)%Aij(j) * EscapF
 
              !**** Write in File Emission spectra *** 
-             IF (mod(iter,2000)==0) THEN
+             IF (mod(iter,modulo)==0) THEN
                 write(99,"(2ES15.4,2A)") meta(i)%ondemit(j), emitF*meta(i)%Ni*1d-6, meta(i)%Name, meta(j)%Name
              END IF
              !***************************************
@@ -99,7 +101,8 @@ CONTAINS
        END DO
     END DO
 
-    IF (mod(iter,2000)==0) THEN
+    !**** Close File "Spectra" with the corresponding iteration modulo
+    IF (mod(iter,modulo)==0) THEN
        CLOSE(99)
     END IF
 

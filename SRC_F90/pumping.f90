@@ -29,8 +29,8 @@ CONTAINS
     switch = 0 ; errmax = 9.0d-7
     N1 = real(Npop1) ; N2 = real(Npop2)
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
-    pop(1)%T_relax = 1.d0/ (meta(1)%Damb / (sys%Ra/2.405d0)**2)
-    pop(2)%T_relax = 1.d0/ (3.2d06*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
+    !pop(1)%T_relax = 1.d0/ (meta(1)%Damb / (sys%Ra/2.405d0)**2)
+    !pop(2)%T_relax = 1.d0/ (3.2d06*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
     pop(1)%tau_e   = 1.d0/ (3.75d6*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
     pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s) (cf. Nacher 1985)
     pop(1)%Tr      = 100.d0 ! (s)
@@ -43,7 +43,7 @@ CONTAINS
     ! Doppler Width due to metastable velocity distribution
     Dop  = Omeg * Vm / (ppi*Vcel)
     ! Laser coefficient 
-    gammak = sqrt(pi) * fineS * 0.5391 * lasr%Is / (me*Omeg*Dop*lasr%Sec)
+    gammak = sqrt(pi) * fineS * 0.5391d0 * lasr%Is / (me*Omeg*Dop*lasr%Sec)
     !************************
     IF (lasr%OnOff.EQ.1 .and. Clock%SumDt.GT.lasr%Stime) THEN
        switch = 1
@@ -66,12 +66,12 @@ CONTAINS
                       IF (nu_ij.GT.MaxR) MaxR = nu_ij ! Variation of the time step (max of s-1)
                    END IF
                 END IF
-             END DO    
-          END IF
-          !**** Update A_i sublevels due to metastability exchange between A_k sublevels ***
-          IF (j.LE.Npop1) THEN
-             Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) &
-                  * pop(1)%Ni(j) / (18.d0*pop(1)%tau_e)
+             END DO
+             !**** Update A_i sublevels due to metastability exchange between A_k sublevels ***
+             IF (j.LE.Npop1) THEN
+                Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) &
+                     * pop(1)%Ni(j) / (18.d0*pop(1)%tau_e)
+             END IF
           END IF
        END DO
     END DO
@@ -119,8 +119,9 @@ CONTAINS
        !E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
        E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
        !IF (E_2P3.LE. errmax) THEN
-       pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te )!&
-            !- pop(1)%polarz/pop(1)%Tr)
+       !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
+       pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
+            - pop(1)%polarz/pop(1)%Tr)
        !END IF
        meta(1)%NStart = meta(1)%Ni
        meta(3)%NStart = meta(3)%Ni

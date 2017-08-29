@@ -72,8 +72,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  !CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/Steady_S/steady_10/"
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Test/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/0.3_Torr/Steady_S/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
