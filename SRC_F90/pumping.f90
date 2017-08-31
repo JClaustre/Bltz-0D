@@ -115,7 +115,7 @@ CONTAINS
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
 
     !**** Calculate the polarization of the Helium gas ***
-    IF (mod(iter,1000) == 0 .and. switch==1) THEN
+    IF (mod(iter,2000) == 0 .and. switch==1) THEN
        !E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
        E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
        !IF (E_2P3.LE. errmax) THEN
