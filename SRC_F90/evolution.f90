@@ -47,7 +47,7 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-10
+    MxDt   = 1d-09
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
@@ -246,8 +246,8 @@ CONTAINS
     write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
     write(99,"(A)")""
     
-    write(99,"(A,3(A,I4))") "Today : ",Clock%Date(3),"/",Clock%Date(2),"/",Clock%Date(1)
-    write(99,"(A,3(A,I2))") "Hour : ", Clock%Date(5),"h ",Clock%Date(6),"min ",Clock%Date(7)
+    write(99,"(3(A,I4))") "Today : ",Clock%Date(3),"/",Clock%Date(2),"/",Clock%Date(1)
+    write(99,"(3(A,I2))") "Hour : ", Clock%Date(5),"h ",Clock%Date(6),"min ",Clock%Date(7)
     write(99,"(A)") ""
     write(99,"(A)") "SYSTEM PARAMETERS"
     write(99,"(A)") "--------------------"
