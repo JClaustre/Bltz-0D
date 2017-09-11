@@ -20,15 +20,19 @@ CONTAINS
     TYPE(Excited), DIMENSION(2), INTENT(INOUT) :: pop
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL
-    INTEGER :: i, j, k, switch
-    REAL(DOUBLE) :: Dt, nu_ij, E_meta, E_2P3, errmax
+    INTEGER :: i, j, k, switch, Niter
+    REAL(DOUBLE) :: Dt, nu_ij, E_meta, Dt_p, E_max
     REAL(DOUBLE) :: gammak, Dop, Omeg, vm
     REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
     !**************************
-    switch = 0 ; errmax = 9.0d-7
+    switch = 0 ! Laser On (1) or Off (0) 
     N1 = real(Npop1) ; N2 = real(Npop2)
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
+
+    E_max = 2d-4 ; Dt_p = 1d-6 ! E_max == percentage (limit) of variation of DAi/Dt.
+    Niter = int(Dt_p / Dt) ! Calcul Niter for 1 micro-sec (== Dt_p).
+
     !pop(1)%T_relax = 1.d0/ (meta(1)%Damb / (sys%Ra/2.405d0)**2)
     !pop(2)%T_relax = 1.d0/ (3.2d06*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
     pop(1)%tau_e   = 1.d0/ (3.75d6*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
@@ -115,16 +119,15 @@ CONTAINS
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
 
     !**** Calculate the polarization of the Helium gas ***
-    IF (mod(iter,2000) == 0 .and. switch==1) THEN
-       !E_meta = ABS(1.d0 - meta(1)%NStart / meta(1)%Ni)
-       E_2P3  = ABS(1.d0 - meta(3)%NStart / meta(3)%Ni)
-       !IF (E_2P3.LE. errmax) THEN
-       !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
-       pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
-            - pop(1)%polarz/pop(1)%Tr)
-       !END IF
-       meta(1)%NStart = meta(1)%Ni
-       meta(3)%NStart = meta(3)%Ni
+    IF (mod(iter,Niter) == 0 .and. switch==1) THEN
+       E_meta = ABS(pop(1)%Ni(1)/meta(1)%NStart - 1d0)
+       IF (E_meta.LE. E_max) THEN
+          !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
+          pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
+               - pop(1)%polarz/pop(1)%Tr)
+       END IF
+       meta(1)%NStart = pop(1)%Ni(1)
+       print*, "polariz : DT iter = ", Niter, " P= ", pop(1)%polarz, " err= ", E_meta
     END IF
 
   END Subroutine Sublev_coll
