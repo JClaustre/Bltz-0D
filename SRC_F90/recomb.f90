@@ -14,9 +14,10 @@ MODULE MOD_RECOMB
 CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Recomb (sys, meta, U, Fi, diag)
+  SUBROUTINE Recomb (sys, meta, Neut, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
@@ -53,6 +54,8 @@ CONTAINS
     !**** Ref. Branching ratio in Santos et al (j.phys D:47 (2014)) 
     Do i = 1, 4
        meta(i)%Updens = meta(i)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
+       !**** UpDate neutral density for polarization
+       !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
     END Do
     !**** Energy conservation Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
@@ -147,10 +150,11 @@ CONTAINS
   !***********************************************************************
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
-  SUBROUTINE Conv_3Body (meta, ion)
+  SUBROUTINE Conv_3Body (meta, ion, Neut)
     !INTENT
     TYPE(Species), DIMENSION(0:), INTENT(InOut) :: meta
     TYPE(Species), DIMENSION(:) , INTENT(InOUT) :: ion
+    TYPE(Species), DIMENSION(2) , INTENT(InOUT) :: Neut
     !LOCAL
     REAL(DOUBLE) :: eta, Src, Tp, excim, ratx
     Tp = meta(0)%Tp * qok
@@ -163,6 +167,9 @@ CONTAINS
     IF (ion(1)%Ni .GT. 0.d0) THEN
        ion(1)%Updens = ion(1)%Updens - Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens + Clock%Dt * Src
+       !**** UpDate neutral density for polarization
+       !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Src
+       !Neut(2)%Updens = Neut(2)%Updens + 2.d0 * Clock%Dt * Src
        !**** Energy conservation Diagnostic
        diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************** Diagnostic for relative importance of reactions (m-3/s)
@@ -181,6 +188,9 @@ CONTAINS
     IF (ion(2)%Ni .GT. 0.d0) THEN
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
+       !**** UpDate neutral density for polarization
+       !Neut(1)%Updens = Neut(1)%Updens + 2.d0 * Clock%Dt * Src
+       !Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * Src
        !**** Energy conservation Diagnostic
        diag(7)%EnProd = diag(7)%EnProd + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************** Diagnostic for relative importance of reactions (m-3/s)
@@ -199,6 +209,9 @@ CONTAINS
        excim = 1.6d-44 * meta(3)%Ni * meta(0)%Ni**2
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
+       !**** UpDate neutral density for polarization
+       !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * excim
+       !Neut(2)%Updens = Neut(2)%Updens + 2.d0 * Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(3)%Ni
        IF (ratx .GT. maxR) maxR = ratx
@@ -211,6 +224,9 @@ CONTAINS
        excim = 3.6d-20 * ion(3)%Ni * meta(0)%Ni
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
+       !**** UpDate neutral density for polarization
+       !Neut(1)%Updens = Neut(1)%Updens + 2.d0 * Clock%Dt * excim
+       !Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(3)%Ni
        IF (ratx .GT. maxR) maxR = ratx

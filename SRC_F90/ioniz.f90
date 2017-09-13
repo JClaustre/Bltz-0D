@@ -95,9 +95,10 @@ CONTAINS
 
   !***********************************************************************
   !**** Second electron with 0 energy ***
-  SUBROUTINE Ioniz_100 (sys, meta, U, Fi, diag)
+  SUBROUTINE Ioniz_100 (sys, meta, Neut, U, Fi, diag)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
@@ -168,6 +169,11 @@ CONTAINS
           END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
           ion(1)%UpDens  = ion(1)%UpDens  + SubDt * Src * coef1 * Dx
+          !**** UpDate neutral density for polarization
+          IF (i == 0) THEN
+             !Neut(2)%Updens = Neut(2)%Updens + SubDt * Src * coef1 * Dx
+          END IF
+          !*****************
 
           ratx = Src * Dx * gama
           IF (ratx .GT. maxR) maxR = ratx
@@ -197,9 +203,10 @@ CONTAINS
   ! **** Second electron with 0 energy from excimer He2* ***
   ! **** He2+ + e + e <<-->> He2* + e 
   ! ****                -->> He(2S3) + He + e
-  SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi, diag)
+  SUBROUTINE Ioniz_Dimer100 (sys, ion, Neut, U, Fi, diag)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2), INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(:), INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
@@ -298,6 +305,10 @@ CONTAINS
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
     ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
+    !**** UpDate neutral density for polarization
+    !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * br*Sr * Dx
+    !*****************
+
   END SUBROUTINE Ioniz_Dimer100
   !***********************************************************************
 

@@ -19,9 +19,10 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Totally explicit driscretization but a little bit restrictive
   !for the time step ***
-  SUBROUTINE Exc_Begin(sys, meta, U, Fi, diag)
+  SUBROUTINE Exc_Begin(sys, meta, Neut, U, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
@@ -129,6 +130,12 @@ CONTAINS
              !**** UpDate Density
              meta(i)%UpDens = meta(i)%UpDens + Clock%Dt*(Sd*meta(j)%Ni - Sx*meta(i)%Ni)
              meta(j)%UpDens = meta(j)%UpDens + Clock%Dt*(Sx*meta(i)%Ni - Sd*meta(j)%Ni)
+             !**** Update Neutral density for polarized ground state
+             if (i==0.and.j.NE.1) THEN
+                Neut(1)%UpDens = Neut(1)%UpDens + Clock%Dt*Sd*meta(j)%Ni
+                Neut(2)%UpDens = Neut(2)%UpDens + Clock%Dt*Sx*meta(i)%Ni
+             END if
+             !*****************
 
              if (Sd .GT. MaxR) MaxR = Sd
              IF (Sx .GT. MaxR) MaxR = Sx
@@ -485,9 +492,10 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** He2* + e --> 2He + e ***
-  SUBROUTINE Dexc_Dimer(sys, U, ion, Fi, diag)
+  SUBROUTINE Dexc_Dimer(sys, U, ion, Neut, Fi, diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(NumIon), INTENT(INOUT) :: ion
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
@@ -536,6 +544,9 @@ CONTAINS
     !*****************
     !**** UpDate Density ***
     ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
+    !**** UpDate neutral density for polarization
+    !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Sd*ion(Nion)%Ni * 2.d0
+    !*****************
 
     if (Sd .GT. MaxR) MaxR = Sd
     diag(15)%Tx(1) = Sd*ion(Nion)%Ni

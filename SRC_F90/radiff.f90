@@ -14,11 +14,12 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Radiative transfer ***
-  SUBROUTINE Radiat (sys, meta, Fosc, diag, iter)
+  SUBROUTINE Radiat (sys, meta, Neut, Fosc, diag, iter)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
     INTEGER, INTENT(IN) :: iter
     Type(Diagnos), DIMENSION(:)    , INTENT(INOUT) :: diag
+    TYPE(Species), DIMENSION(2)    , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:)   , INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
     !**** LOCAL ***
@@ -46,13 +47,13 @@ CONTAINS
                 Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
                 Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
                 Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
-                IF (Gcd/Gcol .GT. 8.d0) THEN
-                   EscapF = Gcol * erf(Gcd/Gcol)
-                   !print*, '>10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
-                ELSE
-                   EscapF = Gdop / exp(Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
-                   !print*, '<10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
-                END IF
+                !IF (Gcd/Gcol .GE. 8.d0) THEN
+                !   EscapF = Gcol * erf(Gcd/Gcol)
+                !   !print*, '>8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
+                !ELSE
+                EscapF = Gdop * exp(-Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
+                   !print*, '<8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF, Gcd/Gcol
+                !END IF
              ELSE
                 EscapF = 1.d0
              END IF
@@ -67,6 +68,11 @@ CONTAINS
                 meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                 meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
              END IF
+             !**** UpDate neutral density for polarization
+             IF (i.NE.1.and.j==0) THEN
+                !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * emitF * meta(i)%Ni
+             END IF
+             !*****************
              !**** Energy conservation Diagnostic ***
              diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
              !**** Rate calcul for adaptative time-step ***

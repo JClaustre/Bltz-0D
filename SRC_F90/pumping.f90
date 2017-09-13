@@ -11,13 +11,14 @@ MODULE MOD_PUMP
 
 CONTAINS
 
-  Subroutine Sublev_coll (Clock,meta,pop,Tij,lasr,iter)
+  Subroutine Sublev_coll (Clock,meta,pop,Neut,Tij,lasr,iter)
     !INTENT
     INTEGER      , INTENT(IN) :: iter
     TYPE(TIME)   , INTENT(IN) :: Clock
     TYPE(Laser)  , INTENT(IN) :: lasr
     REAL(DOUBLE) , DIMENSION(Npop2,Npop1,3) :: Tij
     TYPE(Excited), DIMENSION(2), INTENT(INOUT) :: pop
+    TYPE(Species), DIMENSION(2), INTENT(IN) :: Neut
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL
     INTEGER :: i, j, k, switch, Niter
@@ -124,7 +125,8 @@ CONTAINS
        IF (E_meta.LE. E_max) THEN
           !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
           pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
-               - pop(1)%polarz/pop(1)%Tr)
+               - pop(1)%polarz/pop(1)%Tr) - (pop(1)%polarz * Neut(1)%UpDens / meta(0)%Ni) &
+               * (pop(1)%Te/20.d0)/(Niter*Dt)
        END IF
        meta(1)%NStart = pop(1)%Ni(1)
        print*, "polariz : DT iter = ", Niter, " P= ", pop(1)%polarz, " err= ", E_meta
