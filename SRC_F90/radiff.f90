@@ -48,10 +48,10 @@ CONTAINS
                 Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
                 IF (Gcd/Gcol .GT. 8.d0) THEN
                    EscapF = Gcol * erf(Gcd/Gcol)
-                   !print*, '>10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
+                   !print*, '>8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF,Gcd/Gcol
                 ELSE
-                   EscapF = Gdop / exp(Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
-                   !print*, '<10', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
+                   EscapF = Gdop * exp(-Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
+                   !print*, '<8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF,Gcd/Gcol
                 END IF
              ELSE
                 EscapF = 1.d0
