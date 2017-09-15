@@ -171,7 +171,7 @@ CONTAINS
           ion(1)%UpDens  = ion(1)%UpDens  + SubDt * Src * coef1 * Dx
           !**** UpDate neutral density for polarization
           IF (i == 0) THEN
-             !Neut(2)%Updens = Neut(2)%Updens + SubDt * Src * coef1 * Dx
+             Neut(2)%Updens = Neut(2)%Updens + SubDt * Src * coef1 * Dx
           END IF
           !*****************
 
@@ -306,7 +306,7 @@ CONTAINS
     meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
     ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
     !**** UpDate neutral density for polarization
-    !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * br*Sr * Dx
+    Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * br*Sr * Dx
     !*****************
 
   END SUBROUTINE Ioniz_Dimer100

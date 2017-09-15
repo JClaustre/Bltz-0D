@@ -88,7 +88,7 @@ CONTAINS
        !**** Radiative transfert ***
        CALL Radiat       (sys, meta, Ngpl, Fosc, Diag, l)
        !**** Diffusion ***
-       CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
+       CALL Diffuz_Gaine (sys, meta, ion,elec,Ngpl,F,U, diag)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
@@ -486,8 +486,8 @@ CONTAINS
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
             "| polariz: ", pop(1)%polarz*100.d0," | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td) | N+ ", Ngpl(1)%UpDens, &
-            "| N- ", Ngpl(2)%UpDens, "cm-3 \r"
+            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td) | N+ ", Ngpl(1)%UpDens*1e-6, &
+            "| N- ", Ngpl(2)%UpDens*1e-6, "cm-3 \r"
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

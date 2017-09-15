@@ -56,7 +56,7 @@ CONTAINS
           meta(0)%Updens = meta(0)%Updens - Clock%Dt * asso
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
           !**** UpDate neutral density for polarization
-          !Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * asso
+          Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * asso
           !**** Energy conservation Diagnostic
           Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
           !***************
@@ -98,7 +98,7 @@ CONTAINS
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** UpDate neutral density for polarization
              IF (i.GT.1.and.j.GT.1.and.l==1) THEN
-                !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn
+                Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn
              END IF
              !**** Energy conservation Diagnostic
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
@@ -166,12 +166,12 @@ CONTAINS
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
              !**** UpDate neutral density for polarization
              IF (i==0) THEN
-                !IF (l==1) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 3.d0
-                !IF (l==2) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 2.d0
+                IF (l==1) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 3.d0
+                IF (l==2) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 2.d0
              END IF
              IF (i.GT.1) THEN
-                !IF (l==1) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 2.d0
-                !IF (l==2) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn
+                IF (l==1) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 2.d0
+                IF (l==2) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn
              END IF
              !*****************
              !**** Energy conservation Diagnostic

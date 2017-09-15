@@ -55,7 +55,7 @@ CONTAINS
     Do i = 1, 4
        meta(i)%Updens = meta(i)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
        !**** UpDate neutral density for polarization
-       !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
+       Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * (tx(i)*recmb) * Dx
     END Do
     !**** Energy conservation Diagnostic
     diag(8)%EnLoss = diag(8)%EnLoss + (energI-energF)
@@ -168,8 +168,8 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens - Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens + Clock%Dt * Src
        !**** UpDate neutral density for polarization
-       !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Src
-       !Neut(2)%Updens = Neut(2)%Updens + 2.d0 * Clock%Dt * Src
+       Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Src
+       Neut(2)%Updens = Neut(2)%Updens + 2.d0 * Clock%Dt * Src
        !**** Energy conservation Diagnostic
        diag(7)%EnLoss = diag(7)%EnLoss + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************** Diagnostic for relative importance of reactions (m-3/s)
@@ -189,8 +189,8 @@ CONTAINS
        ion(1)%Updens = ion(1)%Updens + Clock%Dt * Src
        ion(2)%Updens = ion(2)%Updens - Clock%Dt * Src
        !**** UpDate neutral density for polarization
-       !Neut(1)%Updens = Neut(1)%Updens + 2.d0 * Clock%Dt * Src
-       !Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * Src
+       Neut(1)%Updens = Neut(1)%Updens + 2.d0 * Clock%Dt * Src
+       Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * Src
        !**** Energy conservation Diagnostic
        diag(7)%EnProd = diag(7)%EnProd + Clock%Dt * Src * abs(ion(1)%En-ion(2)%En)
        !***************** Diagnostic for relative importance of reactions (m-3/s)
@@ -210,8 +210,8 @@ CONTAINS
        meta(3)%UpDens = meta(3)%UpDens - Clock%Dt * excim
        ion(NumIon)%UpDens  = ion(NumIon)%UpDens  + Clock%Dt * excim
        !**** UpDate neutral density for polarization
-       !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * excim
-       !Neut(2)%Updens = Neut(2)%Updens + 2.d0 * Clock%Dt * excim
+       Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * excim
+       Neut(2)%Updens = Neut(2)%Updens + 2.d0 * Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(3)%Ni
        IF (ratx .GT. maxR) maxR = ratx
@@ -225,8 +225,8 @@ CONTAINS
        meta(3)%UpDens = meta(3)%UpDens + Clock%Dt * excim
        ion(3)%UpDens  = ion(3)%UpDens  - Clock%Dt * excim
        !**** UpDate neutral density for polarization
-       !Neut(1)%Updens = Neut(1)%Updens + 2.d0 * Clock%Dt * excim
-       !Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * excim
+       Neut(1)%Updens = Neut(1)%Updens + 2.d0 * Clock%Dt * excim
+       Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * excim
        !**** Rate calcul for adaptative time-step
        ratx = excim / meta(3)%Ni
        IF (ratx .GT. maxR) maxR = ratx

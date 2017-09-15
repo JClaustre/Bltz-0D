@@ -131,10 +131,10 @@ CONTAINS
              meta(i)%UpDens = meta(i)%UpDens + Clock%Dt*(Sd*meta(j)%Ni - Sx*meta(i)%Ni)
              meta(j)%UpDens = meta(j)%UpDens + Clock%Dt*(Sx*meta(i)%Ni - Sd*meta(j)%Ni)
              !**** Update Neutral density for polarized ground state
-             if (i==0.and.j.NE.1) THEN
+             IF (i == 0) THEN
                 Neut(1)%UpDens = Neut(1)%UpDens + Clock%Dt*Sd*meta(j)%Ni
                 Neut(2)%UpDens = Neut(2)%UpDens + Clock%Dt*Sx*meta(i)%Ni
-             END if
+             END IF
              !*****************
 
              if (Sd .GT. MaxR) MaxR = Sd
@@ -545,7 +545,7 @@ CONTAINS
     !**** UpDate Density ***
     ion(Nion)%UpDens = ion(Nion)%UpDens - Clock%Dt*Sd*ion(Nion)%Ni
     !**** UpDate neutral density for polarization
-    !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Sd*ion(Nion)%Ni * 2.d0
+    Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Sd*ion(Nion)%Ni * 2.d0
     !*****************
 
     if (Sd .GT. MaxR) MaxR = Sd

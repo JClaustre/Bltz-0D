@@ -47,16 +47,18 @@ CONTAINS
                 Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
                 Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
                 Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
-                !IF (Gcd/Gcol .GE. 8.d0) THEN
-                !   EscapF = Gcol * erf(Gcd/Gcol)
-                !   !print*, '>8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
-                !ELSE
-                EscapF = Gdop * exp(-Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
+                IF (Gcd/Gcol .GE. 8.d0) THEN
+                   EscapF = Gcol * erf(Gcd/Gcol)
+                   !print*, '>8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF
+                ELSE
+                   EscapF = Gdop * exp(-Gcd**2/Gcol**2) + Gcol * erf(Gcd/Gcol)
                    !print*, '<8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF, Gcd/Gcol
-                !END IF
+                END IF
              ELSE
                 EscapF = 1.d0
              END IF
+             !IF (i==4.or.i == 3) print*, "Radiff: ", meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Fosc(j,i), meta(i)%ondemit(j)
+
              emitF = meta(i)%Aij(j) * EscapF
 
              !**** Write in File Emission spectra *** 
@@ -70,7 +72,7 @@ CONTAINS
              END IF
              !**** UpDate neutral density for polarization
              IF (i.NE.1.and.j==0) THEN
-                !Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * emitF * meta(i)%Ni
+                Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * emitF * meta(i)%Ni
              END IF
              !*****************
              !**** Energy conservation Diagnostic ***
@@ -111,7 +113,6 @@ CONTAINS
     IF (mod(iter,modulo)==0) THEN
        CLOSE(99)
     END IF
-
   END SUBROUTINE Radiat
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -283,10 +284,11 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Charlotte Diffusion ***
-  SUBROUTINE Diffuz_Gaine (sys,meta,ion,elec,F,U,diag)
+  SUBROUTINE Diffuz_Gaine (sys,meta,ion,elec,Neut,F,U,diag)
     !INTENT
     TYPE(SysVar) , INTENT(IN)    :: sys
     TYPE(Species), INTENT(INOUT) :: elec
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     TYPE(Species), DIMENSION(:) , INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: F
@@ -331,6 +333,8 @@ CONTAINS
     ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
     meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
     meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
+
+
     SELECT CASE (NumIon) 
     CASE (3)   
        ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
@@ -353,6 +357,11 @@ CONTAINS
           mue = mue - Coef2 * (F(i+1)-F(i)) / sys%Dx
        END IF
     END DO
+
+    !**** UpDate neutral density for polarization
+    Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * (Sa + Sm + Smeta1 + Smeta2 + Smeta3)
+    !*****************
+
     F(sys%nx) = 0.d0
     elec%Dfree = De ; ion(1)%Dfree = Da ; ion(2)%Dfree = Dm 
     elec%mobl = mue ; ion(1)%mobl = mua ; ion(2)%mobl = mum 
