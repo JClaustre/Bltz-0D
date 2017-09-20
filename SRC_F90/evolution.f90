@@ -60,8 +60,8 @@ CONTAINS
        l = l + 1
        IF (modulo(l,2000)==0) THEN
           OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",ACTION="WRITE",STATUS="UNKNOWN")
-          WRITE(919,"(A,ES15.6)") "Rates for several reactions in the code. Time (μs) : ", Clock%SumDt*1d6
-          WRITE(919,"(A,2ES15.6)") "Pressure (Torr) & absorbed power (W/cm-3) : ", meta(0)%Prs, sys%Powr*1d-6
+          WRITE(919,"(A,ES12.3)") "Rates for several reactions in the code. Time (μs) : ", Clock%SumDt*1d6
+          WRITE(919,"(A,2ES12.3)") "Pressure (Torr) & absorbed power (W/cm-3) : ", meta(0)%Prs, sys%Powr*1d-6
           CLOSE(919)
        END IF
 
