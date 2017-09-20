@@ -14,8 +14,9 @@ MODULE MOD_PENNASS
 CONTAINS
 
   !***********************************************************************
-  SUBROUTINE Penn_Assoc (sys, meta, Neut, U, Fi, Diag)
+  SUBROUTINE Penn_Assoc (sys, meta, Neut, U, Fi, Diag, iter)
     !INTENT
+    INTEGER      , INTENT(IN) :: iter
     TYPE(SysVar) , INTENT(IN) :: sys
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: Diag
@@ -34,6 +35,12 @@ CONTAINS
     Dx = sys%Dx
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
+
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Associative Ionization : He* + He(1S)-> e + He2+"
+    END IF
 
     !**** Associative process
     DO i = 5, Nmeta
@@ -70,9 +77,19 @@ CONTAINS
              Diag(6)%Tx(2) = real(i)
           END IF
           Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
+          !***************
+          IF (i.GT.5.and.i.LE.15) THEN
+             IF (mod(iter,2000)==0) THEN
+                WRITE(919,"(A,3ES12.3)") meta(i)%Name, Sn(i)*meta(0)%Ni, asso, meta(i)%Ni
+             END IF
+          END IF
        END IF
     END DO
 
+ 
+    IF (mod(iter,2000)==0) THEN
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Penning Ionization : He* + He* -> e + He2+ || -> e + He + He+"
+    END IF
     !**** Penning process
     Rate=0.d0 ; Diag(5)%Tx(:)=0.d0
     diag(5)%OutM1 = 0.d0 ; diag(5)%OutM2 = 0.d0
@@ -128,6 +145,10 @@ CONTAINS
           !****************
           if(i==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(i)%Ni
           if(j==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(j)%Ni
+          !****************
+          IF (mod(iter,2000)==0) THEN
+             WRITE(919,"(2A,3ES12.3)") meta(i)%Name,meta(j)%Name, Penn / meta(i)%Ni, Penn, meta(i)%Ni
+          END IF
 
        END DO
     END DO
@@ -206,6 +227,7 @@ CONTAINS
 
     END SELECT
 
+    IF (mod(iter,2000)==0) CLOSE(919)
   END SUBROUTINE Penn_Assoc
   !***********************************************************************
 

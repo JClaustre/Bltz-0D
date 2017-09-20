@@ -58,6 +58,13 @@ CONTAINS
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
+       IF (modulo(l,2000)==0) THEN
+          OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          WRITE(919,"(A,ES15.6)") "Rates for several reactions in the code. Time (μs) : ", Clock%SumDt*1d6
+          WRITE(919,"(A,2ES15.6)") "Pressure (Torr) & absorbed power (W/cm-3) : ", meta(0)%Prs, sys%Powr*1d-6
+          CLOSE(919)
+       END IF
+
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0 ; Ngpl(:)%UpDens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
@@ -75,28 +82,28 @@ CONTAINS
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
-       CASE DEFAULT ; CALL Ioniz_100(sys, meta, Ngpl, U, F, diag)
+       CASE DEFAULT ; CALL Ioniz_100(sys, meta, Ngpl, U, F, diag, l)
        END SELECT
        !**** Ioniz Excimer *** 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, Ngpl, U, F, diag)
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, Ngpl, U, F, diag, l)
        !**** Dissociative Recombination ***
-       CALL Recomb       (sys, meta, Ngpl, U, F, Diag)
+       CALL Recomb       (sys, meta, Ngpl, U, F, Diag, l)
        !**** 3 Body ionic conversion ***
-       CALL Conv_3Body   (meta, ion, Ngpl)
+       CALL Conv_3Body   (meta, ion, Ngpl, l)
        !**** Penning + Associative ioniz ***
-       CALL Penn_Assoc   (sys, meta, Ngpl, U, F, Diag)
+       CALL Penn_Assoc   (sys, meta, Ngpl, U, F, Diag, l)
        !**** Radiative transfert ***
        CALL Radiat       (sys, meta, Ngpl, Fosc, Diag, l)
        !**** Diffusion ***
-       CALL Diffuz_Gaine (sys, meta, ion,elec,Ngpl,F,U, diag)
+       CALL Diffuz_Gaine (sys, meta, ion,elec,Ngpl,F,U, diag, l)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-       CASE (2) ; CALL Exc_Begin (sys, meta, Ngpl, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, Ngpl, U, F, diag, l)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
        !**** De-excit excimer molecule (He2*) ***
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, Ngpl, F, diag)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, Ngpl, F, diag, l)
        !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
 

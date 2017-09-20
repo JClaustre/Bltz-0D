@@ -19,8 +19,9 @@ CONTAINS
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Totally explicit driscretization but a little bit restrictive
   !for the time step ***
-  SUBROUTINE Exc_Begin(sys, meta, Neut, U, Fi, diag)
+  SUBROUTINE Exc_Begin(sys, meta, Neut, U, Fi, diag, iter)
     !INTENT
+    INTEGER      , INTENT(IN) :: iter
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
@@ -38,6 +39,11 @@ CONTAINS
     Dx = sys%Dx ; nx = sys%nx
     Ratx=0.d0 ; Ratd=0.d0 ; pop(1)%Tr = 0.d0
     !********************
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3) in Excitation & De-excitation :"
+    END IF
 
     !********************************************************
     DO i = 0, NumMeta-1
@@ -153,10 +159,19 @@ CONTAINS
              diag(10)%Tx(1) = diag(10)%Tx(1) + Sd*meta(j)%Ni
              !**** Calculation of the relaxation rate for MEOP
              pop(1)%Tr = pop(1)%Tr + 1.d0 / (Sx * meta(i)%Ni/meta(0)%Ni)
+             !*****************
+             IF (mod(iter,2000)==0) THEN
+                IF (i.LE.3.and.j.LE.3) THEN
+                   WRITE(919,"(2A,4ES12.3)") meta(i)%Name, meta(j)%Name, Sx, Sd, meta(i)%Ni, meta(j)%Ni
+                END IF
+             END IF
+             !*****************
 
           END IF
        END DO
     END DO
+
+    IF (mod(iter,2000)==0) CLOSE(919)
   END SUBROUTINE Exc_Begin
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -492,8 +507,9 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** He2* + e --> 2He + e ***
-  SUBROUTINE Dexc_Dimer(sys, U, ion, Neut, Fi, diag)
+  SUBROUTINE Dexc_Dimer(sys, U, ion, Neut, Fi, diag, iter)
     !INTENT
+    INTEGER      , INTENT(IN) :: iter
     TYPE(SysVar) , INTENT(IN) :: sys
     TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(NumIon), INTENT(INOUT) :: ion
@@ -514,6 +530,12 @@ CONTAINS
     CASE (3) 
        Nion = 3
     END SELECT
+    !********************
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates  & density (s-1 | m-3 s-1 | m-3) in De-excitation Excimer : He2* + e --> 2He + e:"
+    END IF
 
     coef1 = ion(Nion)%Ni * gama
     !********************************************************
@@ -550,6 +572,10 @@ CONTAINS
 
     if (Sd .GT. MaxR) MaxR = Sd
     diag(15)%Tx(1) = Sd*ion(Nion)%Ni
+    IF (mod(iter,2000)==0) THEN
+       WRITE(919,"(A,3ES12.3)") ion(Nion)%Name, Sd, Sd*ion(Nion)%Ni, ion(Nion)%Ni
+       CLOSE(919)
+    END IF
 
   END SUBROUTINE Dexc_Dimer
 
