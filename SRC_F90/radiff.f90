@@ -14,11 +14,12 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Radiative transfer ***
-  SUBROUTINE Radiat (sys, meta, Fosc, diag, iter)
+  SUBROUTINE Radiat (sys, meta, Neut, Fosc, diag, iter)
     !**** INTENT ***
     TYPE(SysVar) , INTENT(IN) :: sys
-    INTEGER, INTENT(IN) :: iter
+    INTEGER      , INTENT(IN) :: iter
     Type(Diagnos), DIMENSION(:)    , INTENT(INOUT) :: diag
+    TYPE(Species), DIMENSION(2)    , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:)   , INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(0:,0:), INTENT(IN)    :: Fosc
     !**** LOCAL ***
@@ -33,6 +34,12 @@ CONTAINS
     IF (mod(iter,modulo)==0) THEN
        OPEN(UNIT=99,FILE=TRIM(ADJUSTL(DirFile))//'spectra.dat',ACTION="WRITE",STATUS="UNKNOWN")
     END IF
+    !**** Open File to write Rates every 2000 iterations
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Radiative transitions "
+    END IF
 
     DO i = 3, NumMeta
        DO j = 0, i-1
@@ -46,7 +53,7 @@ CONTAINS
                 Gdop = 1.6d0 / ( Kor * dsqrt(pi*log(Kor)) )
                 Gcol = (2.0d0 / pi) * dsqrt( dsqrt(pi)*damp / Kor )
                 Gcd  = 2.0d0 * damp / ( pi * dsqrt(log(Kor)) )
-                IF (Gcd/Gcol .GT. 8.d0) THEN
+                IF (Gcd/Gcol .GE. 8.d0) THEN
                    EscapF = Gcol * erf(Gcd/Gcol)
                    !print*, '>8', i,j,meta(i)%name, meta(j)%Name, meta(i)%Aij(j), Kor, EscapF,Gcd/Gcol
                 ELSE
@@ -56,17 +63,32 @@ CONTAINS
              ELSE
                 EscapF = 1.d0
              END IF
+             !IF (i==4.or.i == 3) print*, "Radiff: ", meta(i)%Name, meta(j)%Name, &
+             !meta(i)%Aij(j), Fosc(j,i), meta(i)%ondemit(j)
+
              emitF = meta(i)%Aij(j) * EscapF
 
              !**** Write in File Emission spectra *** 
              IF (mod(iter,modulo)==0) THEN
-                write(99,"(2ES15.4,2A)") meta(i)%ondemit(j), emitF*meta(i)%Ni*1d-6, meta(i)%Name, meta(j)%Name
+                write(99,"(F7.1,ES15.4,2A)") meta(i)%ondemit(j)*1d9, (emitF*meta(i)%Ni*1d-6)/meta(i)%ondemit(j), &
+                     meta(i)%Name, meta(j)%Name
+             END IF
+             !***************************************
+             IF (i.EQ.3.and.j.LE.2) THEN
+                IF (mod(iter,2000)==0) THEN
+                   WRITE(919,"(2A,3ES12.3)") meta(i)%Name,meta(j)%Name, emitF, emitF*meta(i)%Ni, meta(i)%Ni
+                END IF
              END IF
              !***************************************
              IF (i.NE.3.or.j.NE.1) THEN
                 meta(i)%Updens = meta(i)%Updens - Clock%Dt* emitF * meta(i)%Ni
                 meta(j)%Updens = meta(j)%Updens + Clock%Dt* emitF * meta(i)%Ni
              END IF
+             !**** UpDate neutral density for polarization
+             IF (i.NE.1.and.j==0) THEN
+                Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * emitF * meta(i)%Ni
+             END IF
+             !*****************
              !**** Energy conservation Diagnostic ***
              diag(3)%EnLoss = diag(3)%EnLoss + Clock%Dt* emitF * meta(i)%Ni * Eij
              !**** Rate calcul for adaptative time-step ***
@@ -105,7 +127,7 @@ CONTAINS
     IF (mod(iter,modulo)==0) THEN
        CLOSE(99)
     END IF
-
+    IF (mod(iter,2000)==0) CLOSE(919)
   END SUBROUTINE Radiat
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -277,10 +299,12 @@ CONTAINS
 
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
   !**** Charlotte Diffusion ***
-  SUBROUTINE Diffuz_Gaine (sys,meta,ion,elec,F,U,diag)
+  SUBROUTINE Diffuz_Gaine (sys,meta,ion,elec,Neut,F,U,diag, iter)
     !INTENT
+    INTEGER      , INTENT(IN)    :: iter
     TYPE(SysVar) , INTENT(IN)    :: sys
     TYPE(Species), INTENT(INOUT) :: elec
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     TYPE(Species), DIMENSION(:) , INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: F
@@ -292,6 +316,13 @@ CONTAINS
     REAL(DOUBLE) :: Coef, Coef2, Coef3, ratx
     REAL(DOUBLE) :: Sa, Sm, Se, Smeta1, Smeta2, smeta3
     En = 0.d0 ; En2 = 0.d0 ; mue = 0.d0
+
+    !**** Open File to write Rates every 2000 iterations
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Diffusion "
+    END IF
 
     elec%Ni = 0.d0 ; elec%Tp = 0.d0
     DO i = 1, sys%nx
@@ -325,6 +356,8 @@ CONTAINS
     ion(2)%Updens  = ion(2)%Updens  - Clock%Dt * Sm
     meta(1)%Updens = meta(1)%Updens - Clock%Dt * Smeta1
     meta(2)%Updens = meta(2)%Updens - Clock%Dt * Smeta2
+
+
     SELECT CASE (NumIon) 
     CASE (3)   
        ion(NumIon)%Damb  = 7.102d-02 * 1d-4 * (meta(0)%Tp*qok)**(1.5d0) / meta(0)%Prs
@@ -347,10 +380,22 @@ CONTAINS
           mue = mue - Coef2 * (F(i+1)-F(i)) / sys%Dx
        END IF
     END DO
+
+    !**** UpDate neutral density for polarization
+    Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * (Sa + Sm + Smeta1 + Smeta2 + Smeta3)
+    !*****************
+
     F(sys%nx) = 0.d0
     elec%Dfree = De ; ion(1)%Dfree = Da ; ion(2)%Dfree = Dm 
     elec%mobl = mue ; ion(1)%mobl = mua ; ion(2)%mobl = mum 
-
+    
+    IF (mod(iter,2000)==0) THEN
+       WRITE(919,"(2A,ES12.3)") tabul ,"Diffusion Ambipolaire (s-1) : ", Damb / (sys%Ra/2.405d0)**2
+       WRITE(919,"(2A,ES12.3)") tabul ,"Diffusion He(2S3) (s-1) : ", meta(1)%Damb / (sys%Ra/2.405d0)**2
+       WRITE(919,"(2A,2ES12.3)") tabul,"Free Diffusion He+ & He2+ (m2/s) : ", ion(1)%Dfree, ion(2)%Dfree
+       WRITE(919,"(2A,ES12.3)") tabul ,"Free Diffusion electron (m2/s) : ", elec%Dfree
+    END IF
+    
     !**** Calcul du potentiel de gaine dans le cas de la diffusion 
     !**** ambipolaire ***
     Coef2 = 0.d0 ; Coef = (sys%Ra/2.405d0)**2
@@ -385,7 +430,8 @@ CONTAINS
     !*************** Diagnostic for metastable and 2^3S rates (s-1) for MEOP
     diag(9)%OutM1 = meta(1)%Damb / Coef
     !***************
-  END SUBROUTINE Diffuz_Gaine
+    IF (mod(iter,2000)==0) CLOSE(919)
+ END SUBROUTINE Diffuz_Gaine
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
 
 END MODULE MOD_RADIFF

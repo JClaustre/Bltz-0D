@@ -85,6 +85,7 @@ MODULE MOD_PARAM
   TYPE(Species), DIMENSION(NumIon)    :: ion
   TYPE(Species), DIMENSION(0:NumMeta) :: meta ! (0) --> fundamental state
   TYPE(Excited), DIMENSION(2) :: pop
+  TYPE(Species), DIMENSION(2) :: Ngpl ! Polarized Neutral (+ & -).
 
   REAL(DOUBLE), PARAMETER :: kb  = 1.3807d-23    ! Boltzmann constant (m2 kg s-2 K-1)
   REAL(DOUBLE), PARAMETER :: qe  = 1.602d-19     ! Elementary charge (C)

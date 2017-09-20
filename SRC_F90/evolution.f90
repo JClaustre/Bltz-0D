@@ -58,7 +58,14 @@ CONTAINS
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
        if (l == 200) CALL System_clock (t1, clock_rate)
        l = l + 1
-       meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0
+       IF (modulo(l,2000)==0) THEN
+          OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",ACTION="WRITE",STATUS="UNKNOWN")
+          WRITE(919,"(A,ES15.6)") "Rates for several reactions in the code. Time (μs) : ", Clock%SumDt*1d6
+          WRITE(919,"(A,2ES15.6)") "Pressure (Torr) & absorbed power (W/cm-3) : ", meta(0)%Prs, sys%Powr*1d-6
+          CLOSE(919)
+       END IF
+
+       meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0 ; Ngpl(:)%UpDens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
 
@@ -75,28 +82,28 @@ CONTAINS
        !**** Ioniz He+ ***
        SELECT CASE (IonX)
        CASE (1) ; CALL Ioniz_50     (sys, meta, U, F, diag)
-       CASE DEFAULT ; CALL Ioniz_100(sys, meta, U, F, diag)
+       CASE DEFAULT ; CALL Ioniz_100(sys, meta, Ngpl, U, F, diag, l)
        END SELECT
        !**** Ioniz Excimer *** 
-       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, U, F, diag)
+       IF (NumIon == 3) CALL Ioniz_Dimer100 (sys, ion, Ngpl, U, F, diag, l)
        !**** Dissociative Recombination ***
-       CALL Recomb       (sys, meta, U, F, Diag)
+       CALL Recomb       (sys, meta, Ngpl, U, F, Diag, l)
        !**** 3 Body ionic conversion ***
-       CALL Conv_3Body   (meta, ion)
+       CALL Conv_3Body   (meta, ion, Ngpl, l)
        !**** Penning + Associative ioniz ***
-       CALL Penn_Assoc   (sys, meta, U, F, Diag)
+       CALL Penn_Assoc   (sys, meta, Ngpl, U, F, Diag, l)
        !**** Radiative transfert ***
-       CALL Radiat       (sys, meta, Fosc, Diag, l)
+       CALL Radiat       (sys, meta, Ngpl, Fosc, Diag, l)
        !**** Diffusion ***
-       CALL Diffuz_Gaine (sys, meta, ion,elec,F,U, diag)
+       CALL Diffuz_Gaine (sys, meta, ion,elec,Ngpl,F,U, diag, l)
        !**** Excit + De-excit ***
        SELECT CASE (XcDx)
        CASE (1) ; CALL Exc_Equil     (sys, meta, U, F, diag)
-       CASE (2) ; CALL Exc_Begin (sys, meta, U, F, diag)
+       CASE (2) ; CALL Exc_Begin (sys, meta, Ngpl, U, F, diag, l)
        CASE DEFAULT ; CALL Exc_Impli     (sys, meta, U, F, diag)
        END SELECT
        !**** De-excit excimer molecule (He2*) ***
-       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, F, diag)
+       IF (NumIon == 3) CALL Dexc_Dimer (sys, U, ion, Ngpl, F, diag, l)
        !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
 
@@ -106,7 +113,7 @@ CONTAINS
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Tij,lasr,l)
+       CALL Sublev_coll(Clock,meta,pop,Ngpl,Tij,lasr,l)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
@@ -442,7 +449,7 @@ CONTAINS
     do i = 1, NumMeta
        !**** Update excited densities
        meta(i)%Ni = meta(i)%Ni + meta(i)%Updens
-       
+
        IF (meta(i)%Ni < 0.d0) THEN
           meta(i)%Ni = 0.d0 ; Mnul = Mnul + 1
        END IF
@@ -482,11 +489,12 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,ES10.2,A,ES10.2,A)",advance="no") &
+       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,ES10.2,2(A,ES10.2),A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
             "| polariz: ", pop(1)%polarz*100.d0," | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td) ", J_e, "(A m2)\r"
+            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td) | N+ ", Ngpl(1)%UpDens*1e-6, &
+            "| N- ", Ngpl(2)%UpDens*1e-6, "cm-3 \r"
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN

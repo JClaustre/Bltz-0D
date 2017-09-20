@@ -14,11 +14,13 @@ MODULE MOD_PENNASS
 CONTAINS
 
   !***********************************************************************
-  SUBROUTINE Penn_Assoc (sys, meta, U, Fi, Diag)
+  SUBROUTINE Penn_Assoc (sys, meta, Neut, U, Fi, Diag, iter)
     !INTENT
+    INTEGER      , INTENT(IN) :: iter
     TYPE(SysVar) , INTENT(IN) :: sys
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
     TYPE(Diagnos), DIMENSION(:) , INTENT(INOUT) :: Diag
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     REAL(DOUBLE) , DIMENSION(:) , INTENT(INOUT) :: Fi
     !LOCAL
@@ -33,6 +35,12 @@ CONTAINS
     Dx = sys%Dx
     Nmeta = 34
     If (NumMeta.LT.34) Nmeta = NumMeta
+
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Associative Ionization : He* + He(1S)-> e + He2+"
+    END IF
 
     !**** Associative process
     DO i = 5, Nmeta
@@ -54,6 +62,8 @@ CONTAINS
           meta(i)%Updens = meta(i)%Updens - Clock%Dt * asso
           meta(0)%Updens = meta(0)%Updens - Clock%Dt * asso
           ion(2)%Updens  = ion(2)%Updens  + Clock%Dt * asso
+          !**** UpDate neutral density for polarization
+          Neut(2)%Updens = Neut(2)%Updens + Clock%Dt * asso
           !**** Energy conservation Diagnostic
           Diag(6)%EnProd = Diag(6)%EnProd + Clock%Dt * asso * Eij
           !***************
@@ -67,9 +77,19 @@ CONTAINS
              Diag(6)%Tx(2) = real(i)
           END IF
           Diag(6)%Tx(1) = Diag(6)%Tx(1) + asso
+          !***************
+          IF (i.GT.5.and.i.LE.15) THEN
+             IF (mod(iter,2000)==0) THEN
+                WRITE(919,"(A,3ES12.3)") meta(i)%Name, Sn(i)*meta(0)%Ni, asso, meta(i)%Ni
+             END IF
+          END IF
        END IF
     END DO
 
+ 
+    IF (mod(iter,2000)==0) THEN
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Penning Ionization : He* + He* -> e + He2+ || -> e + He + He+"
+    END IF
     !**** Penning process
     Rate=0.d0 ; Diag(5)%Tx(:)=0.d0
     diag(5)%OutM1 = 0.d0 ; diag(5)%OutM2 = 0.d0
@@ -93,6 +113,10 @@ CONTAINS
                 Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
              END DO
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
+             !**** UpDate neutral density for polarization
+             IF (i.GT.1.and.j.GT.1.and.l==1) THEN
+                Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn
+             END IF
              !**** Energy conservation Diagnostic
              diag(5)%EnProd = diag(5)%EnProd + Eij*Clock%Dt * Penn
              !****************
@@ -121,6 +145,10 @@ CONTAINS
           !****************
           if(i==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(i)%Ni
           if(j==3) diag(5)%OutM2 = diag(5)%OutM2 + Penn/meta(j)%Ni
+          !****************
+          IF (mod(iter,2000)==0) THEN
+             WRITE(919,"(2A,3ES12.3)") meta(i)%Name,meta(j)%Name, Penn / meta(i)%Ni, Penn, meta(i)%Ni
+          END IF
 
        END DO
     END DO
@@ -157,6 +185,16 @@ CONTAINS
                 Fi(k) = Fi(k) + Clock%Dt * (Penn * (coef1 + coef2))
              END DO
              ion(l)%Updens = ion(l)%Updens + Clock%Dt * Penn
+             !**** UpDate neutral density for polarization
+             IF (i==0) THEN
+                IF (l==1) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 3.d0
+                IF (l==2) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 2.d0
+             END IF
+             IF (i.GT.1) THEN
+                IF (l==1) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn * 2.d0
+                IF (l==2) Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * Penn
+             END IF
+             !*****************
              !**** Energy conservation Diagnostic
              diag(4)%EnProd = diag(4)%EnProd + Eij*Clock%Dt * Penn
              diag(4)%SumTx = diag(4)%SumTx + Clock%Dt * Penn
@@ -189,6 +227,7 @@ CONTAINS
 
     END SELECT
 
+    IF (mod(iter,2000)==0) CLOSE(919)
   END SUBROUTINE Penn_Assoc
   !***********************************************************************
 

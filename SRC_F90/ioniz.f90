@@ -95,9 +95,11 @@ CONTAINS
 
   !***********************************************************************
   !**** Second electron with 0 energy ***
-  SUBROUTINE Ioniz_100 (sys, meta, U, Fi, diag)
+  SUBROUTINE Ioniz_100 (sys, meta, Neut, U, Fi, diag, iter)
     !**** INTENT ***
+    INTEGER      , INTENT(IN) :: iter
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2) , INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(0:), INTENT(INOUT) :: meta
     Type(Diagnos), DIMENSION(:) , INTENT(INOUT) :: diag
     REAL(DOUBLE) , DIMENSION(:) , INTENT(IN)    :: U
@@ -116,6 +118,12 @@ CONTAINS
     !**** else "Matte case" (remove electrons from 2nd cell) ***
     cas = 0
     cnst = dsqrt(2.d0/Dx**3.d0)
+    
+    IF (mod(iter,2000)==0) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+            ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
+       WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in Ionization (-> 2e + He+) :"
+    END IF
 
     DO i = 0, NumMeta
        coef1 = gama * meta(i)%Ni
@@ -168,6 +176,11 @@ CONTAINS
           END IF
           meta(i)%Updens = meta(i)%Updens - SubDt * Src * coef1 * Dx
           ion(1)%UpDens  = ion(1)%UpDens  + SubDt * Src * coef1 * Dx
+          !**** UpDate neutral density for polarization
+          IF (i == 0) THEN
+             Neut(2)%Updens = Neut(2)%Updens + SubDt * Src * coef1 * Dx
+          END IF
+          !*****************
 
           ratx = Src * Dx * gama
           IF (ratx .GT. maxR) maxR = ratx
@@ -189,7 +202,15 @@ CONTAINS
           END IF
           !***************
        END DO
+       IF (mod(iter,2000)==0) THEN
+          IF (i.LE.3) THEN
+             WRITE(919,"(A,3ES12.3)") meta(i)%Name, (Src*Dx*gama), (Src*coef1*Dx), meta(i)%Ni
+          END IF
+       END IF
     END DO
+
+    IF (mod(iter,2000)==0) CLOSE(919)
+   
   END SUBROUTINE Ioniz_100
   !***********************************************************************
 
@@ -197,9 +218,11 @@ CONTAINS
   ! **** Second electron with 0 energy from excimer He2* ***
   ! **** He2+ + e + e <<-->> He2* + e 
   ! ****                -->> He(2S3) + He + e
-  SUBROUTINE Ioniz_Dimer100 (sys, ion, U, Fi, diag)
+  SUBROUTINE Ioniz_Dimer100 (sys, ion, Neut, U, Fi, diag, iter)
     !**** INTENT ***
+    INTEGER      , INTENT(IN) :: iter
     TYPE(SysVar) , INTENT(IN) :: sys
+    TYPE(Species), DIMENSION(2), INTENT(INOUT) :: Neut
     TYPE(Species), DIMENSION(:), INTENT(INOUT) :: ion
     REAL(DOUBLE) , DIMENSION(:), INTENT(IN)    :: U
     REAL(DOUBLE) , DIMENSION(:), INTENT(INOUT) :: Fi
@@ -216,6 +239,9 @@ CONTAINS
     CASE (3) 
        Nion = 3
     END SELECT
+
+    IF (mod(iter,2000)==0) OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",&
+         ACTION="WRITE",POSITION="APPEND",STATUS='OLD')
 
     !**** if (0) then "Vidal case" (change the threshold) ***
     !**** else "Matte case" (remove electrons from 2nd cell) ***
@@ -293,11 +319,23 @@ CONTAINS
     !**** Diagnostic for metastable and 2^3S rates (m-3 s-1) for MEOP ***
     diag(13)%InM1 = br*Sr * Dx
     !***************
-    
+    IF (mod(iter,2000)==0) THEN
+          WRITE(919,"(A)") "Rates & density (s-1 | m-3 s-1 | m-3) in  He2+ + e + e <<-->> He2* + e || -->> He(2S3) + He + e :"
+          WRITE(919,"(2(A,3ES12.3))") ion(2)%Name, Sr*Dx/ion(2)%Ni, Sr*Dx, ion(2)%Ni, " | ",  Si*Dx/ion(2)%Ni, Si*Dx, ion(2)%Ni
+          WRITE(919,"(A,3ES12.3,A)") meta(1)%Name, (br*Sr*Dx/meta(1)%Ni), (br*Sr*Dx), meta(1)%Ni, " | "
+          WRITE(919,"(2(A,3ES12.3))") ion(Nion)%Name, ((1.-br)*Sr*Dx/ion(Nion)%Ni), (1.-br)*Sr*Dx, ion(Nion)%Ni, " | ",  &
+               Si*Dx/ion(Nion)%Ni, Si*Dx, ion(Nion)%Ni
+    END IF
+
     !**** br == branching ratio ***
     ion(Nion)%Updens = ion(Nion)%Updens + Clock%Dt * ((1.-br)*Sr-Si) * Dx
-    meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr * Dx
+    meta(1)%Updens   = meta(1)%Updens   + Clock%Dt * br*Sr*Dx
     ion(2)%Updens    = ion(2)%Updens    + Clock%Dt * (Si-Sr) * Dx
+    !**** UpDate neutral density for polarization
+    Neut(1)%Updens = Neut(1)%Updens + Clock%Dt * br*Sr * Dx
+    !*****************
+
+    IF (mod(iter,2000)==0) CLOSE(919)
   END SUBROUTINE Ioniz_Dimer100
   !***********************************************************************
 

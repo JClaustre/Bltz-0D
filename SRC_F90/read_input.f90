@@ -420,6 +420,7 @@ CONTAINS
           meta(i)%Aij(j) = 4.339d7 * Eij**2 * Fosc(j,i) * &
                meta(j)%Deg / meta(i)%Deg
           meta(i)%ondemit(j) = Hp * Vcel / (Eij*qe) ! (lambda = h * c / (Ef-Ei)  en metre)
+          !IF (i==4.or.i == 3) print*, "Init: ", meta(i)%Name, meta(j)%Name, meta(i)%Aij(j), Fosc(j,i), meta(i)%ondemit(j)
        END DO
     END DO
 
