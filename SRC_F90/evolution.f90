@@ -52,7 +52,7 @@ CONTAINS
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    meta(1)%NStart = pop(1)%Ni(1) ! For MEOP
+    meta(1)%NStart = meta(0)%Ni ! For MEOP
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)

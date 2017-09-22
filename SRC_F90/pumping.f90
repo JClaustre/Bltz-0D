@@ -13,7 +13,7 @@ CONTAINS
 
   Subroutine Sublev_coll (Clock,meta,pop,Neut,Tij,lasr,iter)
     !INTENT
-    INTEGER      , INTENT(IN) :: iter
+    INTEGER      , INTENT(INOUT) :: iter
     TYPE(TIME)   , INTENT(IN) :: Clock
     TYPE(Laser)  , INTENT(IN) :: lasr
     REAL(DOUBLE) , DIMENSION(Npop2,Npop1,3) :: Tij
@@ -22,7 +22,7 @@ CONTAINS
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL
     INTEGER :: i, j, k, switch, Niter
-    REAL(DOUBLE) :: Dt, nu_ij, E_meta, Dt_p, E_max
+    REAL(DOUBLE) :: Dt, nu_ij, E_meta, Dt_p, E_max, E_pop
     REAL(DOUBLE) :: gammak, Dop, Omeg, vm
     REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
@@ -119,19 +119,39 @@ CONTAINS
     END do
     meta(1)%Ni = tot1 ; meta(3)%Ni = tot2
 
-    !**** Calculate the polarization of the Helium gas ***
-    IF (mod(iter,Niter) == 0 .and. switch==1) THEN
-       E_meta = ABS(pop(1)%Ni(1)/meta(1)%NStart - 1d0)
-       IF (E_meta.LE. E_max) THEN
-          !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
-          pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
-               - pop(1)%polarz/pop(1)%Tr) - (pop(1)%polarz * Neut(1)%UpDens / meta(0)%Ni) &
-               * (pop(1)%Te/20.d0)/(Niter*Dt)
-       END IF
-       meta(1)%NStart = pop(1)%Ni(1)
-       print*, "polariz : DT iter = ", Niter, " P= ", pop(1)%polarz, " err= ", E_meta
+    !**** Calcul des populations des Ai avec P fixe.
+
+    pop(1)%polarz = 0.d0
+    !**** Calcul du critere d'arret
+    E_pop = ABS(tot1/meta(1)%NStart - 1d0)
+    meta(1)%NStart = tot1
+    IF (E_pop.LT.1d-10) THEN
+       OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"A_i.dat",ACTION="WRITE",POSITION="APPEND",STATUS="UNKNOWN")
+       do i = 1, 6
+          WRITE(919,"(ES12.3,I3,2ES19.10)") meta(0)%Prs, i, pop(1)%Ni(i), meta(i)%Ni
+       END do
+       CLOSE(919)
+       print*, "Critere d'arret = ", E_pop
+       iter = Clock%MaxIter
+    END IF
+    !**** Pour info sur l'evolution du critere d'arret:
+    IF (mod(iter,Niter*2) == 0 .and. switch==1) THEN
+       print*, "Critere d'arret = ", E_pop
     END IF
 
+!    !**** Calculate the polarization of the Helium gas ***
+!    IF (mod(iter,Niter) == 0 .and. switch==1) THEN
+!       E_meta = ABS(pop(1)%Ni(1)/meta(1)%NStart - 1d0)
+!       IF (E_meta.LE. E_max) THEN
+!          !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
+!          pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
+!               - pop(1)%polarz/pop(1)%Tr) - (pop(1)%polarz * Neut(1)%UpDens / meta(0)%Ni) &
+!               * (pop(1)%Te/20.d0)/(Niter*Dt)
+!       END IF
+!       meta(1)%NStart = pop(1)%Ni(1)
+!       print*, "polariz : DT iter = ", Niter, " P= ", pop(1)%polarz, " err= ", E_meta
+!    END IF
+!
   END Subroutine Sublev_coll
 
 END MODULE MOD_PUMP
