@@ -47,12 +47,12 @@ CONTAINS
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-1
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 2d-09
+    MxDt   = 4d-09
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
-    meta(1)%NStart = meta(0)%Ni ! For MEOP
+    meta(1)%NStart = pop(1)%Ni(4) ! For MEOP
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
@@ -284,6 +284,7 @@ CONTAINS
     write(99,"(A,F8.2)")    "* Gas Pressure (Torr): ", meta(0)%Prs
     write(99,"(2(A,F7.2))") "* Gas Temperature (°K | eV): ", meta(0)%Tp*qok, " | ", meta(0)%Tp
     write(99,"((A,F7.2))" ) "* Gas Tp at the tube bound (°K): ", meta(0)%Tp*qok
+    write(99,"(A,2ES11.3)") "* Gas dNg+ | dNg- (cm-3): ", Ngpl(1)%UpDens*1e-6, Ngpl(2)%UpDens*1e-6
     write(99,"(A)") ""
     write(99,"(A)") "ELEC | IONS PARAMETERS"
     write(99,"(A)") "--------------------"

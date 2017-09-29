@@ -74,7 +74,8 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir_2/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/Calcul_Ai_P/15.5_Torr_1mW_0.2_W/"
+!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
@@ -148,7 +149,7 @@ CONTAINS
        ALLOCATE ( ion(NumIon)%SecIon(2 ,nx) ) ; ion(NumIon)%SecIon(:,:) = 0.d0
        ALLOCATE ( ion(NumIon)%SecExc(1 ,nx) ) ; ion(NumIon)%SecExc(:,:) = 0.d0
     END SELECT
-    
+
     ALLOCATE ( Meta(0)%SecTot(nx) ) ; Meta(0)%SecTot(:) = 0.d0
     ALLOCATE ( Meta(0)%SecMtM(nx) ) ; Meta(0)%SecMtM(:) = 0.d0 ! Elastic momentum transfer C-S
     ALLOCATE ( Meta(1)%SecMtM(nx) ) ; Meta(1)%SecMtM(:) = 0.d0 ! Effective momentum transfer C-S
@@ -168,7 +169,7 @@ CONTAINS
   ! **********************************************************
   SUBROUTINE DelocArray()
     INTEGER :: i
-    
+
     DO i = 0, NumMeta
        DEALLOCATE ( Meta(i)%SecIon, Meta(i)%SecExc, Meta(i)%Aij, Meta(i)%ondemit )
     END DO
@@ -296,7 +297,7 @@ CONTAINS
        write(*,"(F4.1,A,I6,A)") tot, " sec ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 60 .and. tot .LE. 5*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-               "You Have time to ... check your email! estimated calculation: "
+            "You Have time to ... check your email! estimated calculation: "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 5*60.0 .and. tot .LE. 15*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
