@@ -121,7 +121,7 @@ CONTAINS
 
     !**** Calcul des populations des Ai avec P fixe.
     IF (lasr%OnOff.EQ.1)THEN
-       pop(1)%polarz = 0.002 ! Tagada ...
+       pop(1)%polarz = 1.00003 ! Tagada ...
        !**** Calcul du critere d'arret
        !E_pop = ABS(pop(1)%Ni(4)/meta(1)%NStart - 1d0)
        !IF (E_pop.LT.1d-08.and.iter.GT.5000) THEN

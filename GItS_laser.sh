@@ -35,13 +35,21 @@ do
     ln=$(sed -n "/MEOP/=" SRC_F90/param.f90)
     ligne=`awk -F "\/" 'NR==77 { print $4 }' SRC_F90/param.f90`
     int=$(printf '%.1f' "$Pr")
-    sed -i "$ln s/$ligne/$int\_Torr\_1mW/" SRC_F90/param.f90
+    sed -i "$ln s/$ligne/$int\_Torr\_0.1W/" SRC_F90/param.f90
 
     # **** Changement de variables pour l'initialisation       
     # **** Read the pressure in file                          
     ligne=$(sed -n "/Torr/=" datFile/input_he)
     Torr2=`awk 'NR==6 { print $1}' ./datFile/input_he`
     sed -i "$ligne s/$Torr2/$Pr/" datFile/input_he
+    # **** Change : restart or not!!!!                        
+    ligne=$(sed -n "/Restart/=" datFile/input_he)
+    Torr2=`awk 'NR==2 { print $1}' ./datFile/input_he`
+    sed -i "$ligne s/$Torr2/0/" datFile/input_he
+    # **** Change Absorbed Power!!!!                        
+    ligne=$(sed -n "/Absorbed/=" datFile/input_he)
+    Torr2=`awk 'NR==12 { print $1}' ./datFile/input_he`
+    sed -i "$ligne s/$Torr2/0.100000/" datFile/input_he
     # **** Read the Simulation Time in file                          
     #ligne=$(sed -n "/mic-sec/=" datFile/input_he)
     #Torr2=`awk 'NR==13 { print $1}' ./datFile/input_he`

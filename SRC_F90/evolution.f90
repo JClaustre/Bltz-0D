@@ -285,6 +285,7 @@ CONTAINS
     write(99,"(2(A,F7.2))") "* Gas Temperature (°K | eV): ", meta(0)%Tp*qok, " | ", meta(0)%Tp
     write(99,"((A,F7.2))" ) "* Gas Tp at the tube bound (°K): ", meta(0)%Tp*qok
     write(99,"(A,2ES11.3)") "* Gas dNg+ | dNg- (cm-3): ", Ngpl(1)%UpDens*1e-6, Ngpl(2)%UpDens*1e-6
+    write(99,"(A,ES11.3)")  "* 1/Tr = dNg+/(Ng*dt) (s-1): ", Ngpl(1)%UpDens/(meta(0)%Ni*Clock%Dt)
     write(99,"(A)") ""
     write(99,"(A)") "ELEC | IONS PARAMETERS"
     write(99,"(A)") "--------------------"

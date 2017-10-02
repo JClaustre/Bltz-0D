@@ -74,7 +74,7 @@ MODULE MOD_PARAM
   INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
   INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
 
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/Calcul_Ai_P/30.0_Torr_1mW_0.2_W/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/MEOP/Calcul_Ai_P/2.2_Torr_5mW_0.2_W/"
 !  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 
   TYPE(Time)    :: Clock
