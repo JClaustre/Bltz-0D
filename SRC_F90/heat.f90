@@ -26,12 +26,15 @@ CONTAINS
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
-    GenPwr = 1.d-6 ! Time constant to start/end the generator.
+    GenPwr = 1.d-7 ! Time constant to start/end the generator.
     
     IF (Clock%SumDt .LT. Post_D) THEN
        !**** Increase Power
        sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
        sys%Pcent = sys%Powr
+       !sys%E = sys%Emax * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+       !sys%Pcent = sys%E
+
        !**** Power calculation
        power = 0.d0
        do i = 1, nx-1
@@ -48,6 +51,7 @@ CONTAINS
        END do
        !**** New External Electric Field Calculation 
        sys%E = dsqrt ( sys%Powr / (power * qe) )
+
        !***************************************************
     ELSE
        !**** Decrease External Electric source ***

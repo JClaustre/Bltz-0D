@@ -161,7 +161,7 @@ CONTAINS
              pop(1)%Tr = pop(1)%Tr + 1.d0 / (Sx * meta(i)%Ni/meta(0)%Ni)
              !*****************
              IF (mod(iter,2000)==0) THEN
-                IF (i.LE.3.and.j.LE.3) THEN
+                IF (i.LE.6.and.j.LE.6) THEN
                    WRITE(919,"(2A,4ES12.3)") meta(i)%Name, meta(j)%Name, Sx, Sd, meta(i)%Ni, meta(j)%Ni
                 END IF
              END IF

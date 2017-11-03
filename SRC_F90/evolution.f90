@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=67.4
+  REAL(DOUBLE), PRIVATE :: ETownsd=17.5
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -35,23 +35,25 @@ CONTAINS
     REAL(DOUBLE) :: Cgen, Post_D                                              !
     count1=0.d0 ; count2=0.d0                                                 !
     Res = Clock%SumDt + Clock%TRstart                                         !
+    !**** Maximum time-step allowed (sec)***
+    MxDt   = 1d-9
+    IF (Clock%Rstart.EQ.1)THEN
+       IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
+    END IF
+
     !*************************************************************************!
     Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
+    !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
     !**** Keep Power-init in memory ***
     sys%IPowr = sys%Powr 
     !**** Time factor for external source ***
     Cgen   = 1.0d-02
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
     Post_D = 2.d-1
-    !**** Maximum time-step allowed (sec)***
-    MxDt   = 4d-09
-    IF (Clock%Rstart.EQ.1)THEN
-       IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
-    END IF
-    !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+
     meta(1)%NStart = pop(1)%Ni(4) ! For MEOP
 
     !**** MAIN LOOP ***
@@ -68,6 +70,12 @@ CONTAINS
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0 ; Ngpl(:)%UpDens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
+       ! Calculation of relaxation time of sublevels Ai :
+       IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.02001 ) THEN !GT. Tagada
+          print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
+          lasr%OnOff = 0
+          !MxDt   = 1d-10
+       END IF
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -491,11 +499,11 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F8.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,A,ES10.2,2(A,ES10.2),A)",advance="no") &
+       write(*,"(A,F11.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,F6.1,A,ES10.2,ES10.2,2(A,ES10.2),A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            "| polariz: ", pop(1)%polarz*100.d0," | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-            " (m2) E/N: ", (sys%E/meta(0)%Ni)*1d+21," (Td) | N+ ", Ngpl(1)%UpDens*1e-6, &
+            "| polariz: ", pop(1)%polarz*100.d0," | Pwr(W/cm3,%): ", sys%Pwmoy*1d-6, (sys%Pcent*100./sys%IPowr),&
+            " (m2) E (V/cm, Td): ", (sys%E/meta(0)%Ni)*1d+21, sys%E*1d-2," N+ ", Ngpl(1)%UpDens*1e-6, &
             "| N- ", Ngpl(2)%UpDens*1e-6, "cm-3 \r"
 
        !**** WRITE IN EVOL.DAT *************************!

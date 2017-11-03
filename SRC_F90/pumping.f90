@@ -38,7 +38,8 @@ CONTAINS
     !pop(2)%T_relax = 1.d0/ (3.2d06*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
     pop(1)%tau_e   = 1.d0/ (3.75d6*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
     pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s) (cf. Nacher 1985)
-    pop(1)%Tr      = 100.d0 ! (s)
+    !pop(1)%Tr      = 47.d0!100.d0 ! (s)
+    pop(1)%Tr      = 1.0/ (Ngpl(1)%UpDens/(meta(0)%Ni*Clock%Dt))
 
     !**** Laser variables ***
     ! mean velocity of the metastables
@@ -55,8 +56,11 @@ CONTAINS
     END IF
 
     DO j = 1, Npop2
+       ! Test de la relaxation instantanee des 2P3
+       !pop(2)%Ni(j) = meta(3)%Ni/Npop2
        !**** Update B_j sublevels due to radiative transitions (2P3 -> 2S3) ***
        Updens(2,j) = Updens(2,j) - Dt * pop(2)%tau_rad * pop(2)%Ni(j)
+
        Do i = 1, Npop1
           !**** Update A_i sublevels due to radiative transitions (2P3 -> 2S3) ***
           Updens(1,i) = Updens(1,i) + Dt * pop(2)%tau_rad * ( pop(2)%Ni(j)*Tij(j,i,1) )
@@ -77,7 +81,9 @@ CONTAINS
                 Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) &
                      * pop(1)%Ni(j) / (18.d0*pop(1)%tau_e)
              END IF
+             !*********************************************************************************
           END IF
+
        END DO
     END DO
 
@@ -87,7 +93,7 @@ CONTAINS
 
     pol = 0.d0
     DO i = 1, Npop1
-       !**** Update of sublevels densities due to Boltz collisions *************
+       !**** Update of sublevel densities due to Boltz collisions *************
        !**** If Delta_n > 0 then mean allocations on sublevels Ai **************
        !**** IF Delta_n < 0 then density prorata depending on each sublevels ***
        IF (pop(1)%Dn_o.GE.0.d0) THEN
@@ -101,7 +107,7 @@ CONTAINS
        pop(1)%Ni(i) = pop(1)%Ni(i) + Updens(1,i)
     END DO
     DO j = 1, Npop2
-       !**** Update of sublevels densities due to Boltz collisions for Bj sublevels ***
+       !**** Update of sublevel densities due to Boltz collisions for Bj sublevels ***
        IF (pop(2)%Dn_o.GE.0.d0) THEN
           Updens(2,j) = Updens(2,j) + pop(2)%Dn_o / N2
        ELSE
@@ -121,11 +127,9 @@ CONTAINS
 
     !**** Calcul des populations des Ai avec P fixe.
     IF (lasr%OnOff.EQ.1)THEN
-       pop(1)%polarz = 1.00003 ! Tagada ...
-       !**** Calcul du critere d'arret
-       !E_pop = ABS(pop(1)%Ni(4)/meta(1)%NStart - 1d0)
-       !IF (E_pop.LT.1d-08.and.iter.GT.5000) THEN
-       IF (iter.EQ.Clock%NumIter-1) THEN
+       pop(1)%polarz = 0 ! Tagada ...
+       !**** Copy into files Ai populations.
+       IF (iter.EQ.Clock%NumIter-2) THEN
           OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"A_i.dat",ACTION="WRITE",POSITION="APPEND",STATUS="UNKNOWN")
           WRITE(919,"(3ES12.3,6(ES19.10),6(ES19.10))") meta(0)%Prs,lasr%Is, pop(1)%polarz, &
                (pop(1)%Ni(i), i=1,6), (meta(i)%Ni, i=1,6) 
@@ -133,25 +137,15 @@ CONTAINS
           !print*, "Critere d'arret = ", E_pop
           !iter = Clock%MaxIter
        END IF
-       !**** Pour info sur l'evolution du critere d'arret:
-       !IF (mod(iter,Niter*2) == 0 .and. switch==1) THEN
-       !   print*, "Critere d'arret = ", E_pop, pop(1)%Ni(4), meta(1)%NStart, pop(1)%Ni(4)/meta(1)%NStart
-       !END IF
-       !meta(1)%NStart = pop(1)%Ni(4)     
-       !    !**** Calculate the polarization of the Helium gas ***
-       !    IF (mod(iter,Niter) == 0 .and. switch==1) THEN
-       !       E_meta = ABS(pop(1)%Ni(1)/meta(1)%NStart - 1d0)
-       !       IF (E_meta.LE. E_max) THEN
-       !          !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
-       !          pop(1)%polarz = pop(1)%polarz + (pop(1)%Te/20.d0) * ((-pop(1)%polarz + pol)/pop(1)%Te &
-       !               - pop(1)%polarz/pop(1)%Tr) - (pop(1)%polarz * Neut(1)%UpDens / meta(0)%Ni) &
-       !               * (pop(1)%Te/20.d0)/(Niter*Dt)
-       !       END IF
-       !       meta(1)%NStart = pop(1)%Ni(1)
-       !       print*, "polariz : DT iter = ", Niter, " P= ", pop(1)%polarz, " err= ", E_meta
-       !    END IF
-       !
+       !*************************************
+   
+!    ELSE IF (lasr%OnOff.EQ.0) THEN
+!       !**** Calcul the (de)polarization of the Helium gas ***
+!       !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
+!       pop(1)%polarz = pop(1)%polarz + Clock%Dt * ((-pop(1)%polarz + pol)/pop(1)%Te &
+!            - pop(1)%polarz/pop(1)%Tr)
     END IF
+
   END Subroutine Sublev_coll
 
 END MODULE MOD_PUMP
