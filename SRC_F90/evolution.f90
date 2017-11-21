@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=17.5
+  REAL(DOUBLE), PRIVATE :: ETownsd=50.0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -49,6 +49,7 @@ CONTAINS
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
     !**** Keep Power-init in memory ***
     sys%IPowr = sys%Powr 
+    !sys%E = sys%Emax
     !**** Time factor for external source ***
     Cgen   = 1.0d-02
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
@@ -70,12 +71,12 @@ CONTAINS
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0 ; Ngpl(:)%UpDens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
-       ! Calculation of relaxation time of sublevels Ai :
-       IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.02001 ) THEN !GT. Tagada
-          print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
-          lasr%OnOff = 0
-          !MxDt   = 1d-10
-       END IF
+!       ! Calculation of relaxation time of sublevels Ai :
+!       IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.02001 ) THEN !GT. Tagada
+!          print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
+!          lasr%OnOff = 0
+!          !MxDt   = 1d-10
+!       END IF
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -271,6 +272,7 @@ CONTAINS
     write(99,"(A,F8.2)")    "* Energy Max (ev)      : ", sys%Emx
     write(99,"(A,ES10.2)")  "* Energy step (Δu)    : ", sys%Dx
     write(99,"(A,F8.2)")    "* Cylinder radius (cm) : ", sys%Ra*1d2
+    write(99,"(A,F8.2)")    "* (R/ᴧ)^2 (cm2) : ", (sys%Ra/2.405)**2*1d4
     write(99,"(A,F8.3)")    "* E/N (Td) : ", (sys%E/meta(0)%Ni) * 1d21
     write(99,"(A,F8.3)")    "* E Field (V/cm) : ", sys%E*1d-2
     write(99,"(A,ES11.3)")  "* heating frequency (Hz) : ", sys%Freq / (2*pi)
@@ -294,6 +296,7 @@ CONTAINS
     write(99,"((A,F7.2))" ) "* Gas Tp at the tube bound (°K): ", meta(0)%Tp*qok
     write(99,"(A,2ES11.3)") "* Gas dNg+ | dNg- (cm-3): ", Ngpl(1)%UpDens*1e-6, Ngpl(2)%UpDens*1e-6
     write(99,"(A,ES11.3)")  "* 1/Tr = dNg+/(Ng*dt) (s-1): ", Ngpl(1)%UpDens/(meta(0)%Ni*Clock%Dt)
+    write(99,"(A,ES11.3)")  "* 1/Tp = 6.88e-30*N0N1+ (cm6.s-1): ", 6.88e-30*meta(0)%Ni*ion(1)%Ni
     write(99,"(A)") ""
     write(99,"(A)") "ELEC | IONS PARAMETERS"
     write(99,"(A)") "--------------------"
@@ -307,12 +310,12 @@ CONTAINS
     write(99,"(2(A,F8.2))") "* Electron Tp° (eV) : init ", consv(2)*0.66667d0/consv(1),&
          " | Final ", elec%Tp
     write(99,"(/,A)") "-------------------------------------------------------"
-    write(99,"(A,ES11.3)") "* Electron  mobility (cm2.V-¹.s-¹) : ", elec%mobl
-    write(99,"(A,ES11.3)") "* ion[He+]  mobility (cm2.V-¹.s-¹) : ", ion(1)%mobl
-    write(99,"(A,ES11.3)") "* ion[He2+] mobility (cm2.V-¹.s-¹) : ", ion(2)%mobl
-    write(99,"(A,ES11.3)") "* Electron  Free Diff (cm².s-¹) : ", elec%Dfree
-    write(99,"(A,ES11.3)") "* ion[He+]  Free Diff (cm².s-¹) : ", ion(1)%Dfree
-    write(99,"(A,ES11.3)") "* ion[He2+] Free Diff (cm².s-¹) : ", ion(2)%Dfree
+    write(99,"(A,ES11.3)") "* Electron  mobility (cm2.V-¹.s-¹) : ", elec%mobl   * 1d4
+    write(99,"(A,ES11.3)") "* ion[He+]  mobility (cm2.V-¹.s-¹) : ", ion(1)%mobl * 1d4
+    write(99,"(A,ES11.3)") "* ion[He2+] mobility (cm2.V-¹.s-¹) : ", ion(2)%mobl * 1d4
+    write(99,"(A,ES11.3)") "* Electron  Free Diff (cm².s-¹) : ", elec%Dfree   * 1d4
+    write(99,"(A,ES11.3)") "* ion[He+]  Free Diff (cm².s-¹) : ", ion(1)%Dfree * 1d4
+    write(99,"(A,ES11.3)") "* ion[He2+] Free Diff (cm².s-¹) : ", ion(2)%Dfree * 1d4
     write(99,"(A,ES10.2)") "* Ionization degree (Ne/Ng) : ", elec%Ni/meta(0)%Ni
     write(99,"(A)") ""
     write(99,"(A)") "ELECTRON | IONS BALANCE"
@@ -503,7 +506,7 @@ CONTAINS
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
             "| polariz: ", pop(1)%polarz*100.d0," | Pwr(W/cm3,%): ", sys%Pwmoy*1d-6, (sys%Pcent*100./sys%IPowr),&
-            " (m2) E (V/cm, Td): ", (sys%E/meta(0)%Ni)*1d+21, sys%E*1d-2," N+ ", Ngpl(1)%UpDens*1e-6, &
+            " (m2) E (Td,V/cm): ", (sys%E/meta(0)%Ni)*1d+21, sys%E*1d-2," N+ ", Ngpl(1)%UpDens*1e-6, &
             "| N- ", Ngpl(2)%UpDens*1e-6, "cm-3 \r"
 
        !**** WRITE IN EVOL.DAT *************************!

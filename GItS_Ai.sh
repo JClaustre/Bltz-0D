@@ -14,9 +14,9 @@ echo
 # **** Incrementation de la pression et pression initiale (bar)
 # **** I use "awk" to compute float values
 initPr=`awk "BEGIN{ print 0.3 }" ` ; maxPr=`awk "BEGIN{ print 8.0 }" `; NPrsimu=`awk "BEGIN{ print 6 }" `
-initPo=`awk "BEGIN{ print 0.002}" `; maxPo=`awk "BEGIN{ print 1.0}" ` ; NPosimu=`awk "BEGIN{ print 12}" `
+initPo=`awk "BEGIN{ print 0.002}" `; maxPo=`awk "BEGIN{ print 1.0}" ` ; NPosimu=`awk "BEGIN{ print 14}" `
 initIl=`awk "BEGIN{ print 1.00}" `; maxIl=`awk "BEGIN{ print 2.0}" ` ; NIlsimu=`awk "BEGIN{ print 3 }" `
-initAr=`awk "BEGIN{ print 8E-6}" `; maxAr=`awk "BEGIN{ print 5E-6}" `; NArsimu=`awk "BEGIN{ print 8 }" `
+initAr=`awk "BEGIN{ print 6E-6}" `; maxAr=`awk "BEGIN{ print 1.5E-6}" `; NArsimu=`awk "BEGIN{ print 8 }" `
 #initDt=`awk "BEGIN{ print 3000}" `; maxDt=`awk "BEGIN{ print 3020}" ` ; NDtsimu=`awk "BEGIN{ print 8 }" `
 
 # **** r is the geometric ratio (raison geometrique in Fr)
@@ -40,11 +40,11 @@ do
     Po=$(awk "BEGIN{print $initPo }")
     echo "Valeur de Pression  : $Pr"
     # **** Update Dir File name
-    ln=$(sed -n "/MEOP/Calcul_Ai_Test_relax/=" SRC_F90/param.f90)
+    ln=$(sed -n "/MEOP/Calcul_Ai_P/=" SRC_F90/param.f90)
     ligne=`awk -F "\/" 'NR==77 { print $5 }' SRC_F90/param.f90`
     int=$(printf '%.1f' "$Pr")
     int2=$(printf '%.1f' "$Il")
-    sed -i "$ln s/$ligne/$int\_Torr\_0.1W\_$int2\_W/" SRC_F90/param.f90
+    sed -i "$ln s/$ligne/$int\_Torr\_3.1623_W\_$int2\_W/" SRC_F90/param.f90
 
     if [ $valPr -eq 6 ]
     then
@@ -55,36 +55,36 @@ do
 	    echo "########## Valeur de Polarisation  : $Po ##########"
 	    # **** Update Polarization
 	    ln=$(sed -n "/Tagada/=" SRC_F90/pumping.f90)
-	    ligne=`awk 'NR==127 { print $3 }' SRC_F90/pumping.f90`
+	    ligne=`awk 'NR==131 { print $3 }' SRC_F90/pumping.f90`
 	    sed -i "$ln s/$ligne/$Po/" SRC_F90/pumping.f90
 
 	    # **** Copie des fichier Steady State vers le repertoire pour le calcul des Ai:
-	    mkdir ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/
-	    cp -r ./datFile/MEOP/$int\_Torr\_0.1W/* ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/.
+	    mkdir ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/
+	    cp -r ./datFile/MEOP/$int\_Torr\_3.1623_W/* ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/.
 	    # **** Changement des variable dans le fichier Rstart ************************************************
 	    # **** Laser On
-	    Torr=`awk 'NR==18 { print $1}' ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he`
+	    Torr=`awk 'NR==18 { print $1}' ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he`
 	    ligne=`awk "BEGIN{ print 18 }" `
-	    sed -i "$ligne s/$Torr/1/" datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he
+	    sed -i "$ligne s/$Torr/1/" datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he
 	    # **** Laser Power
-	    Torr=`awk 'NR==21 { print $1}' ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he`
+	    Torr=`awk 'NR==21 { print $1}' ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he`
 	    ligne=`awk "BEGIN{ print 21 }" `
-	    sed -i "$ligne s/$Torr/$int2\e+00/" datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he
+	    sed -i "$ligne s/$Torr/$int2\e+00/" datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he
 	    # **** Laser Section (m2)
-	    Torr=`awk 'NR==22 { print $1}' ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he`
+	    Torr=`awk 'NR==22 { print $1}' ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he`
 	    ligne=`awk "BEGIN{ print 22 }" `
-	    sed -i "$ligne s/$Torr/0.001963/" datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he
+	    sed -i "$ligne s/$Torr/0.001963/" datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he
 	    # **** Laser Time Start
-	    Torr=`awk 'NR==26 { print $1}' ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he`
+	    Torr=`awk 'NR==26 { print $1}' ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he`
 	    int3=$(printf '%.5f' "$Torr")
-	    Torr2=`awk 'NR==23 { print $1}' ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he`
+	    Torr2=`awk 'NR==23 { print $1}' ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he`
 	    ligne=`awk "BEGIN{ print 23 }" `
-	    sed -i "$ligne s/$Torr2/$int3/" datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he
+	    sed -i "$ligne s/$Torr2/$int3/" datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he
 	    # **** end Time of simulation 
-	    Torr=`awk 'NR==13 { print $1}' ./datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he`
+	    Torr=`awk 'NR==13 { print $1}' ./datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he`
 	    Torr2=$(awk "BEGIN{print $int3+$Ar}")
 	    ligne=`awk "BEGIN{ print 13 }" `
-	    sed -i "$ligne s/$Torr/$Torr2/" datFile/MEOP/Calcul_Ai_Test_relax/$int\_Torr\_0.1W\_$int2\_W/Rstart/Rs_input_he
+	    sed -i "$ligne s/$Torr/$Torr2/" datFile/MEOP/Calcul_Ai_P/$int\_Torr\_3.1623_W\_$int2\_W/Rstart/Rs_input_he
 	    # ****************************************************************************************************
 	    make clean
 	    make

@@ -430,6 +430,8 @@ CONTAINS
     !*************** Diagnostic for metastable and 2^3S rates (s-1) for MEOP
     diag(9)%OutM1 = meta(1)%Damb / Coef
     !***************
+    diag(9)%SumTx = diag(9)%SumTx + Clock%Dt * Se  
+    !***************
     IF (mod(iter,2000)==0) CLOSE(919)
  END SUBROUTINE Diffuz_Gaine
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!

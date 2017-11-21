@@ -23,7 +23,7 @@ CONTAINS
     !LOCAL
     INTEGER :: i, j, k, switch, Niter
     REAL(DOUBLE) :: Dt, nu_ij, E_meta, Dt_p, E_max, E_pop
-    REAL(DOUBLE) :: gammak, Dop, Omeg, vm
+    REAL(DOUBLE) :: gammak, Dop, Omeg, vm, Tp
     REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
     !**************************
@@ -40,9 +40,10 @@ CONTAINS
     pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s) (cf. Nacher 1985)
     !pop(1)%Tr      = 47.d0!100.d0 ! (s)
     pop(1)%Tr      = 1.0/ (Ngpl(1)%UpDens/(meta(0)%Ni*Clock%Dt))
+    Tp = 6.876e-30 * meta(0)%Ni*ion(1)%Ni ! Milner et al (Nuclear Instruments and Methods in
+                                          ! Physics Research A257 (1987) 286-290) 
 
-    !**** Laser variables ***
-    ! mean velocity of the metastables
+    !**** Laser variables *** mean velocity of the metastables
     vm   = sqrt(2.d0*kb*meta(0)%Tp*qok/mhe3) 
     ! Laser frequency (1083 nm)
     Omeg = ppi*Vcel / lasr%Lwave
@@ -127,7 +128,7 @@ CONTAINS
 
     !**** Calcul des populations des Ai avec P fixe.
     IF (lasr%OnOff.EQ.1)THEN
-       pop(1)%polarz = 0 ! Tagada ...
+       pop(1)%polarz = 0.0337162 ! Tagada ...
        !**** Copy into files Ai populations.
        IF (iter.EQ.Clock%NumIter-2) THEN
           OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"A_i.dat",ACTION="WRITE",POSITION="APPEND",STATUS="UNKNOWN")
@@ -143,7 +144,7 @@ CONTAINS
 !       !**** Calcul the (de)polarization of the Helium gas ***
 !       !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
 !       pop(1)%polarz = pop(1)%polarz + Clock%Dt * ((-pop(1)%polarz + pol)/pop(1)%Te &
-!            - pop(1)%polarz/pop(1)%Tr)
+!            - pop(1)%polarz/pop(1)%Tr - pop(1)%polarz/Tp)
     END IF
 
   END Subroutine Sublev_coll
