@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=50.0
+  REAL(DOUBLE), PRIVATE :: ETownsd=38.0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -36,7 +36,7 @@ CONTAINS
     count1=0.d0 ; count2=0.d0                                                 !
     Res = Clock%SumDt + Clock%TRstart                                         !
     !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-9
+    MxDt   = 1d-09
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
@@ -71,12 +71,12 @@ CONTAINS
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0 ; Ngpl(:)%UpDens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
-!       ! Calculation of relaxation time of sublevels Ai :
-!       IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.02001 ) THEN !GT. Tagada
-!          print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
-!          lasr%OnOff = 0
-!          !MxDt   = 1d-10
-!       END IF
+       ! Calculation of relaxation time of sublevels Ai :
+       IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.000542297 ) THEN !GT. Tagada
+          print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
+          lasr%OnOff = 0
+          !MxDt   = 1d-10
+       END IF
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -296,7 +296,7 @@ CONTAINS
     write(99,"((A,F7.2))" ) "* Gas Tp at the tube bound (°K): ", meta(0)%Tp*qok
     write(99,"(A,2ES11.3)") "* Gas dNg+ | dNg- (cm-3): ", Ngpl(1)%UpDens*1e-6, Ngpl(2)%UpDens*1e-6
     write(99,"(A,ES11.3)")  "* 1/Tr = dNg+/(Ng*dt) (s-1): ", Ngpl(1)%UpDens/(meta(0)%Ni*Clock%Dt)
-    write(99,"(A,ES11.3)")  "* 1/Tp = 6.88e-30*N0N1+ (cm6.s-1): ", 6.88e-30*meta(0)%Ni*ion(1)%Ni
+    write(99,"(A,ES11.3)")  "* 1/Tp = 6.88e-30*N0N1+ (cm6.s-1): ", 6.88e-30*meta(0)%Ni*ion(1)%Ni*1e-12
     write(99,"(A)") ""
     write(99,"(A)") "ELEC | IONS PARAMETERS"
     write(99,"(A)") "--------------------"

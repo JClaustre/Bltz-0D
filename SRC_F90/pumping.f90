@@ -128,7 +128,7 @@ CONTAINS
 
     !**** Calcul des populations des Ai avec P fixe.
     IF (lasr%OnOff.EQ.1)THEN
-       pop(1)%polarz = 0.0337162 ! Tagada ...
+       pop(1)%polarz = 0 ! Tagada ...
        !**** Copy into files Ai populations.
        IF (iter.EQ.Clock%NumIter-2) THEN
           OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"A_i.dat",ACTION="WRITE",POSITION="APPEND",STATUS="UNKNOWN")
