@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=38.0
+  REAL(DOUBLE), PRIVATE :: ETownsd=10.0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -46,10 +46,10 @@ CONTAINS
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
-    !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
     !**** Keep Power-init in memory ***
-    sys%IPowr = sys%Powr 
-    !sys%E = sys%Emax
+    !sys%IPowr = sys%Powr 
+    sys%E = sys%Emax
     !**** Time factor for external source ***
     Cgen   = 1.0d-02
     !**** Start Time to ignitiate post_discharge (micro-sec) ***
@@ -502,7 +502,7 @@ CONTAINS
 !            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
 !            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
 !            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F11.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,F6.1,F6.1,A,ES10.2,ES10.2,2(A,ES10.2),A)",advance="no") &
+       write(*,"(A,F11.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,ES10.2,F6.1,A,ES10.2,ES10.2,2(A,ES10.2),A)",advance="no") &
             tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
             "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
             "| polariz: ", pop(1)%polarz*100.d0," | Pwr(W/cm3,%): ", sys%Pwmoy*1d-6, (sys%Pcent*100./sys%IPowr),&

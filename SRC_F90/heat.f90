@@ -25,42 +25,47 @@ CONTAINS
     INTEGER      :: i, nx
     REAL(DOUBLE) :: Dx, Fn, nuc, frq
     REAL(DOUBLE) :: power, Uc, Df, GenPwr
+    REAL(DOUBLE) :: Delta, Op
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
     GenPwr = 1.d-6 ! Time constant to start/end the generator.
     
-    IF (Clock%SumDt .LT. Post_D) THEN
-       !**** Increase Power
-       sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
-       sys%Pcent = sys%Powr
-       !sys%E = sys%Emax * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
-       !sys%Pcent = sys%E
+!    IF (Clock%SumDt .LT. Post_D) THEN
+!       !**** Increase Power
+!       sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+!       sys%Pcent = sys%Powr
+!       !sys%E = sys%Emax * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+!       !sys%Pcent = sys%E
+!
+!       !**** Power calculation
+!       power = 0.d0
+!       do i = 1, nx-1
+!          nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+!          Uc = qome * nuc / (nuc**2 + sys%Freq**2)
+!          IF (i .LT. nx-1) THEN
+!             Df = F(i+1) - F(i)
+!          ELSE IF (i.EQ.nx-1) THEN
+!             !**** linear extrapolation for f(nx)
+!             Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
+!             Df = Fn - F(i)
+!          END IF
+!          power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
+!       END do
+!       !**** New External Electric Field Calculation 
+!       sys%E = dsqrt ( sys%Powr / (power * qe) )
+!
+!       !***************************************************
+!    ELSE
+!       !**** Decrease External Electric source ***
+!       IF (Pwk == 0) sys%IPowr = sys%E
+!       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
+!       IF (sys%E.LT.1d-08) sys%E = 0.d0
+!       sys%Pcent = sys%E
+!       Pwk = Pwk+1
+!    END IF
+    Op = 5.64d4 * sqrt(elec%Ni*1d-6)
+    Delta = Vcel / Op * sqrt(2.d0*1d9*meta(0)%Prs/sys%freq)
 
-       !**** Power calculation
-       power = 0.d0
-       do i = 1, nx-1
-          nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-          Uc = qome * nuc / (nuc**2 + sys%Freq**2)
-          IF (i .LT. nx-1) THEN
-             Df = F(i+1) - F(i)
-          ELSE IF (i.EQ.nx-1) THEN
-             !**** linear extrapolation for f(nx)
-             Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
-             Df = Fn - F(i)
-          END IF
-          power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
-       END do
-       !**** New External Electric Field Calculation 
-       sys%E = dsqrt ( sys%Powr / (power * qe) )
-
-       !***************************************************
-    ELSE
-       !**** Decrease External Electric source ***
-       IF (Pwk == 0) sys%IPowr = sys%E
-       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
-       IF (sys%E.LT.1d-08) sys%E = 0.d0
-       sys%Pcent = sys%E
-       Pwk = Pwk+1
-    END IF
+    sys%E = sqrt( sys%Emax**2 * exp(-2d0*sys%Ra/Delta) )
 
     !**** RF - electric field*********************
     IF (sys%rf == 1) THEN
