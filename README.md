@@ -8,21 +8,26 @@ Description
 -----------
 
 This code solve the 0D Bltz equation, depending on time for the
-Helium gas.  It includes *electron-electron* collisions,
-*electron-neutral* collision, *heating* by electric field.
+electrons in the _pure_ helium gas. It includes *electron-electron*
+collisions, *electron-neutral* collision, *heating* by electric field.
 
 Furthermore, it takes into account *inelastic* and *superelastic*
 collisions, *ionization* (direct, non-direct, Penning and
 Associative), *dissociative recombination*, *l-exchange* and
-*s-exchange* processes, *ionic conversion*, *radiative transfert* and
-*diffusion*.
+*s-exchange* processes, *ionic conversion*, *radiative transfert*,
+*diffusion* and so on.
 
-The geometry concidered here is a cylinder (used for the absorbed
-power and the diffusion coefficient).
+The geometry concidered here is a cylinder (the geometry consideration
+is used for the absorbed power calculation and the ambipolar diffusion).
 
-We invite you to look at these papers where most of the rates and
-cross-sections used in the code come from (our source of inspiration!
-:D ):
+Have a look at our paper, to have a detailled description of the model:
+
+* J Claustre *et al.* (doi:10.1088/1361-6595/aa8a16)
+  [(link article)](https://doi.org/10.1088/1361-6595/aa8a16)
+* C Boukandou *et al.* (doi:10.1016/j.cpc.2017.07.004)
+  [(link paper)](https://doi.org/10.1016/j.cpc.2017.07.004)
+
+We invite you to look at these papers too (our source of inspiration!:D ):
 
 * L Alves *et al* (doi:10.1088/0022-3727/25/12/007)
   [(link article)](http://m.iopscience.iop.org/article/10.1088/0022-3727/25/12/007/meta;jsessionid=AE4353A7414EB307AA0214AD6A4BA223.c3.iopscience.cld.iop.org)
@@ -47,15 +52,12 @@ Install it
 
 		unzip file.zip -d destination_folder
 		
-* In the folder, a makefile is included. Modifie it with your own
+* In the folder, a makefile is included. Modify it with your own
         compiler (gcc by default) and compile it by using the terminal
         consol :
 
 		make makedirectories
 		make
-
-* /!\ Inside of the folder "datFile", make sure you have a folder
-named "Rstart", else create it!
 
 * /!\ In the same folder ("datFile"), you should have a file called
 "input_he". This file is needed to define (and read) the simulation
@@ -67,23 +69,32 @@ parameters. If you don't have it, create it by using the example below
 *EXAMPLE OF INPUT FILE : (name_of_file =* input_he*)*
 
 ----------------------------------------
-
-	500               Number of grid points 
+	
+	2000              Number of grid points 
 	0                 Restart simulation ( 0  - no restart | 1 - restart )
-	2.13000E+01       E (V/cm)      Electric field
-	3.00000E+18   0   Ng (cm-3) ( 1 - input parameter N | 0 - input parameter Prs)
-	2.45000E+09       f (Hz)        Heating Frequency
-	7.60000E+02       prs (Torr)    Pressure (760 Torr = Atmospheric pressure)
-	2000.000000       Tp (K)        Temperature
-	2.10000E+00       Tpe (eV)      Initial electron temperature
-	1.00000E-01       Ra (cm)       Cylinder Radius
-	2.30000E+00       L  (cm)       Tube Length
-	2.34000E+12       ne (cm-3)     Initial electron density
-	8.30000E+01   0   P  (W/cm3) ( 1 - input parameter E | 0 - input parameter P)
-	3.000000000       Simulation Time (micro-secnd)  
-	1.00000E-12       Dt ( Time-Step (secnd) )
-	1.00000E+02       Emax (Energy grid max (eV) ) (Maximum allowed = 1000 eV)
-	1.0000            save data's every XXX micro-sec
+	2.320E+01         E (V/cm)      Electric field (see also the absorbed power parameter)
+	4.000E+18   0     Ng (cm-3) ( 1 - input parameter neutral gas (Ng) | 0 - input parameter Pressure (prs))
+	3.000E+06   0     f (Hz)        Heating Frequency (If 1 ==> "RF mode" Else "HF mode" )
+	1.0000000         prs (Torr)    Pressure
+	3.000E+02  600    Tp (K)        Temperature [+ Tp at tube boundary (if needed)]
+	2.000E+00         Tpe (eV)      Electronic Temperature
+	2.500E+00         Ra (cm)       Cylinder Radius
+	5.000E+00         L  (cm)       Tube Length
+	1.000E+03         ne (cm-3)     Initial electron density
+	1.000E+00   0     P  (W/cm3)    Absorbed power ( 1 - input parameter E | 0 - input parameter P)
+	1000.0001         Simulation Time (micro-sec)
+	1.000E-09         Dt ( Time-Step (sec) ) ==> Max time-step allowed
+	3.000E+02         Emax (Max Energy [for the grid] (eV) ) 
+	5.000E+01         save data's every XXX micro-sec (includes Restart files + EEDF)
+	*************************************************************************
+	0                 Activate the laser (1) or don't use laser pumping (0)
+	1083              lenght wave of the laser (nm)
+	1                 Polarization of the Laser (0=pi ; 1=sigma+ ; 2=sigma-)
+	1.000E+00         Laser intensity (W)
+	1.963E+01         Surface or laser section (cm2)
+	5.000E+02         Start time of the Laser (micro-sec)
+	1                 Numbers of transitions to use with the laser
+	9                 Write the transitions to use (from 1 to 9) (write on the same line, ex: 1 5 7 9)
 
 ----------------------------------------
 ### On Windows
@@ -97,7 +108,14 @@ After the code compiled perfectly, you should have an executale
 
 	./run_BOD
 
-Want to Contribute ?
+Output Files and results
+-------------------------
+
+During the calculation and after the code end, you can check results
+and outputs in the file directory you choose at the beginning of the
+simulation (see *param.f90* file).
+
+Want to Contribute (in GitHub)?
 --------------------
 
 1. Fork it
@@ -110,12 +128,13 @@ Routine descriptions
 ---------------
 
 * Evolution.f90
-	* Contains the main loop. This is the loop in time where all
-	reactions concidered in the code are called.
+	* Contains the main loop (time evolution). This is the loop in
+	time where all reactions concidered and heating, in the code, are called.
 	* In this loop, time is updated but also some densities (charges,
       excited states).
-	* The time step is adapted to the strongest collision rate between
-     inelastic-superelastic collisions and ionization processes.
+	* The time step is adapted to (mainly) the strongest collision
+     rate between inelastic-superelastic collisions and ionization
+     processes.
 	
 * Excit.f90
 	* Contains the excitation and de-excitation processes between all
@@ -127,8 +146,8 @@ Routine descriptions
 	* The subroutine "implic" calculates in a semi-implicit form, the
 	densities at time k+1.  It allows to have a greater time-step
 	without calculating an equilibrium solution between some states.
-	* We advise to take care to have a "reasonable" time-step (i mean
-     not too high!).
+	* We advise to take care to have a "reasonable" time-step (*i.e*
+      not too high!).
 
 * Ioniz.f90
 	* Contains ionization (direct and undirect) processes. In the case
@@ -158,11 +177,30 @@ Routine descriptions
 	
 * Heat.f90
 	* Contains heat by electric field and depends of the input power
-	defined (== absorbed power).
+	defined (= absorbed power).
 	* Contains electron-electron collisions by solving the
 	Fokker-Planck equation (full conservative scheme).
 	* Contains electron-neutral collisions.
 	
+* Pumping.f90
+	* Contains the optical pumping part and the distribution of
+      populations on the sublevels of the excited states 2^3^P and
+      2^3^S (*e.g.* radiative and metastable states) without magnetic
+      field.
+	  * The polarization of Helium is also considered but it is done
+        is two steps.
+		  * The calculation of a~i~ populations for several
+            polarization values (-> a~i~(P) ).
+		  * The calculation of the polarization with the a~i~ values in
+            an other files (*i.e.* python program).
+
+* Gaz_Tp.f90
+	* Contains the routine to calculate the 1D gas temperature
+	evolution inside of the cylinder, considering:
+		* The electron density [Ne] with a Bessel shape in the transverse direction.
+		* The gas temperature at the boundary of the tube.
+		* The conductivity
+		
 * Read-input.f90
 	* Contains initialization of all parameters, cross-sections, EEDF,
 	charge and excited state densities, read input files, ..., etc.
@@ -175,6 +213,6 @@ Routine descriptions
 	* Contains routines for dynamic allocation and deallocation.
 	
 * Main.f90 :
-	* the SOURCE! :)
+	* The top of the pyramid :)
 
 ------------------------------------------------------------------------------------------------------------

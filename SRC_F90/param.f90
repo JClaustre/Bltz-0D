@@ -9,7 +9,8 @@ MODULE MOD_PARAM
 
   USE F90_KIND
   IMPLICIT NONE
-
+  
+  !**** Declaration of all structures used in the code
   !-----------------------------------------------------------
   TYPE, PUBLIC :: Time
      REAL(DOUBLE) :: Dt=0, SimuTime
@@ -70,13 +71,13 @@ MODULE MOD_PARAM
   ! *******************************************************************************
   INTEGER, PARAMETER :: Lv=44
   INTEGER, PARAMETER :: NumIon  = 3  ! He+ | He2+ | He2*
-  INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1
-  INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 
-  INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3
+  INTEGER, PARAMETER :: NumMeta = 34 ! 1S1 --> 7P1 (cannot be higher than 42!)
+  INTEGER, PARAMETER :: Npop1 = 6    ! Sublevel numbers in 2S3 (a_i)
+  INTEGER, PARAMETER :: Npop2 = 18   ! Sublevel numbers in 2P3 (b_j)
 
+  !**** Output File directories: If you modify this line, "make clean"
+  ! before "make" to take into account the change.
   CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/20Torr/HF_mode/test_OP_relax/"
-!  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys
@@ -89,6 +90,7 @@ MODULE MOD_PARAM
   TYPE(Excited), DIMENSION(2) :: pop
   TYPE(Species), DIMENSION(2) :: Ngpl ! Polarized Neutral (+ & -).
 
+  !**** Physical Constant used in code 
   REAL(DOUBLE), PARAMETER :: kb  = 1.3807d-23    ! Boltzmann constant (m2 kg s-2 K-1)
   REAL(DOUBLE), PARAMETER :: qe  = 1.602d-19     ! Elementary charge (C)
   REAL(DOUBLE), PARAMETER :: koq = kb/qe         ! conversion to eV
@@ -109,22 +111,23 @@ MODULE MOD_PARAM
   REAL(DOUBLE), PARAMETER :: Hp   = 6.6261d-34  ! Planck Constant (J s)
   REAL(DOUBLE), PARAMETER :: Hpb  = Hp / (2.d0*Pi) ! H_barre (J s) 
   REAL(DOUBLE), PARAMETER :: fineS= qe*qe / (2*eps*Hp*Vcel) ! Fine structure constant
-  !REAL(DOUBLE), PARAMETER :: LnC = 10.d0      ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
-  CHARACTER(len=1), PARAMETER :: tabul=char(9) ! tabulation 
+
+  CHARACTER(len=1), PARAMETER :: tabul=char(9) ! tabulation for output files 
   ! *******************************************************************************
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: F
   REAL(DOUBLE), DIMENSION(:)  , ALLOCATABLE :: U
   REAL(DOUBLE), DIMENSION(2)                :: consv
-  REAL(DOUBLE), DIMENSION(34)               :: Sn   ! Associative rate coeff
+  REAL(DOUBLE), DIMENSION(34)               :: Sn   ! Associative ioniz. rate coeff
   REAL(DOUBLE), DIMENSION(NumMeta,NumMeta)  :: K_ij ! l-change rate coeff
   REAL(DOUBLE), DIMENSION(0:Lv,0:Lv)        :: Fosc ! Oscillator strenght
   REAL(DOUBLE), DIMENSION(Npop2,Npop1,3)    :: Tij  ! Transition for each Ck components
-  REAL(DOUBLE) :: MaxR                      ! Max rate calculated --> used for adaptative time
-  REAL(DOUBLE) :: LnC                       ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl)
+  REAL(DOUBLE) :: MaxR                      ! Max rate calculated --> used for adaptative time-step
+  REAL(DOUBLE) :: LnC                       ! lnC = ln(Λ) log Coulomb (cf. Fk-Pl routine)
   REAL(DOUBLE) :: Vg                        ! Calculate sheath potential for diffusion routine
   REAL(DOUBLE) :: Twnsd_a                   ! First Townsend coefficient
 CONTAINS
 
+  !**** Grid step function
   ! **********************************************************
   FUNCTION IdU(i,Dx)
     REAL(DOUBLE) :: IdU
@@ -133,7 +136,8 @@ CONTAINS
     IdU = (dble(i) - 0.5d0) * Dx
   END FUNCTION IdU
   ! **********************************************************
-
+  
+  !**** Array allocation in memory
   SUBROUTINE AllocArray(nx)
     INTEGER :: i
     INTEGER, INTENT(IN) :: nx
@@ -189,7 +193,6 @@ CONTAINS
   !**** Following Subroutines :
   !**** - Write_Out1D
   !**** - Write_Out2D
-  !**** - Write_Out2D
   !**** - PrinTime
   !**** - LoopTime
   !**** - tridag
@@ -236,29 +239,6 @@ CONTAINS
   END SUBROUTINE Write_Out2D
 
   !***********************************************************
-  !                    SUBROUTINE Write_Out3D
-  !***********************************************************
-  SUBROUTINE Write_Out3D( array, FileName )
-    !INTENT
-    REAL(DOUBLE), DIMENSION(:,:,:), INTENT(IN) :: array
-    CHARACTER(*), INTENT(IN) :: FileName
-    !LOCAL
-    INTEGER :: i, j, k
-
-    OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//TRIM(ADJUSTL(FileName)),&
-         ACTION="WRITE",STATUS="UNKNOWN")
-    DO i = lbound(array,1), ubound(array,1)
-       DO j = lbound(array,2), ubound(array,2)
-          DO k = lbound(array,3), ubound(array,3)
-             write(99,*) i, j, k, array(i,j,k)
-          END DO
-          write(99,*) ""
-       END DO
-       write(99,*) ""
-    END DO
-    CLOSE(99)
-  END SUBROUTINE Write_Out3D
-  !***********************************************************
   SUBROUTINE PrinTime (t1, t2, rate)
     !INTENT
     INTEGER, INTENT(IN) :: t1, t2, rate
@@ -282,6 +262,8 @@ CONTAINS
          Hrs, "h", min, ":", int(sec), "s"
   END SUBROUTINE PrinTime
   !***********************************************************
+
+  !**** Estimation of the calculation time
   SUBROUTINE LoopTime(t1, t2, clockR, Nloop)
     INTEGER, INTENT(IN)    :: t1, t2, clockR
     INTEGER, INTENT(INOUT) :: Nloop
@@ -302,7 +284,7 @@ CONTAINS
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 5*60.0 .and. tot .LE. 15*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
-            "You have time for coffee! estimated calculation: "
+            "You have time for ... coffee (or tea)! estimated calculation: "
        write(*,"(F5.2,A,I6,A)") tot/60.d0, " min ! (Num Loop = ", Nloop, ")  "
     ELSEIF (tot .GT. 15*60.0 .and. tot .LE. 45*60.0) THEN
        write(*,"(2A)", advance="no") tabul, &
@@ -315,10 +297,13 @@ CONTAINS
     ELSEIF (tot .GT. 3600. ) THEN
        write(*,"(2A)", advance="no") tabul, &
             "You have all the time! estimated calculation: "
-       write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), "min | (Num Loop = ", Nloop, ")  "
+       write(*,"(2(I3,A),I8,A)") int(tot/3600.d0), "H", int(((tot/3600.)-int(tot/3600))*60.), &
+            "min | (Num Loop = ", Nloop, ")  "
     END IF
   END SUBROUTINE LoopTime
-  !***********************************************************    
+  !***********************************************************
+
+  !**** Solver for tridiagonal matrix
   SUBROUTINE tridag(a,b,c,r,u,n) 
     INTEGER j,n 
     REAL(DOUBLE) :: gam(50000),a(n),b(n),c(n),u(n),r(n), bet
