@@ -88,7 +88,12 @@ CONTAINS
     END IF
     READ (90,*) sys%Powr, sys%P0
     READ (90,*) Clock%SimuTime
-    READ (90,*) Clock%Dt
+    IF (Clock%Rstart == 0)THEN
+       READ (90,*) Clock%MxDt
+    ELSE
+       READ (90,*) Clock%Dt
+       Clock%MxDt = 5.d-09
+    END IF
     READ (90,*) sys%Emx
     READ (90,*) Clock%TRstart
     READ (90,*) !/********************************/!
@@ -108,6 +113,7 @@ CONTAINS
        elec%Name = "      ELEC"
        Clock%SimuTime = Clock%SimuTime * 1.d-6
        Clock%TRstart  = Clock%TRstart  * 1.d-6
+       Clock%Dt = 5.d-12
        !**** Viva USI unit !
        sys%E  = sys%E  * 1.d2
        sys%Freq = sys%Freq * 2.d0 * pi
@@ -521,7 +527,7 @@ CONTAINS
     READ (90,*) sys%Nx
     READ (90,*) Clock%Rstart
     CLOSE (90)
-    !**** Init Clock
+    !**** Max number of iteration for the simulation : beyond that number... it's insane! 
     clock%MaxIter = int(5E+08)
 
     IF (Clock%Rstart == 0) clock%SumDt = 0.d0
@@ -623,13 +629,13 @@ CONTAINS
        ion(2)%Ni = elec%Ni * 0.00d0                                         !
        ion(1)%Ni = elec%Ni * 1.00d0                                         !
        SELECT CASE (NumIon)                                                 !
-       CASE (3) ; ion(NumIon)%Ni = 1.0d+0     ! Molecular Excimer          !
+       CASE (3) ; ion(NumIon)%Ni = 1.0d+0     ! Molecular Excimer           !
        END SELECT                                                           !
-       DO i = 1, NumMeta 
-          IF (i.EQ.1) meta(i)%Ni = 1.0d+0     ! Metastable 2S3             !
-          IF (i.EQ.2) meta(i)%Ni = 1.0d+0     ! Metastable 2S1             !
-          IF (i.EQ.3) meta(i)%Ni = 1.0d+0     ! Radiative state 2P3        !
-          IF (i.GE.4) meta(i)%Ni = 1.00+0       
+       DO i = 1, NumMeta                                                    !
+          IF (i.EQ.1) meta(i)%Ni = 1.0d+0     ! Metastable 2S3              !
+          IF (i.EQ.2) meta(i)%Ni = 1.0d+0     ! Metastable 2S1              !
+          IF (i.EQ.3) meta(i)%Ni = 1.0d+0     ! Radiative state 2P3         !
+          IF (i.GE.4) meta(i)%Ni = 1.00+0     ! others excited states       !  
        END DO                                                               !
        !**** Allocate densities for sublevels in 2S3 and 2P3 ***            !
        pop(1)%Ni(:) = meta(1)%Ni/6.d0 ; pop(2)%Ni(:) = meta(3)%Ni/18.d0     !

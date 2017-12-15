@@ -3,7 +3,8 @@
 ! Date  : 14/07/2015
 ! Objctv: Elastic collisions, Fokker-Planck and Heating 
 !         processes in Helium
-! note  : Fk-Planck equation --> see paper Vidal & Boukandou 
+! note  : Fk-Planck equation --> see paper Vidal & Boukandou
+!         doi:10.1016/j.cpc.2017.07.004
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE MOD_CHAUF
   USE F90_KIND
@@ -29,45 +30,53 @@ CONTAINS
     nx = sys%nx ; Dx = sys%Dx ; power = 0.d0
     GenPwr = 1.d-6 ! Time constant to start/end the generator.
     
-!    IF (Clock%SumDt .LT. Post_D) THEN
-!       !**** Increase Power
-!       sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
-!       sys%Pcent = sys%Powr
-!       !sys%E = sys%Emax * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
-!       !sys%Pcent = sys%E
-!
-!       !**** Power calculation
-!       power = 0.d0
-!       do i = 1, nx-1
-!          nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
-!          Uc = qome * nuc / (nuc**2 + sys%Freq**2)
-!          IF (i .LT. nx-1) THEN
-!             Df = F(i+1) - F(i)
-!          ELSE IF (i.EQ.nx-1) THEN
-!             !**** linear extrapolation for f(nx)
-!             Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
-!             Df = Fn - F(i)
-!          END IF
-!          power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
-!       END do
-!       !**** New External Electric Field Calculation 
-!       sys%E = dsqrt ( sys%Powr / (power * qe) )
-!
-!       !***************************************************
-!    ELSE
-!       !**** Decrease External Electric source ***
-!       IF (Pwk == 0) sys%IPowr = sys%E
-!       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
-!       IF (sys%E.LT.1d-08) sys%E = 0.d0
-!       sys%Pcent = sys%E
-!       Pwk = Pwk+1
-!    END IF
-!    Op = 5.64d4 * sqrt(elec%Ni*1d-6)
-!    Delta = Vcel / Op * sqrt(2.d0*1d9*meta(0)%Prs/sys%freq)
-!
-!    sys%E = sqrt( sys%Emax**2 * exp(-2d0*sys%Ra/Delta) )
+    IF (Clock%SumDt .LT. Post_D) THEN
+       !**** Increase Power
+       IF (sys%P0 == 0) THEN
+          sys%Powr = sys%IPowr * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+          sys%Pcent = sys%Powr
 
-    !**** RF - electric field*********************
+          !**** Power calculation
+          power = 0.d0
+          do i = 1, nx-1
+             nuc  = meta(0)%Ni*meta(0)%SecMtm(i)*gama*dsqrt(U(i))
+             Uc = qome * nuc / (nuc**2 + sys%Freq**2)
+             IF (i .LT. nx-1) THEN
+                Df = F(i+1) - F(i)
+             ELSE IF (i.EQ.nx-1) THEN
+                !**** linear extrapolation for f(nx)
+                Fn = F(nx-2) + (F(nx-1)-F(nx-2))/Dx
+                Df = Fn - F(i)
+             END IF
+             power = power - (U(i)**(1.5d0) * Uc * Df * 0.6667d0)
+          END do
+          !**** New External Electric Field Calculation 
+          sys%E = dsqrt ( sys%Powr / (power * qe) )
+
+       ELSE
+          sys%E = sys%Emax * (1.d0 - exp( -real(Clock%SumDt) / GenPwr) )
+          sys%Pcent = sys%E
+       END IF
+       
+       !***************************************************
+    ELSE
+       !**** Decrease External Electric source ***
+       IF (Pwk == 0) sys%IPowr = sys%E
+       sys%E = sys%IPowr * exp( -real(Pwk*Clock%Dt) / (GenPwr*Cgen))
+       IF (sys%E.LT.1d-08) sys%E = 0.d0
+       sys%Pcent = sys%E
+       Pwk = Pwk+1
+    END IF
+
+    !**** Effet de peau 
+    IF (sys%P0 == 1) THEN
+       Op = 5.64d4 * sqrt(elec%Ni*1d-6)
+       Delta = Vcel / Op * sqrt(2.d0*1d9*meta(0)%Prs/sys%freq)
+
+       sys%E = sqrt( sys%Emax**2 * exp(-2d0*sys%Ra/Delta) )
+    END IF
+    
+    !**** RF - electric field *********************
     IF (sys%rf == 1) THEN
        IF (sys%Freq.NE.0.d0) THEN
           sys%E = (sys%E*sqrt(2.d0)) * sin(sys%Freq * Clock%SumDt)
@@ -271,9 +280,7 @@ CONTAINS
     hdu = 0.5d0*sys%Dx
     tt  = 2.d0/3.d0
     v3 = ( (2.d0*qome))**(1.5d0)
-    nu = (4.d0*pi*elec%Ni*LnC*qe**4) / ( (4.d0*pi*eps*me)**2 * v3)
     
-    cnst = -(2.0d0*Clock%Dt * nu) / Sys%Dx
     !********Initialisation:******************************
     part = 0.d0
     do i=1,nx
@@ -290,6 +297,9 @@ CONTAINS
        LnC = 24.d0 - log((part*1d-6)**0.5d0 / elec%Tp )
     END IF
 
+    nu = (4.d0*pi*elec%Ni*LnC*qe**4) / ( (4.d0*pi*eps*me)**2 * v3)
+    cnst = -(2.0d0*Clock%Dt * nu) / Sys%Dx
+    
     !**** On normalise la fonction de distribution
     !**** integ(u½ f(u) du) = 1
     do i=1,nx

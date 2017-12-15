@@ -13,7 +13,7 @@ MODULE MOD_PARAM
   !**** Declaration of all structures used in the code
   !-----------------------------------------------------------
   TYPE, PUBLIC :: Time
-     REAL(DOUBLE) :: Dt=0, SimuTime
+     REAL(DOUBLE) :: Dt=0, SimuTime, MxDt
      REAL(DOUBLE) :: SumDt, TRstart
      REAL(DOUBLE) :: Hours, Minutes, Seconds
      CHARACTER(len=10) :: DDay(3)

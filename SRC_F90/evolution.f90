@@ -24,6 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
+  !**** don't care about that... only used for test case...
   REAL(DOUBLE), PRIVATE :: ETownsd=5.0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
@@ -31,14 +32,11 @@ CONTAINS
     ! LOCAL ******************************************************************!
     INTEGER :: k, l                                                           !
     INTEGER :: t1, t2, clock_rate                                             !
-    REAL(DOUBLE) :: count1, count2, MxDt                                      !
     REAL(DOUBLE) :: Cgen, Post_D                                              !
-    count1=0.d0 ; count2=0.d0                                                 !
     Res = Clock%SumDt + Clock%TRstart                                         !
     !**** Maximum time-step allowed (sec)***                                  !
-    MxDt   = 5d-09
     IF (Clock%Rstart.EQ.1)THEN
-       IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
+       IF (Clock%Dt.GT.Clock%MxDt) Clock%Dt = Clock%MxDt
     END IF
 
     !*************************************************************************!
@@ -46,21 +44,23 @@ CONTAINS
     write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
-    sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
+    !sys%E = sys%Emax
     !**** Keep Power-init in memory ***
-    !sys%IPowr = sys%Powr 
-    sys%E = sys%Emax
-    !**** Time factor for external source ***
+    sys%IPowr = sys%Powr 
+    !**** Time factor for external source (used in power control : heat.f90)***
     Cgen   = 1.0d-02
-    !**** Start Time to ignitiate post_discharge (micro-sec) ***
+    !**** Time ignitialization post_discharge (sec) ***
     Post_D = 2.d-1
-
-    meta(1)%NStart = pop(1)%Ni(4) ! For MEOP
 
     !**** MAIN LOOP ***
     DO WHILE (Clock%SumDt .LT. Clock%SimuTime)
+       !**** To obtain the time of the simulation (start @ l==XXX)
        if (l == 200) CALL System_clock (t1, clock_rate)
+       !**** Increment
        l = l + 1
+
+       !**** Every XXX loops, update the file "Rates_all.dat".
        IF (modulo(l,2000)==0) THEN
           OPEN(UNIT=919,File=TRIM(ADJUSTL(DirFile))//"Rates_all.dat",ACTION="WRITE",STATUS="UNKNOWN")
           WRITE(919,"(A,ES12.3)") "Rates for several reactions in the code. Time (μs) : ", Clock%SumDt*1d6
@@ -68,15 +68,17 @@ CONTAINS
           CLOSE(919)
        END IF
 
+       !**** Update density parameters/values:
        meta(0:NumMeta)%Updens = 0.d0 ; ion(:)%Updens = 0.d0 ; Ngpl(:)%UpDens = 0.d0
        pop(1)%Ntot = meta(1)%Ni ; pop(2)%Ntot = meta(3)%Ni
        elec%NStart = elec%Ni
-       ! Calculation of relaxation time of sublevels Ai :
-       IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.000542297 ) THEN !GT. Tagada
-          print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
-          lasr%OnOff = 0
-          !MxDt   = 1d-10
-       END IF
+       
+       !! Calculation of relaxation time of sublevels Ai :
+       !IF (lasr%OnOff.EQ.1 .and. Clock%SumDt .GT.0.000542297 ) THEN !GT. Tagada
+       !   print*, "Clock: ", Clock%SumDt, "laser will be switch to Off: ", lasr%OnOff
+       !   lasr%OnOff = 0
+       !   !Clock%MxDt   = 1d-10
+       !END IF
 
        !**** Neutral temperature calculation
        !CALL TP_Neutral (sys, elec, meta, OneD)
@@ -116,17 +118,20 @@ CONTAINS
        !**** (L&S)-Exchange ***
        CALL l_change     (meta, K_ij)
 
-       !**** UpDate and write routine ***
-       CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, MxDt)
+       !**** UpDate and write outputs ***
+       CALL CHECK_AND_WRITE (Clock, sys, meta, elec, ion, pop, F, diag, l, Clock%MxDt)
 
        !*************************************
        !**** LASER PUMPING
        !*************************************
-       CALL Sublev_coll(Clock,meta,pop,Ngpl,Tij,lasr,l)
+       !**** don't comment this routine ... It's not only about Optical Pump.
+       !there is the radiative transfert from 2P3 to 2S3 included too.
+       CALL Sublev_coll(Clock,meta,pop,Tij,lasr,l)
 
        !**** Evaluation of Calculation Time ***
        if (l == 300) CALL System_clock (t2, clock_rate)
        if (l == 300) CALL LoopTime(t1, t2, clock_rate, Clock%NumIter)
+       
        !**** UpDate Simulation Time ***
        Clock%SumDt = Clock%SumDt + Clock%Dt
 
@@ -245,7 +250,8 @@ CONTAINS
     END Do
 
     CALL date_and_time(Clock%DDay(1),Clock%DDay(2),Clock%DDay(3), Clock%Date)
-
+    
+    !**** the format .md is the MarkDown format (such as the README.md).
     OPEN(UNIT=99,File=TRIM(ADJUSTL(DirFile))//"Output.md",ACTION="WRITE",STATUS="UNKNOWN")
     write(99,"(A)")"     .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
     write(99,"(A)")"    .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
@@ -391,7 +397,7 @@ CONTAINS
             meta(i)%Ni*1d-06, meta(i)%Ni *100.d0/SumMeta, " %"
     END DO                                                                  !
     write(99,"(A)") " "
-    write(99,"(A)")"![Zozor](http://uploads.siteduzero.com/files/420001_421000/420263.png)"
+    write(99,"(A)")"![Zozor](https://sdz-upload.s3.amazonaws.com/prod/upload/003.png)"
     Close(99)
   END SUBROUTINE OutPutMD
   !/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/!
@@ -399,7 +405,7 @@ CONTAINS
   SUBROUTINE CHECK_AND_WRITE(Clock, sys, meta, elec, ion, pop, F, diag, iter, MxDt)
     !**** INTENT
     INTEGER      , INTENT(IN)    :: iter
-    REAL(DOUBLE) , INTENT(INOUT) :: MxDt
+    REAL(DOUBLE) , INTENT(IN)    :: MxDt
     TYPE(SysVar) , INTENT(IN)    :: sys
     TYPE(TIME)   , INTENT(INOUT) :: Clock
     TYPE(Species), INTENT(INOUT) :: elec
@@ -431,13 +437,13 @@ CONTAINS
     !**** Calculation of the first Townsend coefficient. Coef found in
     
     !**** Sretenovic et al (2014) for streamer ! and for E in [3-25]
-    !**** kV/cm ***
-    !Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
+    !**** kV/cm *** Twnsd_a = 920.d0 * exp(-29.5d0 / (sys%E*1d-5))
     
     !**** Townsend Coef. (reduced) calculated from Hagelaar et al (PSST 14 pp-722 (2005))
     nu_ib = (elec%Ni - elec%NStart)/(Clock%Dt*elec%NStart)
     Twnsd_a = (elec%mobl*sys%E-sqrt( (elec%mobl*sys%E)**2-4.d0*elec%Dfree*nu_ib) )&
          /(2.d0*elec%Dfree*meta(0)%Ni)
+    !**** Drift velocity
     v_drift = - nu_ib / (Twnsd_a * meta(0)%Ni)
 
     !**** Check EEDF Positivty
@@ -485,7 +491,7 @@ CONTAINS
     END IF
     !**** Check if there's NaN propagation ... probably due to large Dt (change MaxDt).
     IF (ISnan(MaxR) .or. isNaN(elec%Ni) ) THEN 
-       print*,""; print*," NaN ! Pobleme in time-step??", elec%Ni, MaxR ; Stop 
+       print*,""; print*," NaN ! Pobleme in time-step?? Ne", elec%Ni, "MxRate", MaxR ; Stop 
     END IF
     MaxR = 0.d0
     !*************************************

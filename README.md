@@ -20,7 +20,7 @@ Associative), *dissociative recombination*, *l-exchange* and
 The geometry concidered here is a cylinder (the geometry consideration
 is used for the absorbed power calculation and the ambipolar diffusion).
 
-Have a look at our paper, to have a detailled description of the model:
+Have a look at our papers, to have a detailled description of the model:
 
 * J Claustre *et al.* (doi:10.1088/1361-6595/aa8a16)
   [(link article)](https://doi.org/10.1088/1361-6595/aa8a16)
@@ -29,13 +29,13 @@ Have a look at our paper, to have a detailled description of the model:
 
 We invite you to look at these papers too (our source of inspiration!:D ):
 
-* L Alves *et al* (doi:10.1088/0022-3727/25/12/007)
+* L Alves *et al.* (doi:10.1088/0022-3727/25/12/007)
   [(link article)](http://m.iopscience.iop.org/article/10.1088/0022-3727/25/12/007/meta;jsessionid=AE4353A7414EB307AA0214AD6A4BA223.c3.iopscience.cld.iop.org)
-* M Santos *et al* (doi:10.1088/0022-3727/47/26/265201)
+* M Santos *et al.* (doi:10.1088/0022-3727/47/26/265201)
   [(link article)](http://iopscience.iop.org/article/10.1088/0022-3727/47/26/265201#)
-* G Hagelaar *et al* (doi:10.1088/0963-0252/14/4/011)
+* G Hagelaar *et al.* (doi:10.1088/0963-0252/14/4/011)
   [(link article)](http://m.iopscience.iop.org/article/10.1088/0963-0252/14/4/011/meta)
-* T Belmonte *et al* (doi:10.1088/0022-3727/40/23/015)
+* T Belmonte *et al.* (doi:10.1088/0022-3727/40/23/015)
   [(link article)](http://iopscience.iop.org/article/10.1088/0022-3727/40/23/015/meta)
 
 ----------------------------------------------------------------
@@ -87,7 +87,7 @@ parameters. If you don't have it, create it by using the example below
 	3.000E+02         Emax (Max Energy [for the grid] (eV) ) 
 	5.000E+01         save data's every XXX micro-sec (includes Restart files + EEDF)
 	*************************************************************************
-	0                 Activate the laser (1) or don't use laser pumping (0)
+	0                 Activate the laser (1) or don't (0) (if 0, don't care about the following lines!)
 	1083              lenght wave of the laser (nm)
 	1                 Polarization of the Laser (0=pi ; 1=sigma+ ; 2=sigma-)
 	1.000E+00         Laser intensity (W)

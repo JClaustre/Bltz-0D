@@ -11,39 +11,34 @@ MODULE MOD_PUMP
 
 CONTAINS
 
-  Subroutine Sublev_coll (Clock,meta,pop,Neut,Tij,lasr,iter)
+  Subroutine Sublev_coll (Clock,meta,pop,Tij,lasr,iter)
     !INTENT
     INTEGER      , INTENT(INOUT) :: iter
     TYPE(TIME)   , INTENT(IN) :: Clock
     TYPE(Laser)  , INTENT(IN) :: lasr
     REAL(DOUBLE) , DIMENSION(Npop2,Npop1,3) :: Tij
     TYPE(Excited), DIMENSION(2), INTENT(INOUT) :: pop
-    TYPE(Species), DIMENSION(2), INTENT(IN) :: Neut
     TYPE(Species), DIMENSION(0:NumMeta), INTENT(INOUT) :: meta
     !LOCAL
-    INTEGER :: i, j, k, switch, Niter
-    REAL(DOUBLE) :: Dt, nu_ij, E_meta, Dt_p, E_max, E_pop
+    INTEGER :: i, j, k, switch
+    REAL(DOUBLE) :: Dt, nu_ij
     REAL(DOUBLE) :: gammak, Dop, Omeg, vm, Tp
     REAL(DOUBLE) :: tot1, tot2, N1, N2, pol
     REAL(DOUBLE), DIMENSION(2,18) :: Updens
-    !**************************
-    switch = 0 ! Laser On (1) or Off (0) 
+    !****************************************************
+    switch = 0 ! Laser On (1) or Off (0) --> don't modify here!
     N1 = real(Npop1) ; N2 = real(Npop2)
     Dt = Clock%Dt ; Updens(:,:)  = 0.d0
 
-    E_max = 2d-4 ; Dt_p = 1d-6 ! E_max == percentage (limit) of variation of DAi/Dt.
-    Niter = int(Dt_p / Dt) ! Calcul Niter for 1 micro-sec (== Dt_p).
-
-    !pop(1)%T_relax = 1.d0/ (meta(1)%Damb / (sys%Ra/2.405d0)**2)
-    !pop(2)%T_relax = 1.d0/ (3.2d06*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
+    !**** Definition of polarization rate
     pop(1)%tau_e   = 1.d0/ (3.75d6*1.33322*meta(0)%Prs) !(s avec P(mbar)) (cf. These Batz p. 30)
     pop(1)%Te      = meta(0)%Ni * pop(1)%tau_e / meta(1)%Ni !(s) (cf. Nacher 1985)
-    !pop(1)%Tr      = 47.d0!100.d0 ! (s)
     pop(1)%Tr      = 1.0/ (Ngpl(1)%UpDens/(meta(0)%Ni*Clock%Dt))
     Tp = 6.876e-30 * meta(0)%Ni*ion(1)%Ni ! Milner et al (Nuclear Instruments and Methods in
                                           ! Physics Research A257 (1987) 286-290) 
 
-    !**** Laser variables *** mean velocity of the metastables
+    !**** Laser variables ***
+    ! mean velocity of the metastables
     vm   = sqrt(2.d0*kb*meta(0)%Tp*qok/mhe3) 
     ! Laser frequency (1083 nm)
     Omeg = ppi*Vcel / lasr%Lwave
@@ -57,8 +52,6 @@ CONTAINS
     END IF
 
     DO j = 1, Npop2
-       ! Test de la relaxation instantanee des 2P3
-       !pop(2)%Ni(j) = meta(3)%Ni/Npop2
        !**** Update B_j sublevels due to radiative transitions (2P3 -> 2S3) ***
        Updens(2,j) = Updens(2,j) - Dt * pop(2)%tau_rad * pop(2)%Ni(j)
 
@@ -77,14 +70,14 @@ CONTAINS
                    END IF
                 END IF
              END DO
-             !**** Update A_i sublevels due to metastability exchange between A_k sublevels ***
-             IF (j.LE.Npop1) THEN
-                Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) &
-                     * pop(1)%Ni(j) / (18.d0*pop(1)%tau_e)
-             END IF
-             !*********************************************************************************
-          END IF
 
+          END IF
+          !**** Update A_i sublevels due to metastability exchange between A_k sublevels ***
+          IF (j.LE.Npop1) THEN
+             Updens(1,i) = Updens(1,i) + Dt * ( lasr%Eij(i,j)+lasr%Fij(i,j)*pop(1)%polarz ) &
+                  * pop(1)%Ni(j) / (18.d0*pop(1)%tau_e)
+          END IF
+          !*********************************************************************************
        END DO
     END DO
 
@@ -135,16 +128,15 @@ CONTAINS
           WRITE(919,"(3ES12.3,6(ES19.10),6(ES19.10))") meta(0)%Prs,lasr%Is, pop(1)%polarz, &
                (pop(1)%Ni(i), i=1,6), (meta(i)%Ni, i=1,6) 
           CLOSE(919)
-          !print*, "Critere d'arret = ", E_pop
           !iter = Clock%MaxIter
        END IF
        !*************************************
-   
-!    ELSE IF (lasr%OnOff.EQ.0) THEN
-!       !**** Calcul the (de)polarization of the Helium gas ***
-!       !**** [pop(1)%Te/20.d0] == delta T from --> dP/dT
-!       pop(1)%polarz = pop(1)%polarz + Clock%Dt * ((-pop(1)%polarz + pol)/pop(1)%Te &
-!            - pop(1)%polarz/pop(1)%Tr - pop(1)%polarz/Tp)
+       
+       !**** Calcul de la polarisationen fonction du temps.
+       !    ELSE IF (lasr%OnOff.EQ.0) THEN
+       !       !**** Calcul the (de)polarization of the Helium gas ***
+       !       pop(1)%polarz = pop(1)%polarz + Clock%Dt * ((-pop(1)%polarz + pol)/pop(1)%Te &
+       !            - pop(1)%polarz/pop(1)%Tr - pop(1)%polarz/Tp)
     END IF
 
   END Subroutine Sublev_coll

@@ -47,6 +47,8 @@ CONTAINS
     write(*,"(A)")"      .-.     .-.     .-.     .-.     .-.     .-.     .-.    "
     write(*,"(A)")"     .'   `._.'   `._.'   `._.'   `._.'   `._.'   `._.'   `. "
     write(*,"(A)")""
+    write(*,"(A)")"     Ref: J Claustre et al. (doi:10.1088/1361-6595/aa8a16) "
+    write(*,"(A)")""
     
   END SUBROUTINE welcome
 
