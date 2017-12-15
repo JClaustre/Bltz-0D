@@ -62,10 +62,10 @@ CONTAINS
 !       sys%Pcent = sys%E
 !       Pwk = Pwk+1
 !    END IF
-    Op = 5.64d4 * sqrt(elec%Ni*1d-6)
-    Delta = Vcel / Op * sqrt(2.d0*1d9*meta(0)%Prs/sys%freq)
-
-    sys%E = sqrt( sys%Emax**2 * exp(-2d0*sys%Ra/Delta) )
+!    Op = 5.64d4 * sqrt(elec%Ni*1d-6)
+!    Delta = Vcel / Op * sqrt(2.d0*1d9*meta(0)%Prs/sys%freq)
+!
+!    sys%E = sqrt( sys%Emax**2 * exp(-2d0*sys%Ra/Delta) )
 
     !**** RF - electric field*********************
     IF (sys%rf == 1) THEN

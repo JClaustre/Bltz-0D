@@ -24,7 +24,7 @@ MODULE MOD_EVOL
   INTEGER :: IonX = 0 ! 1 == 50-50 | 0 == 100-0
   !**** Variable used to save Restart files (iterations) ***
   REAL(DOUBLE), PRIVATE :: Res
-  REAL(DOUBLE), PRIVATE :: ETownsd=10.0
+  REAL(DOUBLE), PRIVATE :: ETownsd=5.0
 CONTAINS
   !**** Contain the main loop: Loop in time including all processes ***
   SUBROUTINE EVOLUTION ()
@@ -35,8 +35,8 @@ CONTAINS
     REAL(DOUBLE) :: Cgen, Post_D                                              !
     count1=0.d0 ; count2=0.d0                                                 !
     Res = Clock%SumDt + Clock%TRstart                                         !
-    !**** Maximum time-step allowed (sec)***
-    MxDt   = 1d-09
+    !**** Maximum time-step allowed (sec)***                                  !
+    MxDt   = 5d-09
     IF (Clock%Rstart.EQ.1)THEN
        IF (Clock%Dt.GT.MxDt) Clock%Dt = MxDt
     END IF
