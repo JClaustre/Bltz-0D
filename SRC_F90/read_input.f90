@@ -502,7 +502,6 @@ CONTAINS
        write(*,"(2A)") "dir doesn't exist! I create it for youuuuuu! --> ", DirFile
     end if
     !**************************************
-
     CALL date_and_time(Clock%DDay(1),Clock%DDay(2),Clock%DDay(3), Clock%Date)
 
     write(*,"(2A)") tabul, "Initilization Done"
@@ -571,7 +570,7 @@ CONTAINS
     sys%Volume = pi * sys%Ra**2 * sys%L
     elec%Ni = consv(1)
     write(*,"(2A, F6.2,A)"  ) tabul, "Tpe init : ", 0.66667d0*consv(2)/consv(1), " (eV)"
-    write(*,"(2A, ES19.10,A)") tabul, "Ne init  : ", consv(1)*1d-6, " (cm-3) "
+    write(*,"(2A, ES10.2,A)") tabul,"Ne  init : ", consv(1)*1d-6, " (cm-3) "
     
     !**** Fix the power here function of Elec field ************************!
     IF (sys%P0 .EQ. 1) THEN                                                 !

@@ -1,4 +1,4 @@
-2000              Number of grid points 
+4000              Number of grid points 
 0                 Restart simulation ( 0  - no restart | 1 - restart )
 2.320E+01         E (V/cm)      Electric field (see also the absorbed power parameter)
 4.000E+18   0     Ng (cm-3) ( 1 - input parameter neutral gas (Ng) | 0 - input parameter Pressure (prs))
@@ -10,7 +10,7 @@
 5.000E+00         L  (cm)       Tube Length
 1.000E+03         ne (cm-3)     Initial electron density
 1.000E+00   0     P  (W/cm3)    Absorbed power ( 1 - input parameter E | 0 - input parameter P)
-1000.0001         Simulation Time (micro-sec)
+10.010000         Simulation Time (micro-sec)
 1.000E-09         Max time-step allowed [MxDt] (sec) 
 3.000E+02         Emax (Max Energy [for the grid] (eV) ) 
 5.000E+01         save data's every XXX micro-sec (includes Restart files + EEDF)

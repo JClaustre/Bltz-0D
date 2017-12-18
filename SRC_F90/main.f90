@@ -14,13 +14,19 @@ PROGRAM MAIN
   IMPLICIT NONE
   INTEGER :: t1, t2, clock_rate
 
+
+  !**** Change the terminal size (used for the "gnome-terminal"):
+  call execute_command_line ('resize -s 40 122')
+  !**** Ref of My paper! :)
   CALL welcome()
+  
   !**** INIT PARAM ****!
   CALL Init(sys, Clock, ion, elec, meta, lasr)
-
+  !**** Enter the main loop
   CALL SYSTEM_CLOCK (t1, clock_rate)
   CALL Evolution ()
   CALL SYSTEM_CLOCK (t2, clock_rate)
+  !**** Write results & simulation time in files
   CALL PrinTime (t1,t2,clock_rate)
   CALL OutPutMD (sys, meta, ion, elec, diag, consv)
   CALL DelocArray()

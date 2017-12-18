@@ -40,8 +40,8 @@ CONTAINS
     END IF
 
     !*************************************************************************!
-    Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%Dt)              !
-    write(*,"(2A,I10)") tabul, "Iterations in Time: ",  Clock%NumIter         !
+    Clock%NumIter = int( (Clock%SimuTime-Clock%SumDt) /Clock%MxDt)            !
+    write(*,"(2A,I10)") tabul, "Min Number of Iterations: ",  Clock%NumIter   !
     l = 0 ; k = 0                                                             !
     !*************************************************************************!
     !sys%Emax = ETownsd * 1d-21 * meta(0)%Ni ! (V/m)
@@ -504,16 +504,9 @@ CONTAINS
        RateSum = -diag(15)%InM1*meta(3)%Ni + (diag(16)%OutM1 + diag(15)%OutM1)*meta(1)%Ni
 
        !**** WRITE Frequently IN TERMINAL **************!
-!       write(*,"(2A,F8.3,A,F5.1,A,I7,A,ES9.3,A,F5.1,A,F5.1,A,ES10.2,A)",advance="no") &
-!            tabul, "RunTime : ", (Clock%SumDt*1e6), " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-!            "% [Nloop = ", iter, " | Dt = ", Clock%Dt, " | Pwr(%): ", (sys%Pcent*100./sys%IPowr),&
-!            "] Sheath: ", Vg, " Emoy(V/m) ", sys%Emoy/iter, " \r"!
-       write(*,"(A,F11.3,A,F5.1,A,ES8.2,A,ES10.2,A,F6.1,A,ES10.2,F6.1,A,ES10.2,ES10.2,2(A,ES10.2),A)",advance="no") &
-            tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,&
-            "% Dt = ", Clock%Dt, " ne/ni", abs(1.d0-elec%Ni/(ion(1)%Ni+ion(2)%Ni)), &
-            "| polariz: ", pop(1)%polarz*100.d0," | Pwr(W/cm3,%): ", sys%Pwmoy*1d-6, (sys%Pcent*100./sys%IPowr),&
-            " (m2) E (Td,V/cm): ", (sys%E/meta(0)%Ni)*1d+21, sys%E*1d-2," N+ ", Ngpl(1)%UpDens*1e-6, &
-            "| N- ", Ngpl(2)%UpDens*1e-6, "cm-3 \r"
+       write(*,"(A,ES8.2,A,F5.1,A,ES8.2,A,ES8.2,F5.1,A,2ES10.2,A)",advance="no") &
+            tabul, Clock%SumDt*1e6, " μs | ", Clock%SumDt*100.d0/Clock%SimuTime,"% Dt = ", Clock%Dt, " | Pwr(W/cm3,%): ", &
+            sys%Pwmoy*1d-6, (sys%Pcent*100./sys%IPowr), " E (Td,V/cm):", (sys%E/meta(0)%Ni)*1d+21, sys%E*1d-2,"\r"
 
        !**** WRITE IN EVOL.DAT *************************!
        IF (Clock%Rstart.EQ.0 .and. iter.EQ.mdlus) THEN
