@@ -209,10 +209,40 @@ Routine descriptions
 	* Contains the definition of structures and types used in the
       code.
 	* Contains all constants and physical parameters used (i.e qe, me,
-     kB, ...,etc) in the code.
+	  kB, ...,etc) in the code.
 	* Contains routines for dynamic allocation and deallocation.
 	
 * Main.f90 :
 	* The top of the pyramid :)
+
+Tips
+---------------
+
+* Outputs
+	* In the file param.f90, you can choose the directories for your
+	  outputs. If the directory doesn't exist, it will create it.
+	* If you want to create manually your directory, _you_ _have_ _to_
+      _create_ the folder *Rstart* inside of your new directory!
+	* Be sure to *make clean* (and *make*) before to run the code to take into
+      account of any changes in *param.f90*.
+
+* Cross Sections
+	* Several cross sections are available. We found some differences
+      between the cross section given by the team of Alves (Lisboa)
+      and Biagi. We advise to use the Biagi cross section if you take
+      into account the _Associative_ _Ionization_ processes, else the
+      Alves cross section.
+	* You can change from one to the other in the file *excit.f90*, in
+      the subroutine *Init_ExcDxc*. you'll find the variable *Switch_CS*.
+
+			if (Switch_CS == 1) Then
+				Alves Cross section
+			else
+				Biagi cross section
+			end if
+
+* Gas temperature
+	* If you want to calculate the gas temperature, just uncomment the
+	  call in the main loop (in *evolution.f90*).
 
 ------------------------------------------------------------------------------------------------------------
