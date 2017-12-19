@@ -157,6 +157,9 @@ Routine descriptions
 
 * Penn-asso.f90
 	* Contains Penning ionization and associative ionization.
+	* Contains also the dimer Penning processes.
+	* In the init subroutine, you have several rates. You can choose
+      which one to use in the *read_input.f90* (look for "penning").
 	
 * L-xchange.f90
 	* Contains l-exchange and s-exchange processes for He.
