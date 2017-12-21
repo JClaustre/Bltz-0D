@@ -77,7 +77,7 @@ MODULE MOD_PARAM
 
   !**** Output File directories: If you modify this line, "make clean"
   ! before "make" to take into account the change.
-  CHARACTER(*), PARAMETER :: DirFile = "./datFile/Default_RunDir/"
+  CHARACTER(*), PARAMETER :: DirFile = "./datFile/JSeb_case/500Torr/HF_mode/Power_Reg/"
 
   TYPE(Time)    :: Clock
   TYPE(SysVar)  :: sys

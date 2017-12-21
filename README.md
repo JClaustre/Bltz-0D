@@ -228,6 +228,21 @@ Tips
       _create_ the folder *Rstart* inside of your new directory!
 	* Be sure to *make clean* (and *make*) before to run the code to take into
       account of any changes in *param.f90*.
+	* There are different outputs :
+	  * OutPut.md : At the end of the simulation, it's a summary of
+      some parameters of the discharge.
+	  * density.dat : density of excited species.
+	  * evol_time.dat : results depending on time, such as elec. and
+	  gas temperature, electric field, mobility, elec. diffusion,
+	  Townsend coef, drift velocity, etc.
+	  * evol_dens.dat : evolution of densities depending on time.
+	  * pop.dat : evolution of sublevel densities for 2^3S and 2^3P.
+	  * Rates_all.dat : Give rates for the main collision processes.
+	  * spectra.dat : Give the intensity of each emitted rays for the
+      radiative transfer.
+	  * F_evol_xxx.dat : It's the EEDF given at the *save-time* number
+      xxx.
+	  
 
 * Cross Sections
 	* Several cross sections are available. We found some differences
